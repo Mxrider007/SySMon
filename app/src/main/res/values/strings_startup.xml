@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Startup apps screen -->
+    <string name="startup_subtitle">Apps that register to run when this device starts. Android launches them automatically after boot; to stop one, open App info and disable the app.</string>
+
+    <!-- Table columns -->
+    <string name="startup_col_app">Name</string>
+    <string name="startup_col_status">Status</string>
+    <string name="startup_col_receivers">Boot receivers</string>
+    <string name="startup_col_impact">Startup impact</string>
+
+    <!-- Status values -->
+    <string name="startup_status_enabled">Enabled</string>
+    <string name="startup_status_disabled">Disabled</string>
+
+    <!-- Impact values (informational captions, not status colors) -->
+    <string name="startup_impact_low">Low</string>
+    <string name="startup_impact_medium">Medium</string>
+    <string name="startup_impact_high">High</string>
+
+    <!-- Counts -->
+    <plurals name="startup_receivers_count">
+        <item quantity="one">%1$d receiver</item>
+        <item quantity="other">%1$d receivers</item>
+    </plurals>
+    <plurals name="startup_count">
+        <item quantity="one">%1$d startup app</item>
+        <item quantity="other">%1$d startup apps</item>
+    </plurals>
+
+    <!-- Empty table -->
+    <string name="startup_empty_title">No startup apps found</string>
+    <string name="startup_empty_body">No installed apps declare boot receivers, or the list could not be read on this device.</string>
+</resources>

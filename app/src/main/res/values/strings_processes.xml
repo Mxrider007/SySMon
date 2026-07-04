@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Processes screen -->
+    <string name="processes_show_system">Show system processes</string>
+    <string name="processes_count_shown">Showing %1$d of %2$d</string>
+    <string name="processes_footer">%1$d processes • Usage access %2$s</string>
+    <string name="processes_access_yes">✓</string>
+    <string name="processes_access_no">✗</string>
+
+    <!-- Table columns -->
+    <string name="processes_col_app">Name</string>
+    <string name="processes_col_status">Status</string>
+    <string name="processes_col_screen_time">Screen time</string>
+    <string name="processes_col_network">Network</string>
+    <string name="processes_col_storage">Storage</string>
+
+    <!-- Status values -->
+    <string name="processes_status_running">Running</string>
+    <string name="processes_status_recent">Recent</string>
+    <string name="processes_status_cached">Cached</string>
+    <string name="processes_status_not_running">Not running</string>
+
+    <!-- Usage access gate -->
+    <string name="processes_gate_title">Usage access needed</string>
+    <string name="processes_gate_body">Grant usage access to see each app\'s screen time, network use and storage on this page. SysMon has no internet access — data never leaves this device.</string>
+    <string name="processes_gate_action">Grant usage access</string>
+    <string name="processes_gate_notice">Without usage access, only installed apps are listed and the activity columns stay empty.</string>
+
+    <!-- Empty table -->
+    <string name="processes_empty_title">No matching processes</string>
+    <string name="processes_empty_body">Try a different search, or turn on “Show system processes”.</string>
+
+    <!-- End task -->
+    <string name="processes_end_task_title">End %1$s?</string>
+    <string name="processes_end_task_body">SysMon will ask Android to stop this app\'s background processes. Android may ignore the request or restart the app, and anything the app shows on screen is not affected. For a guaranteed stop, open App info and use Force stop.</string>
+    <string name="processes_end_task_body_limited">On Android 14 and later the system ignores background-kill requests from other apps, so this will likely have no effect. Open App info and use Force stop instead.</string>
+    <string name="processes_kill_requested">Requested background kill of %1$s</string>
+    <string name="processes_kill_unsupported">Android did not allow ending %1$s. Use App info → Force stop.</string>
+
+    <!-- Run new task dialog -->
+    <string name="processes_run_new_task_body">Tap an app to open it.</string>
+    <string name="processes_run_new_task_empty">No matching apps</string>
+</resources>

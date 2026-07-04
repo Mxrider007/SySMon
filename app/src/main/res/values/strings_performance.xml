@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Page -->
+    <string name="perf_title">Performance</string>
+
+    <!-- Sidebar tiles -->
+    <string name="perf_tile_cpu">CPU</string>
+    <string name="perf_tile_memory">Memory</string>
+    <string name="perf_tile_network">Network</string>
+    <string name="perf_tile_storage">Storage</string>
+    <string name="perf_tile_battery">Battery</string>
+    <string name="perf_tile_gpu">GPU</string>
+    <string name="perf_gpu_info_value">Info</string>
+    <string name="perf_mem_tile_value">%1$s / %2$s (%3$s)</string>
+    <string name="perf_net_rx_short">R: %1$s</string>
+    <string name="perf_net_tx_short">S: %1$s</string>
+    <string name="perf_storage_used_fmt">%1$s used</string>
+
+    <!-- Chart axis labels -->
+    <string name="perf_axis_utilization" formatted="false">% Utilization</string>
+    <string name="perf_axis_100" formatted="false">100%</string>
+    <string name="perf_axis_60s">60 seconds</string>
+    <string name="perf_axis_0">0</string>
+    <string name="perf_axis_memory_usage">Memory usage</string>
+    <string name="perf_axis_throughput">Throughput</string>
+    <string name="perf_axis_charge" formatted="false">% Charge</string>
+
+    <!-- CPU panel -->
+    <string name="perf_stat_utilization">Utilization</string>
+    <string name="perf_stat_speed">Speed</string>
+    <string name="perf_stat_uptime">Up time</string>
+    <string name="perf_stat_source">Source</string>
+    <string name="perf_source_proc_stat">/proc/stat</string>
+    <string name="perf_source_freq_estimate">Estimated from frequency</string>
+    <string name="perf_source_unavailable">Unavailable</string>
+    <string name="perf_cpu_estimated_note">Estimated from core frequencies — Android restricts exact per-process CPU stats</string>
+    <string name="perf_cpu_unavailable_title">CPU statistics unavailable</string>
+    <string name="perf_cpu_unavailable_body">This device does not expose CPU utilization or per-core frequencies to apps.</string>
+    <string name="perf_logical_processors">Logical processors</string>
+    <string name="perf_core_n">Core %1$d</string>
+    <string name="perf_specs">Specifications</string>
+    <string name="perf_spec_soc">SoC</string>
+    <string name="perf_spec_hardware">Hardware</string>
+    <string name="perf_spec_cores">Cores</string>
+    <string name="perf_spec_min_speed">Minimum speed</string>
+    <string name="perf_spec_max_speed">Maximum speed</string>
+    <string name="perf_spec_abi">ABI</string>
+    <string name="perf_spec_64bit">64-bit</string>
+    <string name="perf_yes">Yes</string>
+    <string name="perf_no">No</string>
+
+    <!-- Memory panel -->
+    <string name="perf_mem_in_use">In use</string>
+    <string name="perf_mem_available">Available</string>
+    <string name="perf_mem_cached">Cached</string>
+    <string name="perf_mem_swap">Swap</string>
+    <string name="perf_mem_total">Total</string>
+    <string name="perf_mem_seg_in_use">In use (%1$s)</string>
+    <string name="perf_mem_seg_cached">Cached (%1$s)</string>
+    <string name="perf_mem_low_warning">The system is running low on memory</string>
+    <string name="perf_ratio">%1$s / %2$s</string>
+
+    <!-- Network panel -->
+    <string name="perf_net_receive">Receive</string>
+    <string name="perf_net_send">Send</string>
+    <string name="perf_net_connection_type">Connection type</string>
+    <string name="perf_net_name">Network name</string>
+    <string name="perf_net_ipv4">IPv4 address</string>
+    <string name="perf_net_ipv6">IPv6 address</string>
+    <string name="perf_net_total_rx">Total received since boot</string>
+    <string name="perf_net_total_tx">Total sent since boot</string>
+    <string name="perf_transport_wifi">Wi-Fi</string>
+    <string name="perf_transport_cellular">Cellular</string>
+    <string name="perf_transport_ethernet">Ethernet</string>
+    <string name="perf_transport_vpn">VPN</string>
+    <string name="perf_transport_none">No connection</string>
+    <string name="perf_transport_other">Other</string>
+
+    <!-- Storage panel -->
+    <string name="perf_storage_used">Used</string>
+    <string name="perf_storage_free">Free</string>
+    <string name="perf_storage_total">Total</string>
+    <string name="perf_storage_removable">Removable</string>
+    <string name="perf_storage_seg_used">Used (%1$s)</string>
+    <string name="perf_storage_empty_title">No storage volumes</string>
+    <string name="perf_storage_empty_body">Android did not report any storage volumes on this device.</string>
+
+    <!-- Battery panel -->
+    <string name="perf_battery_level">Level</string>
+    <string name="perf_battery_status">Status</string>
+    <string name="perf_battery_power">Power</string>
+    <string name="perf_battery_current">Current</string>
+    <string name="perf_battery_voltage">Voltage</string>
+    <string name="perf_battery_temperature">Temperature</string>
+    <string name="perf_battery_health">Health</string>
+    <string name="perf_battery_technology">Technology</string>
+    <string name="perf_battery_cycles">Charge cycles</string>
+
+    <!-- GPU panel -->
+    <string name="perf_gpu_renderer">Renderer</string>
+    <string name="perf_gpu_vendor">Vendor</string>
+    <string name="perf_gpu_gl_version">OpenGL ES version</string>
+    <string name="perf_gpu_note">Per-app GPU metrics are not exposed by Android</string>
+
+    <!-- Accessibility -->
+    <string name="perf_cd_cpu">CPU utilization chart, currently %1$s</string>
+    <string name="perf_cd_core">Core %1$d utilization chart, currently %2$s</string>
+    <string name="perf_cd_memory">Memory usage chart, currently %1$s</string>
+    <string name="perf_cd_network">Network throughput chart, receiving %1$s, sending %2$s</string>
+    <string name="perf_cd_battery">Battery level chart, currently %1$s</string>
+</resources>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Services screen -->
+    <string name="services_subtitle">Declared services of installed apps. Android does not expose live service state to third-party apps.</string>
+    <string name="services_hide_system">Hide system apps</string>
+    <string name="services_count_shown">Showing %1$d of %2$d services</string>
+
+    <!-- Table columns -->
+    <string name="services_col_service">Service</string>
+    <string name="services_col_app">App</string>
+    <string name="services_col_exported">Exported</string>
+    <string name="services_col_enabled">Enabled</string>
+    <string name="services_col_fgs">FGS types</string>
+    <string name="services_col_permission">Permission</string>
+
+    <string name="services_yes">Yes</string>
+    <string name="services_no">No</string>
+
+    <string name="services_empty_title">No matching services</string>
+    <string name="services_empty_body">Try a different search, or turn off “Hide system apps”.</string>
+</resources>

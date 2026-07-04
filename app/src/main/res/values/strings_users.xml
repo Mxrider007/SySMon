@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Users screen -->
+    <string name="users_user_fallback">User %1$d</string>
+    <string name="users_user_unknown">Unknown user</string>
+
+    <!-- Badges -->
+    <string name="users_badge_current">Current</string>
+    <string name="users_badge_system">System</string>
+    <string name="users_badge_work">Work profile</string>
+
+    <string name="users_footer">Android shares only limited information about users and profiles with apps: names and activity of other users are hidden, and only profiles linked to the current user appear here.</string>
+
+    <string name="users_empty_title">No users reported</string>
+    <string name="users_empty_body">Android did not report any user profiles on this device.</string>
+</resources>

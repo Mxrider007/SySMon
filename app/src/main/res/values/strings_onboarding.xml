@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Step 1: welcome -->
+    <string name="onboarding_welcome_title">Welcome to SysMon</string>
+    <string name="onboarding_bullet_graphs">Live graphs for CPU, memory, network, storage and battery</string>
+    <string name="onboarding_bullet_processes">Processes and per-app usage history</string>
+    <string name="onboarding_bullet_startup">Startup apps, services and app details</string>
+    <string name="onboarding_bullet_private">Private by design — no internet permission</string>
+
+    <!-- Step 2: prominent usage-access disclosure -->
+    <string name="onboarding_usage_title">Usage access</string>
+    <string name="onboarding_usage_body_why">SysMon uses Android\'s Usage access permission to show your screen time per app, and per-app network and storage usage, on the Processes and App history screens.</string>
+    <string name="onboarding_usage_body_private">SysMon has no internet permission — this data never leaves your device.</string>
+    <string name="onboarding_usage_body_optional">Granting is optional, and you can revoke it at any time in system settings.</string>
+    <string name="onboarding_grant_usage">Grant usage access</string>
+    <string name="onboarding_skip">Skip for now</string>
+    <string name="onboarding_usage_granted">Usage access granted</string>
+    <string name="onboarding_open_settings_failed">Couldn\'t open usage access settings</string>
+
+    <!-- Step 3: done -->
+    <string name="onboarding_done_title">You\'re all set</string>
+    <string name="onboarding_done_body_granted">Usage access is on — screen time and per-app data are available.</string>
+    <string name="onboarding_done_body_skipped">You can grant usage access anytime from Settings.</string>
+    <string name="onboarding_done_summary">Change the theme, accent color and update speed anytime in Settings.</string>
+    <string name="onboarding_get_started">Get started</string>
+
+    <!-- Accessibility -->
+    <string name="onboarding_step_of">Step %1$d of 3</string>
+</resources>

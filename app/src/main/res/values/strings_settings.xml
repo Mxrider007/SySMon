@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Section headers -->
+    <string name="settings_section_appearance">Appearance</string>
+    <string name="settings_section_behavior">Behavior</string>
+    <string name="settings_section_about">About</string>
+
+    <!-- Appearance -->
+    <string name="settings_theme">Theme</string>
+    <string name="settings_theme_system">System default</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_accent">Accent color</string>
+    <string name="settings_accent_blue">Blue</string>
+    <string name="settings_accent_purple">Purple</string>
+    <string name="settings_accent_teal">Teal</string>
+    <string name="settings_accent_green">Green</string>
+    <string name="settings_accent_orange">Orange</string>
+    <string name="settings_accent_red">Red</string>
+
+    <!-- Behavior -->
+    <string name="settings_update_speed">Update speed</string>
+    <string name="settings_speed_high">High (0.5s)</string>
+    <string name="settings_speed_normal">Normal (1s)</string>
+    <string name="settings_speed_low">Low (4s)</string>
+    <string name="settings_speed_paused">Paused</string>
+    <string name="settings_start_page">Default start page</string>
+    <string name="settings_keep_screen_on">Keep screen on</string>
+    <string name="settings_keep_screen_on_desc">Prevent the display from sleeping while SysMon is open</string>
+    <string name="settings_show_system_apps">Show system apps by default</string>
+    <string name="settings_show_system_apps_desc">Include system apps in process and app lists</string>
+
+    <!-- About -->
+    <string name="settings_about_name_version">SysMon 1.0.0</string>
+    <string name="settings_about_privacy">No ads • No tracking • No internet permission</string>
+    <string name="settings_about_font">Typeface: Selawik (SIL OFL 1.1) by Microsoft</string>
+    <string name="settings_about_fluent">Fluent-inspired design. Not affiliated with Microsoft.</string>
+    <string name="settings_about_usage_revoke">Usage access can be revoked anytime in system settings</string>
+    <string name="settings_usage_access_settings">Usage access settings</string>
+    <string name="settings_open_settings_failed">Couldn\'t open system settings</string>
+</resources>

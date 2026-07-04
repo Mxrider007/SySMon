@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Details screen -->
+    <string name="details_col_app">Name</string>
+    <string name="details_col_package">Package</string>
+    <string name="details_col_version">Version</string>
+    <string name="details_col_target_sdk">Target SDK</string>
+    <string name="details_col_min_sdk">Min SDK</string>
+    <string name="details_col_size">Size</string>
+    <string name="details_col_installed">Installed</string>
+    <string name="details_col_updated">Updated</string>
+    <string name="details_col_installer">Installer</string>
+    <string name="details_col_enabled">Enabled</string>
+
+    <string name="details_enabled_yes">Yes</string>
+    <string name="details_enabled_no">No</string>
+
+    <!-- Bottom detail strip -->
+    <string name="details_strip_package">Package</string>
+    <string name="details_strip_version">Version</string>
+    <string name="details_strip_uid">UID</string>
+    <string name="details_strip_installer">Installer</string>
+
+    <string name="details_count_shown">Showing %1$d of %2$d apps</string>
+    <string name="details_empty_title">No matching apps</string>
+    <string name="details_empty_body">Try a different search.</string>
+</resources>

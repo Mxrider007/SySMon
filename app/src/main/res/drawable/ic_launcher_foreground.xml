@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pulse line on a monitor frame, centered in the adaptive-icon safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Screen panel -->
+    <path
+        android:pathData="M31,36 h46 a4,4 0 0 1 4,4 v28 a4,4 0 0 1 -4,4 h-46 a4,4 0 0 1 -4,-4 v-28 a4,4 0 0 1 4,-4 z"
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.22" />
+    <path
+        android:pathData="M31,36 h46 a4,4 0 0 1 4,4 v28 a4,4 0 0 1 -4,4 h-46 a4,4 0 0 1 -4,-4 v-28 a4,4 0 0 1 4,-4 z"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3.5"
+        android:fillColor="#00000000" />
+
+    <!-- Pulse line -->
+    <path
+        android:pathData="M33,54 h9 l5,-9 6,18 5,-9 h17"
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="3.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"
+        android:fillColor="#00000000" />
+</vector>

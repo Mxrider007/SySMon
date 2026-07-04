@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App history screen -->
+    <string name="apphistory_subtitle">Resource usage since %1$s, for apps with activity</string>
+    <string name="apphistory_note">Usage for the selected period. Mobile/Wi-Fi columns need usage access.</string>
+
+    <!-- Range dropdown -->
+    <string name="apphistory_range_today">Today</string>
+    <string name="apphistory_range_7_days">7 days</string>
+    <string name="apphistory_range_30_days">30 days</string>
+
+    <!-- Table columns -->
+    <string name="apphistory_col_app">Name</string>
+    <string name="apphistory_col_screen_time">Screen time</string>
+    <string name="apphistory_col_launches">Launches</string>
+    <string name="apphistory_col_wifi">Wi-Fi data</string>
+    <string name="apphistory_col_mobile">Mobile data</string>
+    <string name="apphistory_col_last_used">Last used</string>
+
+    <!-- Usage access gate -->
+    <string name="apphistory_gate_title">Usage access needed</string>
+    <string name="apphistory_gate_body">App history is built from Android\'s usage statistics. Grant usage access to see each app\'s screen time, launches and data use. SysMon has no internet access — data never leaves this device.</string>
+    <string name="apphistory_gate_action">Grant usage access</string>
+
+    <!-- Empty table -->
+    <string name="apphistory_empty_title">No app activity</string>
+    <string name="apphistory_empty_body">No apps recorded activity in the selected period.</string>
+</resources>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Accessibility state descriptions for sorted DataTable headers. -->
+    <string name="components_sorted_ascending">Sorted ascending</string>
+    <string name="components_sorted_descending">Sorted descending</string>
+</resources>
