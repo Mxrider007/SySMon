@@ -9,11 +9,12 @@ import androidx.activity.enableEdgeToEdge
 import com.mxrider.sysmon.core.TabDestination
 import com.mxrider.sysmon.ui.SysMonRoot
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.SendChannel
 
 /**
- * Mailbox for "open this tab" requests carried by Intent extras (the readout
- * notifications' tap). MainScaffold consumes it; a plain channel keeps this
- * free of any navigation library.
+ * "Open this tab" requests carried by Intent extras (the readout
+ * notifications' tap). MainScaffold consumes them; a plain channel keeps
+ * this free of any navigation library.
  *
  * A conflated [Channel], deliberately not a StateFlow: StateFlow's equality
  * conflation swallows a request identical to one left unconsumed, and a
@@ -21,35 +22,40 @@ import kotlinx.coroutines.channels.Channel
  * into a silent no-op (observed once on-device, session 7). The channel
  * delivers every send, and still buffers the latest request across the gap
  * between onCreate/onNewIntent and the scaffold collector attaching.
+ *
+ * The channel itself lives on the activity instance, not here: a channel
+ * delivers each send to exactly ONE receiver, so a process-global mailbox
+ * could be drained by a stale composition's collector instead of the live
+ * one. Per-instance ownership makes that impossible.
  */
 internal object TabIntents {
     const val EXTRA_OPEN_TAB = "com.mxrider.sysmon.extra.OPEN_TAB"
 
-    val pending = Channel<TabDestination>(Channel.CONFLATED)
-
-    fun offer(intent: Intent?) {
+    fun offer(intent: Intent?, into: SendChannel<TabDestination>) {
         val name = intent?.getStringExtra(EXTRA_OPEN_TAB) ?: return
         val tab = runCatching { TabDestination.valueOf(name) }.getOrNull() ?: return
-        pending.trySend(tab)
+        into.trySend(tab)
     }
 }
 
 class MainActivity : ComponentActivity() {
+    private val tabRequests = Channel<TabDestination>(Channel.CONFLATED)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         // Route the extra only on a genuinely fresh launch: after process
         // death the system re-delivers the original intent, and the restored
         // tab (rememberSaveable) must win over a stale notification extra.
-        if (savedInstanceState == null) TabIntents.offer(intent)
+        if (savedInstanceState == null) TabIntents.offer(intent, tabRequests)
         setContent {
-            SysMonRoot()
+            SysMonRoot(tabRequests)
         }
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        TabIntents.offer(intent)
+        TabIntents.offer(intent, tabRequests)
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {

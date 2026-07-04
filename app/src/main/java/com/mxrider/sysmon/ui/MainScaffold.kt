@@ -22,7 +22,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import com.mxrider.sysmon.Graph
-import com.mxrider.sysmon.TabIntents
 import com.mxrider.sysmon.core.AccentOption
 import com.mxrider.sysmon.core.SysMonSettings
 import com.mxrider.sysmon.core.TabDestination
@@ -39,10 +38,11 @@ import com.mxrider.sysmon.ui.screens.startup.StartupScreen
 import com.mxrider.sysmon.service.CpuNotificationService
 import com.mxrider.sysmon.ui.screens.users.UsersScreen
 import com.mxrider.sysmon.ui.theme.FluentTheme
+import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.launch
 
 @Composable
-fun SysMonRoot() {
+fun SysMonRoot(tabRequests: ReceiveChannel<TabDestination>) {
     // Nullable until DataStore's first disk read lands: seeding with DEFAULT
     // would flash the onboarding screen at every cold start for users who
     // already finished it (and seed `tab` from the wrong start page).
@@ -69,13 +69,16 @@ fun SysMonRoot() {
                 onDone = { scope.launch { Graph.settings.setOnboardingDone(true) } },
             )
         } else {
-            MainScaffold(loaded)
+            MainScaffold(loaded, tabRequests)
         }
     }
 }
 
 @Composable
-private fun MainScaffold(settings: SysMonSettings) {
+private fun MainScaffold(
+    settings: SysMonSettings,
+    tabRequests: ReceiveChannel<TabDestination>,
+) {
     var tab by rememberSaveable { mutableStateOf(settings.startPage) }
     var railExpanded by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
@@ -85,8 +88,8 @@ private fun MainScaffold(settings: SysMonSettings) {
     // Notification taps land here as tab requests. Channel iteration (not a
     // StateFlow collect) so repeated identical requests are never conflated
     // away — see the TabIntents doc.
-    LaunchedEffect(Unit) {
-        for (requested in TabIntents.pending) {
+    LaunchedEffect(tabRequests) {
+        for (requested in tabRequests) {
             tab = requested
         }
     }
