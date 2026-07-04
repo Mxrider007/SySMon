@@ -11,6 +11,14 @@
     <uses-permission android:name="android.permission.KILL_BACKGROUND_PROCESSES" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
+    <!-- All three exist solely for the user-enabled "CPU usage in
+         notification" toggle (default OFF). specialUse is the only FGS type
+         that fits a continuous device-monitoring readout; Play Console asks
+         for a written justification + demo video for it (CONSOLE_ANSWERS.md). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+
     <!-- Deliberately NO INTERNET permission: nothing ever leaves the device.
          Deliberately NO QUERY_ALL_PACKAGES: task managers are not on Play's
          permitted-use list and the declaration is a rejection/termination
@@ -45,5 +53,15 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service
+            android:name=".service.CpuNotificationService"
+            android:exported="false"
+            android:foregroundServiceType="specialUse">
+            <!-- API 34+ / Play policy: state why no narrower FGS type fits. -->
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="User-enabled live CPU usage readout shown as a persistent silent notification" />
+        </service>
     </application>
 </manifest>

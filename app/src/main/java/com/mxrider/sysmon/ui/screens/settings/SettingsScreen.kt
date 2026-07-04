@@ -1,11 +1,14 @@
 package com.mxrider.sysmon.ui.screens.settings
 
+import android.Manifest
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -50,6 +53,7 @@ import com.mxrider.sysmon.core.AccentOption
 import com.mxrider.sysmon.core.TabDestination
 import com.mxrider.sysmon.core.ThemeMode
 import com.mxrider.sysmon.core.UpdateSpeed
+import com.mxrider.sysmon.service.CpuNotificationService
 import com.mxrider.sysmon.ui.components.FluentCard
 import com.mxrider.sysmon.ui.components.FluentDropDown
 import com.mxrider.sysmon.ui.components.FluentStandardButton
@@ -82,6 +86,20 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
     val openLinkFailedMessage = stringResource(R.string.settings_open_link_failed)
     val copiedMessage = stringResource(R.string.settings_diagnostics_copied)
     val noEmailMessage = stringResource(R.string.settings_no_email_app)
+    val notifDeniedMessage = stringResource(R.string.settings_cpu_notification_denied)
+
+    // API 33+ needs the runtime grant before the toggle may turn on; the
+    // FGS itself would run without it, but its notification would be
+    // invisible — a monitoring service nobody can see is not honest.
+    val requestNotifPermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        if (granted) {
+            vm.setCpuNotification(true)
+        } else {
+            Toast.makeText(context, notifDeniedMessage, Toast.LENGTH_LONG).show()
+        }
+    }
 
     val themeLabels = mapOf(
         ThemeMode.SYSTEM to stringResource(R.string.settings_theme_system),
@@ -175,6 +193,25 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                 FluentToggle(
                     checked = settings.showSystemApps,
                     onCheckedChange = vm::setShowSystemApps,
+                )
+            }
+            RowDivider()
+            SettingRow(
+                label = stringResource(R.string.settings_cpu_notification),
+                description = stringResource(R.string.settings_cpu_notification_desc),
+            ) {
+                FluentToggle(
+                    checked = settings.cpuNotification,
+                    onCheckedChange = { checked ->
+                        when {
+                            !checked -> vm.setCpuNotification(false)
+                            CpuNotificationService.canPostNotifications(context) ->
+                                vm.setCpuNotification(true)
+                            else -> requestNotifPermission.launch(
+                                Manifest.permission.POST_NOTIFICATIONS,
+                            )
+                        }
+                    },
                 )
             }
         }

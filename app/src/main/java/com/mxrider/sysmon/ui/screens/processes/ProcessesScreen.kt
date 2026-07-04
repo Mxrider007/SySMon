@@ -409,14 +409,15 @@ private fun AppCell(row: ProcessRow) {
 @Composable
 private fun StatusCell(status: ProcStatus) {
     Text(
-        text = stringResource(
-            when (status) {
-                ProcStatus.ACTIVE -> R.string.processes_status_running
-                ProcStatus.RECENT -> R.string.processes_status_recent
-                ProcStatus.CACHED -> R.string.processes_status_cached
-                ProcStatus.INACTIVE -> R.string.processes_status_not_running
-            },
-        ),
+        text = when (status) {
+            ProcStatus.ACTIVE -> stringResource(R.string.processes_status_running)
+            ProcStatus.RECENT -> stringResource(R.string.processes_status_recent)
+            ProcStatus.CACHED -> stringResource(R.string.processes_status_cached)
+            ProcStatus.INACTIVE -> stringResource(R.string.processes_status_not_running)
+            // Without usage access the state is unknowable; claiming
+            // "Not running" would contradict the empty-state caption.
+            ProcStatus.UNKNOWN -> DASH
+        },
         style = FluentTheme.typography.caption,
         color = FluentTheme.colors.textSecondary,
         maxLines = 1,

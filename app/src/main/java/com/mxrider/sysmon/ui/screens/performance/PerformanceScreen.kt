@@ -11,14 +11,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.gestures.animateScrollBy
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -49,6 +53,19 @@ fun PerformanceScreen(modifier: Modifier = Modifier) {
         if (selected == PerfPanel.GPU) vm.loadGpuInfo()
     }
 
+    // This activity handles config changes itself, so rotation never runs a
+    // saved-state pass — when the compact/wide branches below swap, a plain
+    // PanelContent call re-enters as a fresh subtree and open dialogs, the
+    // core grid and the scroll position all silently reset. movableContentOf
+    // moves the one panel subtree between the two slots with state intact.
+    val panelBody = remember {
+        movableContentOf { panel: PerfPanel, panelState: PerfUiState, bodyModifier: Modifier ->
+            Column(bodyModifier.verticalScroll(rememberScrollState())) {
+                PanelContent(panel, panelState, vm)
+            }
+        }
+    }
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -60,7 +77,29 @@ fun PerformanceScreen(modifier: Modifier = Modifier) {
             if (maxWidth < COMPACT_BREAKPOINT) {
                 // Compact: tiles become a horizontal strip above the panel.
                 Column(Modifier.fillMaxSize()) {
+                    val stripState = rememberLazyListState()
+                    // Keep the selected tile fully in view: a tile tapped at
+                    // the strip's edge is otherwise left half-clipped, and a
+                    // selection restored after rotation or a tab return can
+                    // sit entirely off-screen.
+                    LaunchedEffect(selected) {
+                        val index = selected.ordinal
+                        val layout = stripState.layoutInfo
+                        val item = layout.visibleItemsInfo.firstOrNull { it.index == index }
+                        when {
+                            item == null -> stripState.animateScrollToItem(index)
+                            item.offset < layout.viewportStartOffset ->
+                                stripState.animateScrollBy(
+                                    (item.offset - layout.viewportStartOffset).toFloat(),
+                                )
+                            item.offset + item.size > layout.viewportEndOffset ->
+                                stripState.animateScrollBy(
+                                    (item.offset + item.size - layout.viewportEndOffset).toFloat(),
+                                )
+                        }
+                    }
                     LazyRow(
+                        state = stripState,
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
@@ -76,14 +115,13 @@ fun PerformanceScreen(modifier: Modifier = Modifier) {
                         }
                     }
                     Spacer(Modifier.height(12.dp))
-                    Column(
+                    panelBody(
+                        selected,
+                        state,
                         Modifier
                             .weight(1f)
-                            .fillMaxWidth()
-                            .verticalScroll(rememberScrollState()),
-                    ) {
-                        PanelContent(selected, state, vm)
-                    }
+                            .fillMaxWidth(),
+                    )
                 }
             } else {
                 // Wide: Win11 split view — tile rail on the left, panel right.
@@ -107,14 +145,13 @@ fun PerformanceScreen(modifier: Modifier = Modifier) {
                         }
                     }
                     Spacer(Modifier.width(16.dp))
-                    Column(
+                    panelBody(
+                        selected,
+                        state,
                         Modifier
                             .weight(1f)
-                            .fillMaxHeight()
-                            .verticalScroll(rememberScrollState()),
-                    ) {
-                        PanelContent(selected, state, vm)
-                    }
+                            .fillMaxHeight(),
+                    )
                 }
             }
         }

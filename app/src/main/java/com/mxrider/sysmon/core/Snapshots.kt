@@ -25,6 +25,13 @@ data class CpuSnapshot(
     val uptimeMillis: Long,
 )
 
+/** Average current frequency of the online cores, 0 when unknown. */
+fun CpuSnapshot.averageCurFreqKhz(): Long {
+    val online = perCore.filter { it.online && it.curFreqKhz > 0 }
+    if (online.isEmpty()) return 0L
+    return online.sumOf { it.curFreqKhz } / online.size
+}
+
 data class CpuStaticInfo(
     val socModel: String,
     val hardware: String,
@@ -118,7 +125,10 @@ data class AppEntry(
     val uid: Int,
 )
 
-enum class ProcStatus { ACTIVE, RECENT, CACHED, INACTIVE }
+/** [UNKNOWN]: usage access is missing, so recency is unknowable — rendered as
+ *  a dash, never as a fabricated "Not running" claim. Declaration order is the
+ *  status-column sort order. */
+enum class ProcStatus { ACTIVE, RECENT, CACHED, INACTIVE, UNKNOWN }
 
 data class ProcessRow(
     val packageName: String,

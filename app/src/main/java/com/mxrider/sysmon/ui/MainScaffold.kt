@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -18,8 +19,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import com.mxrider.sysmon.Graph
+import com.mxrider.sysmon.TabIntents
 import com.mxrider.sysmon.core.AccentOption
 import com.mxrider.sysmon.core.SysMonSettings
 import com.mxrider.sysmon.core.TabDestination
@@ -33,6 +36,7 @@ import com.mxrider.sysmon.ui.screens.processes.ProcessesScreen
 import com.mxrider.sysmon.ui.screens.services.ServicesScreen
 import com.mxrider.sysmon.ui.screens.settings.SettingsScreen
 import com.mxrider.sysmon.ui.screens.startup.StartupScreen
+import com.mxrider.sysmon.service.CpuNotificationService
 import com.mxrider.sysmon.ui.screens.users.UsersScreen
 import com.mxrider.sysmon.ui.theme.FluentTheme
 import kotlinx.coroutines.launch
@@ -74,8 +78,34 @@ fun SysMonRoot() {
 private fun MainScaffold(settings: SysMonSettings) {
     var tab by rememberSaveable { mutableStateOf(settings.startPage) }
     var railExpanded by rememberSaveable { mutableStateOf(false) }
+    val context = LocalContext.current
 
     KeepScreenOn(settings.keepScreenOn)
+
+    // Notification taps land here as tab requests.
+    LaunchedEffect(Unit) {
+        TabIntents.pending.collect { requested ->
+            if (requested != null) {
+                tab = requested
+                TabIntents.pending.value = null
+            }
+        }
+    }
+
+    // The CPU-notification service follows its setting — which is also how
+    // the notification returns at the next app open after a reboot (no
+    // BOOT_COMPLETED by design). If the runtime permission was revoked
+    // behind our back, reconcile the setting instead of running a foreground
+    // service nobody can see.
+    LaunchedEffect(settings.cpuNotification) {
+        if (settings.cpuNotification) {
+            if (CpuNotificationService.canPostNotifications(context)) {
+                CpuNotificationService.start(context)
+            } else {
+                Graph.settings.setCpuNotification(false)
+            }
+        }
+    }
 
     Row(
         Modifier

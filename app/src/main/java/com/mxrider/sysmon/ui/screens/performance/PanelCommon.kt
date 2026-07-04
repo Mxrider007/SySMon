@@ -22,17 +22,14 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.mxrider.sysmon.core.CpuSnapshot
 import com.mxrider.sysmon.core.StorageSnapshot
+import com.mxrider.sysmon.core.averageCurFreqKhz
 import com.mxrider.sysmon.ui.theme.FluentTheme
 
 /** Placeholder for values the platform does not expose — never fabricated. */
 internal const val DASH = "—"
 
 /** Average current frequency of the online cores, 0 when unknown. */
-internal fun averageCurFreqKhz(cpu: CpuSnapshot): Long {
-    val online = cpu.perCore.filter { it.online && it.curFreqKhz > 0 }
-    if (online.isEmpty()) return 0L
-    return online.sumOf { it.curFreqKhz } / online.size
-}
+internal fun averageCurFreqKhz(cpu: CpuSnapshot): Long = cpu.averageCurFreqKhz()
 
 /** Aggregate used fraction across all volumes; null when unknown. */
 internal fun storageUsedFraction(snapshot: StorageSnapshot?): Float? {

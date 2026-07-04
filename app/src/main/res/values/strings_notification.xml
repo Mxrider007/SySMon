@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- CPU-readout notification (user-enabled foreground service). -->
+<resources>
+    <string name="cpu_notif_channel_name">CPU usage readout</string>
+    <string name="cpu_notif_channel_desc">Ongoing CPU readout. Shown only while enabled in SysMon settings.</string>
+    <!-- %1$s = "43%" or "~43%" (~ marks the frequency estimate) or "—". -->
+    <string name="cpu_notif_title">CPU %1$s</string>
+    <!-- %1$s as above; %2$s = average core frequency, e.g. "1.03 GHz". -->
+    <string name="cpu_notif_title_freq">CPU %1$s · %2$s</string>
+    <string name="cpu_notif_text">Tap to open Performance</string>
+    <string name="cpu_notif_text_estimate">Estimated from core frequencies — tap for details</string>
+    <string name="cpu_notif_unavailable">CPU utilization isn\'t readable on this device</string>
+</resources>

@@ -29,6 +29,7 @@ private object Keys {
     val START_PAGE = stringPreferencesKey("start_page")
     val KEEP_SCREEN_ON = booleanPreferencesKey("keep_screen_on")
     val SHOW_SYSTEM_APPS = booleanPreferencesKey("show_system_apps")
+    val CPU_NOTIFICATION = booleanPreferencesKey("cpu_notification")
     val ONBOARDING_DONE = booleanPreferencesKey("onboarding_done")
 }
 
@@ -59,6 +60,7 @@ class DefaultSettingsStore(context: Context) : SettingsStore {
                 startPage = prefs[Keys.START_PAGE].asEnum(defaults.startPage),
                 keepScreenOn = prefs[Keys.KEEP_SCREEN_ON] ?: defaults.keepScreenOn,
                 showSystemApps = prefs[Keys.SHOW_SYSTEM_APPS] ?: defaults.showSystemApps,
+                cpuNotification = prefs[Keys.CPU_NOTIFICATION] ?: defaults.cpuNotification,
                 onboardingDone = prefs[Keys.ONBOARDING_DONE] ?: defaults.onboardingDone,
             )
         }
@@ -74,6 +76,8 @@ class DefaultSettingsStore(context: Context) : SettingsStore {
     override suspend fun setKeepScreenOn(value: Boolean) = setBoolean(Keys.KEEP_SCREEN_ON, value)
 
     override suspend fun setShowSystemApps(value: Boolean) = setBoolean(Keys.SHOW_SYSTEM_APPS, value)
+
+    override suspend fun setCpuNotification(value: Boolean) = setBoolean(Keys.CPU_NOTIFICATION, value)
 
     override suspend fun setOnboardingDone(value: Boolean) = setBoolean(Keys.ONBOARDING_DONE, value)
 

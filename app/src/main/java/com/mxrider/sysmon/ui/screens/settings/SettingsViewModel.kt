@@ -47,4 +47,8 @@ class SettingsViewModel : ViewModel() {
     fun setShowSystemApps(value: Boolean) {
         viewModelScope.launch { store.setShowSystemApps(value) }
     }
+
+    fun setCpuNotification(value: Boolean) {
+        viewModelScope.launch { store.setCpuNotification(value) }
+    }
 }

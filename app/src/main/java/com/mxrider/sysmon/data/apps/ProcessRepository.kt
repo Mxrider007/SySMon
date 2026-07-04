@@ -19,7 +19,9 @@ import kotlinx.coroutines.sync.withPermit
  * "Processes" rows built from today's usage data (Android exposes no real
  * per-process list to third-party apps). Status is a recency heuristic over
  * the last foreground time. Launchable non-system apps without any usage today
- * are appended as INACTIVE so the table is useful even without usage access.
+ * are appended so the table is useful even without usage access — INACTIVE
+ * when the heuristic had data to say so, UNKNOWN when usage access is missing
+ * and no status claim would be honest.
  */
 class DefaultProcessRepository(
     context: Context,
@@ -104,7 +106,7 @@ class DefaultProcessRepository(
                 packageName = entry.packageName,
                 label = entry.label,
                 isSystem = false,
-                status = ProcStatus.INACTIVE,
+                status = if (hasAccess) ProcStatus.INACTIVE else ProcStatus.UNKNOWN,
                 foregroundTimeTodayMs = 0L,
                 lastUsedTime = 0L,
                 storageBytes = null,

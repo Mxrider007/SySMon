@@ -20,6 +20,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,7 +50,7 @@ private val LIST_HEIGHT = 280.dp
 fun RunNewTaskDialog(onDismiss: () -> Unit) {
     val context = LocalContext.current
     val colors = FluentTheme.colors
-    var query by remember { mutableStateOf("") }
+    var query by rememberSaveable { mutableStateOf("") }
     var apps by remember { mutableStateOf<List<AppEntry>?>(null) }
 
     LaunchedEffect(Unit) {

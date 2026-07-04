@@ -22,8 +22,8 @@ import kotlinx.coroutines.withContext
 
 /**
  * State holder for the Processes screen. Rows come from [Graph.processes]
- * (usage-stats based; the repository degrades to INACTIVE installed apps when
- * usage access is missing) and are refreshed on init, every 30 seconds and on
+ * (usage-stats based; the repository degrades to UNKNOWN-status installed apps
+ * when usage access is missing) and are refreshed on init, every 30 seconds and on
  * demand via [refresh]. Filtering (query + system apps) and sorting happen
  * here; the screen renders [UiState.visibleRows] as-is.
  */

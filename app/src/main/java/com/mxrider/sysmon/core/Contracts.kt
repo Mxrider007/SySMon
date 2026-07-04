@@ -126,6 +126,12 @@ data class SysMonSettings(
     val startPage: TabDestination,
     val keepScreenOn: Boolean,
     val showSystemApps: Boolean,
+    /**
+     * Ongoing CPU-readout notification (foreground service). Default OFF —
+     * a monitoring app that self-starts a persistent service would betray
+     * the "does nothing you didn't ask for" brand.
+     */
+    val cpuNotification: Boolean,
     val onboardingDone: Boolean,
 ) {
     companion object {
@@ -136,6 +142,7 @@ data class SysMonSettings(
             startPage = TabDestination.PROCESSES,
             keepScreenOn = false,
             showSystemApps = false,
+            cpuNotification = false,
             onboardingDone = false,
         )
     }
@@ -149,5 +156,6 @@ interface SettingsStore {
     suspend fun setStartPage(value: TabDestination)
     suspend fun setKeepScreenOn(value: Boolean)
     suspend fun setShowSystemApps(value: Boolean)
+    suspend fun setCpuNotification(value: Boolean)
     suspend fun setOnboardingDone(value: Boolean)
 }

@@ -29,6 +29,9 @@
     <string name="settings_keep_screen_on_desc">Prevent the display from sleeping while SysMon is open</string>
     <string name="settings_show_system_apps">Show system apps by default</string>
     <string name="settings_show_system_apps_desc">Include system apps in process and app lists</string>
+    <string name="settings_cpu_notification">CPU usage in notification</string>
+    <string name="settings_cpu_notification_desc">Silent, ongoing notification with the live CPU readout (~ marks an estimate). Uses a little battery while on. After a reboot it returns the next time you open SysMon.</string>
+    <string name="settings_cpu_notification_denied">Notifications are turned off for SysMon. Allow them in system settings to use this.</string>
 
     <!-- About -->
     <string name="settings_about_name_version">SysMon 1.0.0</string>

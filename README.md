@@ -19,6 +19,7 @@ A Windows 11 Task Manager–style system monitor for Android. Native Kotlin + Je
 
 ### Honest platform limits (surfaced in-app, never faked)
 - Per-process CPU/RAM of *other* apps is not available to third-party apps on modern Android. CPU utilization is measured from `/proc/stat` where readable, otherwise estimated from per-core frequency scaling and labeled as such.
+- The optional "CPU usage in notification" readout (foreground service, off by default) shows the same figure under the same rules — estimates stay marked with ~, and sampling pauses while the screen is off.
 - "End task" uses `killBackgroundProcesses` (a no-op for other apps since API 34) and always offers the App-info deep link where the user can Force stop.
 - Live service state is not exposed; the Services screen shows declared services.
 
