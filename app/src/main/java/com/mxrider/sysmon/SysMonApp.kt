@@ -5,6 +5,7 @@ import android.content.Context
 import com.mxrider.sysmon.core.AppRepository
 import com.mxrider.sysmon.core.BatteryMonitor
 import com.mxrider.sysmon.core.CpuMonitor
+import com.mxrider.sysmon.core.DiagnosticsReporter
 import com.mxrider.sysmon.core.GpuInfoProvider
 import com.mxrider.sysmon.core.MemoryMonitor
 import com.mxrider.sysmon.core.NetworkMonitor
@@ -27,6 +28,7 @@ import com.mxrider.sysmon.data.apps.DefaultUsageRepository
 import com.mxrider.sysmon.data.apps.DefaultUserRepository
 import com.mxrider.sysmon.data.system.DefaultBatteryMonitor
 import com.mxrider.sysmon.data.system.DefaultCpuMonitor
+import com.mxrider.sysmon.data.system.DefaultDiagnostics
 import com.mxrider.sysmon.data.system.DefaultGpuInfoProvider
 import com.mxrider.sysmon.data.system.DefaultMemoryMonitor
 import com.mxrider.sysmon.data.system.DefaultNetworkMonitor
@@ -45,6 +47,8 @@ class SysMonApp : Application() {
  * no DI framework keeps the APK small and the build simple.
  */
 object Graph {
+    lateinit var diagnostics: DiagnosticsReporter; private set
+
     lateinit var settings: SettingsStore; private set
 
     lateinit var cpu: CpuMonitor; private set
@@ -66,6 +70,11 @@ object Graph {
     fun init(context: Context) {
         val app = context.applicationContext
 
+        // First, so the crash handler is live before anything else spins up
+        // and an init-time crash still lands in the diagnostics file.
+        usageAccess = DefaultUsageAccess(app)
+        diagnostics = DefaultDiagnostics(app, usageAccess).also { it.installCrashHandler() }
+
         settings = DefaultSettingsStore(app)
 
         cpu = DefaultCpuMonitor()
@@ -75,7 +84,6 @@ object Graph {
         storage = DefaultStorageMonitor(app)
         gpu = DefaultGpuInfoProvider()
 
-        usageAccess = DefaultUsageAccess(app)
         apps = DefaultAppRepository(app)
         usage = DefaultUsageRepository(app)
         processes = DefaultProcessRepository(app, apps, usage, usageAccess)

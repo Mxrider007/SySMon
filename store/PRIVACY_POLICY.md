@@ -27,7 +27,9 @@ SysMon (package name `com.mxrider.sysmon`) is a system monitor for Android, sold
 
 SysMon does not request the Android `INTERNET` permission. Without it, the operating system itself prevents the app from making any network connection. This is not just a promise — you can verify it independently by auditing the installed app on your own device with [Exodus Privacy's εxodus app](https://exodus-privacy.eu.org/), or by inspecting the APK's permission list with any package inspector. (Exodus's website only publishes reports for free apps, so a paid app like SysMon is verified on-device rather than via a web report.)
 
-There are no ads, no analytics, no crash reporting, no trackers, and no third-party SDKs of any kind. There are no accounts, sign-ins, or user profiles.
+There are no ads, no analytics, no crash-reporting services, no trackers, and no third-party SDKs of any kind. There are no accounts, sign-ins, or user profiles.
+
+If SysMon ever crashes, a technical crash log is written to the app's private storage **on your device only**. You can copy it — together with your device model, Android version and app version — from Settings ("Copy diagnostics") and choose to email it to support yourself. Nothing is ever sent automatically, and the log contains no personal information.
 
 ## What SysMon reads on your device
 

@@ -1,7 +1,10 @@
 package com.mxrider.sysmon.ui.screens.settings
 
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -28,6 +31,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -53,6 +57,7 @@ import com.mxrider.sysmon.ui.components.FluentToggle
 import com.mxrider.sysmon.ui.components.TitleBar
 import com.mxrider.sysmon.ui.theme.FluentMetrics
 import com.mxrider.sysmon.ui.theme.FluentTheme
+import kotlinx.coroutines.launch
 
 /**
  * Exodus Privacy home (opens in the browser). Their εxodus Android app audits
@@ -62,6 +67,9 @@ import com.mxrider.sysmon.ui.theme.FluentTheme
  */
 private const val EXODUS_URL = "https://exodus-privacy.eu.org/en/"
 
+/** Support address; also shown verbatim in [R.string.settings_about_support]. */
+private const val SUPPORT_MAILTO = "mailto:mxrider008@gmail.com?subject=SysMon%20support"
+
 /** Win11-style settings list: grouped FluentCards of label + control rows. */
 @Composable
 fun SettingsScreen(modifier: Modifier = Modifier) {
@@ -69,8 +77,11 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
     val settings by vm.settings.collectAsStateWithLifecycle()
     val colors = FluentTheme.colors
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val openFailedMessage = stringResource(R.string.settings_open_settings_failed)
     val openLinkFailedMessage = stringResource(R.string.settings_open_link_failed)
+    val copiedMessage = stringResource(R.string.settings_diagnostics_copied)
+    val noEmailMessage = stringResource(R.string.settings_no_email_app)
 
     val themeLabels = mapOf(
         ThemeMode.SYSTEM to stringResource(R.string.settings_theme_system),
@@ -193,6 +204,18 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                     }
                 },
             )
+            Spacer(Modifier.height(8.dp))
+            AboutCaption(stringResource(R.string.settings_diagnostics_desc))
+            AboutLink(
+                text = stringResource(R.string.settings_about_support),
+                onClick = {
+                    try {
+                        context.startActivity(Intent(Intent.ACTION_SENDTO, Uri.parse(SUPPORT_MAILTO)))
+                    } catch (_: Exception) {
+                        Toast.makeText(context, noEmailMessage, Toast.LENGTH_SHORT).show()
+                    }
+                },
+            )
             Spacer(Modifier.height(12.dp))
             FluentStandardButton(
                 text = stringResource(R.string.settings_usage_access_settings),
@@ -201,6 +224,24 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                         context.startActivity(Graph.usageAccess.settingsIntent())
                     } catch (_: Exception) {
                         Toast.makeText(context, openFailedMessage, Toast.LENGTH_SHORT).show()
+                    }
+                },
+            )
+            Spacer(Modifier.height(8.dp))
+            FluentStandardButton(
+                text = stringResource(R.string.settings_copy_diagnostics),
+                onClick = {
+                    scope.launch {
+                        val report = Graph.diagnostics.buildReport()
+                        val clipboard = context.getSystemService(ClipboardManager::class.java)
+                        clipboard?.setPrimaryClip(
+                            ClipData.newPlainText("SysMon diagnostics", report),
+                        )
+                        // Android 13+ shows its own "copied" overlay; a toast
+                        // on top of it would double up.
+                        if (Build.VERSION.SDK_INT <= 32) {
+                            Toast.makeText(context, copiedMessage, Toast.LENGTH_SHORT).show()
+                        }
                     }
                 },
             )

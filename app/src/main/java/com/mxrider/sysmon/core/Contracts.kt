@@ -48,6 +48,18 @@ interface UsageAccess {
     fun settingsIntent(): Intent
 }
 
+/**
+ * Support-path diagnostics. With no INTERNET permission there is no crash
+ * reporter; the support channel is this clipboard report pasted into an email.
+ */
+interface DiagnosticsReporter {
+    /**
+     * Device/app/usage-access summary plus the last recorded crash, if any.
+     * English-only by design — its audience is the developer.
+     */
+    suspend fun buildReport(): String
+}
+
 interface UsageRepository {
     suspend fun usageRows(range: UsageRange, includeNetwork: Boolean): List<UsageRow>
 }

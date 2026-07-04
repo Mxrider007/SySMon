@@ -40,4 +40,11 @@
     <string name="settings_open_link_failed">Couldn\'t open a browser</string>
     <string name="settings_usage_access_settings">Usage access settings</string>
     <string name="settings_open_settings_failed">Couldn\'t open system settings</string>
+
+    <!-- Support / diagnostics -->
+    <string name="settings_diagnostics_desc">Bug reports: Copy diagnostics (device model, Android and app version, usage-access state, last crash log — nothing personal), then paste into an email</string>
+    <string name="settings_about_support">Support: mxrider008@gmail.com</string>
+    <string name="settings_copy_diagnostics">Copy diagnostics</string>
+    <string name="settings_diagnostics_copied">Diagnostics copied — paste into your email</string>
+    <string name="settings_no_email_app">Couldn\'t open an email app</string>
 </resources>
