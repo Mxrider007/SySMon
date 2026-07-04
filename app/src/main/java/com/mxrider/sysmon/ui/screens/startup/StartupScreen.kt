@@ -76,25 +76,25 @@ fun StartupScreen(modifier: Modifier = Modifier) {
                 key = StartupViewModel.COL_APP,
                 title = appTitle,
                 width = 260.dp,
-                comparator = StartupViewModel.COMPARATOR_APP,
+                sortable = true,
             ) { row -> AppCell(row) },
             TableColumn<StartupRow>(
                 key = StartupViewModel.COL_STATUS,
                 title = statusTitle,
                 width = 100.dp,
-                comparator = StartupViewModel.COMPARATOR_STATUS,
+                sortable = true,
             ) { row -> StatusCell(row.enabled) },
             TableColumn<StartupRow>(
                 key = StartupViewModel.COL_RECEIVERS,
                 title = receiversTitle,
                 width = 200.dp,
-                comparator = StartupViewModel.COMPARATOR_RECEIVERS,
+                sortable = true,
             ) { row -> ReceiversCell(row) },
             TableColumn<StartupRow>(
                 key = StartupViewModel.COL_IMPACT,
                 title = impactTitle,
                 width = 130.dp,
-                comparator = StartupViewModel.COMPARATOR_IMPACT,
+                sortable = true,
             ) { row -> ImpactCell(row.impact) },
         )
     }

@@ -29,9 +29,14 @@ internal fun BatteryPanel(
     val levelText = bat?.let { "${it.levelPercent}%" } ?: DASH
 
     Column(modifier.fillMaxWidth()) {
+        // Temperature rides in the header: the most-demanded metric in the
+        // category, so it should be visible without scrolling to the tiles.
         PanelHeader(
             title = stringResource(R.string.perf_tile_battery),
-            trailing = bat?.status,
+            trailing = bat?.let { b ->
+                listOfNotNull(b.status, b.temperatureC?.let { Format.celsius(it) })
+                    .joinToString(" • ")
+            },
         )
         Spacer(Modifier.height(12.dp))
 

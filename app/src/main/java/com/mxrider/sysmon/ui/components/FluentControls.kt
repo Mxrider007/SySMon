@@ -10,6 +10,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -284,6 +286,12 @@ fun <T> FluentDropDown(
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
+            // Bridge the popup surface to Fluent tokens: the M3 default is the
+            // Material colorScheme surface, which mismatches both themes here.
+            shape = RoundedCornerShape(FluentMetrics.cardCorner),
+            containerColor = colors.card,
+            border = BorderStroke(1.dp, colors.cardStroke),
+            shadowElevation = 4.dp,
         ) {
             options.forEach { option ->
                 DropdownMenuItem(
@@ -424,8 +432,8 @@ fun EmptyState(
 
 /**
  * Win11 content dialog: card surface, 8dp corners, 1dp stroke; trailing
- * Cancel + confirm buttons. Dismiss on scrim tap / back is wired to
- * [onDismiss].
+ * Cancel + confirm buttons ([showCancel] = false for OK-only info dialogs).
+ * Dismiss on scrim tap / back is wired to [onDismiss].
  */
 @Composable
 fun FluentDialog(
@@ -436,6 +444,7 @@ fun FluentDialog(
     modifier: Modifier = Modifier,
     body: String? = null,
     danger: Boolean = false,
+    showCancel: Boolean = true,
     content: @Composable ColumnScope.() -> Unit = {},
 ) {
     val colors = FluentTheme.colors
@@ -447,29 +456,41 @@ fun FluentDialog(
             border = BorderStroke(1.dp, colors.cardStroke),
         ) {
             Column(Modifier.padding(24.dp)) {
-                Text(
-                    text = title,
-                    style = FluentTheme.typography.subtitle,
-                    color = colors.textPrimary,
-                )
-                if (body != null) {
-                    Spacer(Modifier.height(8.dp))
+                // Everything above the buttons scrolls when the dialog is
+                // taller than the window (landscape phones, large font scale) —
+                // the button row must never be pushed off-screen. fill = false
+                // keeps short dialogs at their natural height.
+                Column(
+                    modifier = Modifier
+                        .weight(1f, fill = false)
+                        .verticalScroll(rememberScrollState()),
+                ) {
                     Text(
-                        text = body,
-                        style = FluentTheme.typography.body,
-                        color = colors.textSecondary,
+                        text = title,
+                        style = FluentTheme.typography.subtitle,
+                        color = colors.textPrimary,
                     )
+                    if (body != null) {
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            text = body,
+                            style = FluentTheme.typography.body,
+                            color = colors.textSecondary,
+                        )
+                    }
+                    content()
                 }
-                content()
                 Spacer(Modifier.height(24.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
                 ) {
-                    FluentStandardButton(
-                        text = stringResource(R.string.action_cancel),
-                        onClick = onDismiss,
-                    )
+                    if (showCancel) {
+                        FluentStandardButton(
+                            text = stringResource(R.string.action_cancel),
+                            onClick = onDismiss,
+                        )
+                    }
                     FluentButton(
                         text = confirmText,
                         onClick = onConfirm,

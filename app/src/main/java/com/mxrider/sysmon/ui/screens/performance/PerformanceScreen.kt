@@ -225,7 +225,10 @@ private fun PerfTile(
                 selected = selected,
                 onClick = onClick,
                 modifier = modifier,
-                secondaryValue = bat?.status,
+                secondaryValue = bat?.let { b ->
+                    listOfNotNull(b.status, b.temperatureC?.let { Format.celsius(it) })
+                        .joinToString(" • ")
+                },
             )
         }
         PerfPanel.GPU -> {

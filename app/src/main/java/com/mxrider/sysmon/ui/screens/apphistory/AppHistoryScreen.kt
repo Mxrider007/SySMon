@@ -96,41 +96,41 @@ fun AppHistoryScreen(modifier: Modifier = Modifier) {
                 key = AppHistoryViewModel.COL_APP,
                 title = appTitle,
                 width = 240.dp,
-                comparator = AppHistoryViewModel.COMPARATOR_APP,
+                sortable = true,
             ) { row -> AppCell(row) },
             TableColumn<UsageRow>(
                 key = AppHistoryViewModel.COL_SCREEN_TIME,
                 title = screenTimeTitle,
                 width = 120.dp,
                 alignEnd = true,
-                comparator = AppHistoryViewModel.COMPARATOR_SCREEN_TIME,
+                sortable = true,
             ) { row -> ValueCell(Format.duration(row.screenTimeMs)) },
             TableColumn<UsageRow>(
                 key = AppHistoryViewModel.COL_LAUNCHES,
                 title = launchesTitle,
                 width = 90.dp,
                 alignEnd = true,
-                comparator = AppHistoryViewModel.COMPARATOR_LAUNCHES,
+                sortable = true,
             ) { row -> ValueCell(row.launches?.toString() ?: DASH) },
             TableColumn<UsageRow>(
                 key = AppHistoryViewModel.COL_WIFI,
                 title = wifiTitle,
                 width = 110.dp,
                 alignEnd = true,
-                comparator = AppHistoryViewModel.COMPARATOR_WIFI,
+                sortable = true,
             ) { row -> ValueCell(row.wifiBytes?.let { Format.bytes(it) } ?: DASH) },
             TableColumn<UsageRow>(
                 key = AppHistoryViewModel.COL_MOBILE,
                 title = mobileTitle,
                 width = 110.dp,
                 alignEnd = true,
-                comparator = AppHistoryViewModel.COMPARATOR_MOBILE,
+                sortable = true,
             ) { row -> ValueCell(row.mobileBytes?.let { Format.bytes(it) } ?: DASH) },
             TableColumn<UsageRow>(
                 key = AppHistoryViewModel.COL_LAST_USED,
                 title = lastUsedTitle,
                 width = 130.dp,
-                comparator = AppHistoryViewModel.COMPARATOR_LAST_USED,
+                sortable = true,
             ) { row -> ValueCell(Format.relativeTime(row.lastUsed)) },
         )
     }
@@ -157,15 +157,6 @@ fun AppHistoryScreen(modifier: Modifier = Modifier) {
                     },
                 )
             },
-        )
-
-        Text(
-            text = stringResource(R.string.apphistory_note),
-            style = FluentTheme.typography.caption,
-            color = colors.textSecondary,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 4.dp),
         )
 
         Box(

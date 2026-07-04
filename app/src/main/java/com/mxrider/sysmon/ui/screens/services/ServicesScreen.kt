@@ -63,37 +63,37 @@ fun ServicesScreen(modifier: Modifier = Modifier) {
                 key = ServicesViewModel.COL_SERVICE,
                 title = serviceTitle,
                 width = 220.dp,
-                comparator = ServicesViewModel.COMPARATOR_SERVICE,
+                sortable = true,
             ) { row -> ServiceCell(row) },
             TableColumn<ServiceRow>(
                 key = ServicesViewModel.COL_APP,
                 title = appTitle,
                 width = 200.dp,
-                comparator = ServicesViewModel.COMPARATOR_APP,
+                sortable = true,
             ) { row -> AppCell(row) },
             TableColumn<ServiceRow>(
                 key = ServicesViewModel.COL_EXPORTED,
                 title = exportedTitle,
                 width = 90.dp,
-                comparator = ServicesViewModel.COMPARATOR_EXPORTED,
+                sortable = true,
             ) { row -> CaptionCell(if (row.exported) yes else no) },
             TableColumn<ServiceRow>(
                 key = ServicesViewModel.COL_ENABLED,
                 title = enabledTitle,
                 width = 80.dp,
-                comparator = ServicesViewModel.COMPARATOR_ENABLED,
+                sortable = true,
             ) { row -> CaptionCell(if (row.enabled) yes else no) },
             TableColumn<ServiceRow>(
                 key = ServicesViewModel.COL_FGS,
                 title = fgsTitle,
                 width = 180.dp,
-                comparator = ServicesViewModel.COMPARATOR_FGS,
+                sortable = true,
             ) { row -> CaptionCell(row.foregroundServiceTypes.ifEmpty { DASH }) },
             TableColumn<ServiceRow>(
                 key = ServicesViewModel.COL_PERMISSION,
                 title = permissionTitle,
                 width = 220.dp,
-                comparator = ServicesViewModel.COMPARATOR_PERMISSION,
+                sortable = true,
             ) { row -> CaptionCell(row.permission ?: DASH) },
         )
     }

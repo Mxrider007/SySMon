@@ -49,8 +49,9 @@ import com.mxrider.sysmon.ui.theme.FluentTheme
  * @param width fixed column width; the table scrolls horizontally when the
  *   sum of all widths exceeds the viewport.
  * @param alignEnd right-align cell/header content (numeric columns, Win11 style).
- * @param comparator non-null makes the column sortable. The table itself never
- *   applies the comparator — it only decorates the header and reports clicks.
+ * @param sortable makes the header clickable. The table never sorts by itself —
+ *   it only decorates the header and reports clicks; the caller's ViewModel
+ *   owns the comparators and passes back ordered rows.
  * @param cell composable rendering one cell for a row value.
  */
 data class TableColumn<T>(
@@ -58,7 +59,7 @@ data class TableColumn<T>(
     val title: String,
     val width: Dp,
     val alignEnd: Boolean = false,
-    val comparator: Comparator<T>? = null,
+    val sortable: Boolean = false,
     val cell: @Composable (T) -> Unit,
 )
 
@@ -71,8 +72,8 @@ data class TableColumn<T>(
  * sortable header is tapped it invokes [onSortChange] with the column key and
  * the requested direction (tapping the already-sorted column toggles
  * [ascending]; tapping a new column requests ascending). The caller sorts its
- * list — typically with the column's [TableColumn.comparator] — and passes
- * the result back in along with [sortKey]/[ascending].
+ * list — the ViewModels keep a comparator per column key — and passes the
+ * result back in along with [sortKey]/[ascending].
  *
  * Selection: tapping a row calls [onSelect] with the row, tapping the selected
  * row again calls it with `null`. [selectedKey] is compared against
@@ -157,7 +158,7 @@ private fun <T> HeaderCell(
     val sortedAscending = stringResource(R.string.components_sorted_ascending)
     val sortedDescending = stringResource(R.string.components_sorted_descending)
 
-    val clickModifier = if (column.comparator != null && onSortChange != null) {
+    val clickModifier = if (column.sortable && onSortChange != null) {
         Modifier.clickable(
             interactionSource = remember { MutableInteractionSource() },
             indication = null,

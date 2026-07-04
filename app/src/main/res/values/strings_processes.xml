@@ -33,7 +33,7 @@
     <!-- End task -->
     <string name="processes_end_task_title">End %1$s?</string>
     <string name="processes_end_task_body">SysMon will ask Android to stop this app\'s background processes. Android may ignore the request or restart the app, and anything the app shows on screen is not affected. For a guaranteed stop, open App info and use Force stop.</string>
-    <string name="processes_end_task_body_limited">On Android 14 and later the system ignores background-kill requests from other apps, so this will likely have no effect. Open App info and use Force stop instead.</string>
+    <string name="processes_end_task_body_limited">On Android 14 and later, Android ignores requests to stop other apps\' background processes, so End task can\'t work here. Force stop on the App info screen is the action that genuinely stops an app.</string>
     <string name="processes_kill_requested">Requested background kill of %1$s</string>
     <string name="processes_kill_unsupported">Android did not allow ending %1$s. Use App info → Force stop.</string>
 

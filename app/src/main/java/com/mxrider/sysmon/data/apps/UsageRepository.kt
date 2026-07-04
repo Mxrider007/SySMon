@@ -19,7 +19,8 @@ import java.util.Calendar
  * and within the system's ~10-day event retention); DAYS_7/DAYS_30 from
  * [UsageStatsManager.queryAndAggregateUsageStats], because raw events are
  * pruned after ~10 days and a 30-day event query silently returns only the
- * retained tail. Launch counts are event-derived, so they are null for the
+ * retained tail. Launch counts are event-derived with per-package resume-depth
+ * tracking (split screen resumes two activities), so they are null for the
  * multi-day ranges. Optional per-uid network totals from [NetworkStatsManager].
  * Everything degrades to empty lists / `null` byte counts when usage access is
  * missing or an OEM quirk throws. Runs on the caller's dispatcher (callers use IO).
@@ -72,6 +73,34 @@ class DefaultUsageRepository(context: Context) : UsageRepository {
         var lastEnter = 0L
         var lastExit = 0L
         var openSince = -1L
+
+        /**
+         * Class names of this package's currently-resumed activities. Split
+         * screen and in-app navigation resume a second activity before
+         * pausing the first, so the first PAUSED alone must not close the
+         * session. A set — not a counter — so a dropped PAUSED cannot wedge
+         * the bookkeeping: re-resuming the same activity deduplicates, and
+         * ACTIVITY_STOPPED removes entries whose PAUSED never arrived.
+         */
+        val resumedActivities = HashSet<String>(4)
+
+        /**
+         * Credits the open interval (or, when the window's first observed
+         * event is an exit, the segment from [windowStart]) and stamps the
+         * exit time.
+         */
+        fun closeSession(endTime: Long, windowStart: Long) {
+            if (openSince >= 0L) {
+                screenTimeMs += (endTime - openSince).coerceAtLeast(0L)
+                openSince = -1L
+            } else if (lastEnter == 0L && lastExit == 0L) {
+                // First event in the window is an exit: the session was
+                // already open at `windowStart` - credit that segment.
+                screenTimeMs += (endTime - windowStart).coerceAtLeast(0L)
+                lastEnter = windowStart
+            }
+            lastExit = endTime
+        }
     }
 
     private fun collectEvents(start: Long, now: Long): Map<String, UsageAcc> {
@@ -88,13 +117,40 @@ class DefaultUsageRepository(context: Context) : UsageRepository {
             val event = UsageEvents.Event()
             while (events.hasNextEvent()) {
                 events.getNextEvent(event)
+
+                // Global (package-less) events first: a shutdown ends every
+                // open session at a known-good time, and a startup seen while
+                // sessions are still open means the shutdown was never logged
+                // (power loss) - close at the last activity we actually saw,
+                // undercounting the tail rather than inventing off-time.
+                when (event.eventType) {
+                    UsageEvents.Event.DEVICE_SHUTDOWN -> {
+                        for (acc in result.values) {
+                            if (acc.openSince >= 0L) acc.closeSession(event.timeStamp, start)
+                            acc.resumedActivities.clear()
+                        }
+                        continue
+                    }
+                    UsageEvents.Event.DEVICE_STARTUP -> {
+                        for (acc in result.values) {
+                            if (acc.openSince >= 0L) {
+                                acc.closeSession(maxOf(acc.lastEnter, acc.lastExit), start)
+                            }
+                            acc.resumedActivities.clear()
+                        }
+                        continue
+                    }
+                }
+
                 val pkg = event.packageName ?: continue
                 when (event.eventType) {
                     // ACTIVITY_RESUMED == MOVE_TO_FOREGROUND (1): compile-time
                     // constant, so this matches on every API level.
                     UsageEvents.Event.ACTIVITY_RESUMED -> {
                         val acc = result.getOrPut(pkg) { UsageAcc() }
-                        if (acc.openSince < 0L) {
+                        val wasForeground = acc.resumedActivities.isNotEmpty()
+                        acc.resumedActivities += event.className ?: ""
+                        if (!wasForeground && acc.openSince < 0L) {
                             acc.openSince = event.timeStamp
                             // A fresh enter >= 1s after the last exit counts as a launch.
                             if (acc.lastExit == 0L || event.timeStamp - acc.lastExit >= 1_000L) {
@@ -103,19 +159,21 @@ class DefaultUsageRepository(context: Context) : UsageRepository {
                         }
                         acc.lastEnter = event.timeStamp
                     }
-                    // ACTIVITY_PAUSED == MOVE_TO_BACKGROUND (2).
-                    UsageEvents.Event.ACTIVITY_PAUSED -> {
+                    // ACTIVITY_PAUSED == MOVE_TO_BACKGROUND (2); ACTIVITY_STOPPED
+                    // (23, emitted since API 29) is the backstop for lifecycles
+                    // that skip PAUSED (crashed or killed foreground app). The
+                    // normal PAUSED-then-STOPPED pair is harmless here: the
+                    // second remove is a no-op and closeSession only re-stamps
+                    // lastExit. Only the last resumed activity leaving closes
+                    // the session.
+                    UsageEvents.Event.ACTIVITY_PAUSED,
+                    UsageEvents.Event.ACTIVITY_STOPPED,
+                    -> {
                         val acc = result.getOrPut(pkg) { UsageAcc() }
-                        if (acc.openSince >= 0L) {
-                            acc.screenTimeMs += (event.timeStamp - acc.openSince).coerceAtLeast(0L)
-                            acc.openSince = -1L
-                        } else if (acc.lastEnter == 0L && acc.lastExit == 0L) {
-                            // First event in the window is an exit: the session
-                            // was already open at `start` - credit that segment.
-                            acc.screenTimeMs += (event.timeStamp - start).coerceAtLeast(0L)
-                            acc.lastEnter = start
+                        acc.resumedActivities.remove(event.className ?: "")
+                        if (acc.resumedActivities.isEmpty()) {
+                            acc.closeSession(event.timeStamp, start)
                         }
-                        acc.lastExit = event.timeStamp
                     }
                 }
             }

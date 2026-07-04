@@ -34,6 +34,9 @@
     <string name="perf_source_freq_estimate">Estimated from frequency</string>
     <string name="perf_source_unavailable">Unavailable</string>
     <string name="perf_cpu_estimated_note">Estimated from core frequencies — Android restricts exact per-process CPU stats</string>
+    <string name="perf_cpu_estimate_why">Why is this an estimate?</string>
+    <string name="perf_cpu_estimate_why_title">Why CPU usage is an estimate</string>
+    <string name="perf_cpu_estimate_why_body">Since Android 8, the system blocks apps from reading global CPU statistics (/proc/stat), so no app from Play can measure exact system-wide CPU usage.\n\nSysMon instead estimates load from each core\'s live clock speed: a core running near its maximum frequency is treated as busy, one near its minimum as idle. This tracks real load trends well, but it is an approximation — short spikes can be missed and light background work can be over- or under-stated.\n\nThe Source stat shows which method this device uses. When a value can\'t be measured, SysMon shows “—” instead of inventing a number.</string>
     <string name="perf_cpu_unavailable_title">CPU statistics unavailable</string>
     <string name="perf_cpu_unavailable_body">This device does not expose CPU utilization or per-core frequencies to apps.</string>
     <string name="perf_logical_processors">Logical processors</string>

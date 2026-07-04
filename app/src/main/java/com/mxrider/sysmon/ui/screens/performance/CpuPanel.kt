@@ -1,5 +1,6 @@
 package com.mxrider.sysmon.ui.screens.performance
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -9,22 +10,31 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Memory
+import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.mxrider.sysmon.R
 import com.mxrider.sysmon.core.ChartHistory
 import com.mxrider.sysmon.core.CpuSource
 import com.mxrider.sysmon.core.Format
 import com.mxrider.sysmon.ui.components.EmptyState
+import com.mxrider.sysmon.ui.components.FluentDialog
 import com.mxrider.sysmon.ui.components.FluentStandardButton
 import com.mxrider.sysmon.ui.components.StatTile
 import com.mxrider.sysmon.ui.components.chart.PerfChart
@@ -43,6 +53,7 @@ internal fun CpuPanel(
     val cpu = state.cpu
     val info = state.cpuStatic
     var showCores by rememberSaveable { mutableStateOf(false) }
+    var showEstimateWhy by rememberSaveable { mutableStateOf(false) }
 
     Column(modifier.fillMaxWidth()) {
         PanelHeader(
@@ -84,6 +95,28 @@ internal fun CpuPanel(
                     style = typography.caption,
                     color = colors.textSecondary,
                 )
+                // One-tap explainer: the category's trained skeptics punish
+                // unexplained estimates; the label is honest, this is the why.
+                Row(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(4.dp))
+                        .clickable(role = Role.Button) { showEstimateWhy = true }
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Info,
+                        contentDescription = null,
+                        tint = colors.accent,
+                        modifier = Modifier.size(14.dp),
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        text = stringResource(R.string.perf_cpu_estimate_why),
+                        style = typography.caption,
+                        color = colors.accent,
+                    )
+                }
             }
 
             Spacer(Modifier.height(16.dp))
@@ -196,5 +229,16 @@ internal fun CpuPanel(
                 stringResource(if (info.is64Bit) R.string.perf_yes else R.string.perf_no),
             )
         }
+    }
+
+    if (showEstimateWhy) {
+        FluentDialog(
+            title = stringResource(R.string.perf_cpu_estimate_why_title),
+            onDismiss = { showEstimateWhy = false },
+            confirmText = stringResource(R.string.action_ok),
+            onConfirm = { showEstimateWhy = false },
+            body = stringResource(R.string.perf_cpu_estimate_why_body),
+            showCancel = false,
+        )
     }
 }

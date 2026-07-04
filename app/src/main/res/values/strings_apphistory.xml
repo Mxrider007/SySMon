@@ -2,7 +2,6 @@
 <resources>
     <!-- App history screen -->
     <string name="apphistory_subtitle">Resource usage since %1$s, for apps with activity</string>
-    <string name="apphistory_note">Usage for the selected period. Mobile/Wi-Fi columns need usage access.</string>
 
     <!-- Range dropdown -->
     <string name="apphistory_range_today">Today</string>

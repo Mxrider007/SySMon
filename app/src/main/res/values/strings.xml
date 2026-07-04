@@ -19,6 +19,7 @@
     <string name="action_end_task">End task</string>
     <string name="action_run_new_task">Run new task</string>
     <string name="action_app_info">App info</string>
+    <string name="action_open_app_info">Open App info</string>
     <string name="action_cancel">Cancel</string>
     <string name="action_ok">OK</string>
     <string name="action_continue">Continue</string>

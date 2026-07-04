@@ -97,34 +97,34 @@ fun ProcessesScreen(modifier: Modifier = Modifier) {
                 key = ProcessesViewModel.COL_APP,
                 title = appTitle,
                 width = 240.dp,
-                comparator = ProcessesViewModel.COMPARATOR_APP,
+                sortable = true,
             ) { row -> AppCell(row) },
             TableColumn<ProcessRow>(
                 key = ProcessesViewModel.COL_STATUS,
                 title = statusTitle,
                 width = 90.dp,
-                comparator = ProcessesViewModel.COMPARATOR_STATUS,
+                sortable = true,
             ) { row -> StatusCell(row.status) },
             TableColumn<ProcessRow>(
                 key = ProcessesViewModel.COL_SCREEN_TIME,
                 title = screenTimeTitle,
                 width = 110.dp,
                 alignEnd = true,
-                comparator = ProcessesViewModel.COMPARATOR_SCREEN_TIME,
+                sortable = true,
             ) { row -> ValueCell(Format.duration(row.foregroundTimeTodayMs)) },
             TableColumn<ProcessRow>(
                 key = ProcessesViewModel.COL_NETWORK,
                 title = networkTitle,
                 width = 110.dp,
                 alignEnd = true,
-                comparator = ProcessesViewModel.COMPARATOR_NETWORK,
+                sortable = true,
             ) { row -> ValueCell(row.networkTodayBytes?.let { Format.bytes(it) } ?: DASH) },
             TableColumn<ProcessRow>(
                 key = ProcessesViewModel.COL_STORAGE,
                 title = storageTitle,
                 width = 110.dp,
                 alignEnd = true,
-                comparator = ProcessesViewModel.COMPARATOR_STORAGE,
+                sortable = true,
             ) { row -> ValueCell(row.storageBytes?.let { Format.bytes(it) } ?: DASH) },
         )
     }
@@ -267,23 +267,37 @@ fun ProcessesScreen(modifier: Modifier = Modifier) {
 
     if (showEndTaskConfirm && selectedRow != null) {
         val canKill = remember { Graph.taskKiller.canKill() }
-        FluentDialog(
-            title = stringResource(R.string.processes_end_task_title, selectedRow.label),
-            onDismiss = { showEndTaskConfirm = false },
-            confirmText = stringResource(R.string.action_end_task),
-            onConfirm = {
-                showEndTaskConfirm = false
-                vm.endTask(selectedRow)
-            },
-            body = stringResource(
-                if (canKill) {
-                    R.string.processes_end_task_body
-                } else {
-                    R.string.processes_end_task_body_limited
+        if (canKill) {
+            FluentDialog(
+                title = stringResource(R.string.processes_end_task_title, selectedRow.label),
+                onDismiss = { showEndTaskConfirm = false },
+                confirmText = stringResource(R.string.action_end_task),
+                onConfirm = {
+                    showEndTaskConfirm = false
+                    vm.endTask(selectedRow)
                 },
-            ),
-            danger = true,
-        )
+                body = stringResource(R.string.processes_end_task_body),
+                danger = true,
+            )
+        } else {
+            // Android 14+ silently ignores background-kill requests for other
+            // apps, so the primary action routes to the system App info screen,
+            // where Force stop genuinely works — never a button that does nothing.
+            FluentDialog(
+                title = stringResource(R.string.processes_end_task_title, selectedRow.label),
+                onDismiss = { showEndTaskConfirm = false },
+                confirmText = stringResource(R.string.action_open_app_info),
+                onConfirm = {
+                    showEndTaskConfirm = false
+                    try {
+                        context.startActivity(Graph.taskKiller.appInfoIntent(selectedRow.packageName))
+                    } catch (e: Exception) {
+                        // Settings screen unavailable on this device; ignore.
+                    }
+                },
+                body = stringResource(R.string.processes_end_task_body_limited),
+            )
+        }
     }
 }
 

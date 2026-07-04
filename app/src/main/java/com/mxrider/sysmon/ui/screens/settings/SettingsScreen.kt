@@ -1,8 +1,11 @@
 package com.mxrider.sysmon.ui.screens.settings
 
+import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +20,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -50,6 +54,14 @@ import com.mxrider.sysmon.ui.components.TitleBar
 import com.mxrider.sysmon.ui.theme.FluentMetrics
 import com.mxrider.sysmon.ui.theme.FluentTheme
 
+/**
+ * Exodus Privacy home (opens in the browser). Their εxodus Android app audits
+ * INSTALLED apps on-device — the correct verification path for a paid app;
+ * exodus's web reports only crawl free Play apps, so a package-report URL
+ * would 404 forever for SysMon.
+ */
+private const val EXODUS_URL = "https://exodus-privacy.eu.org/en/"
+
 /** Win11-style settings list: grouped FluentCards of label + control rows. */
 @Composable
 fun SettingsScreen(modifier: Modifier = Modifier) {
@@ -58,6 +70,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
     val colors = FluentTheme.colors
     val context = LocalContext.current
     val openFailedMessage = stringResource(R.string.settings_open_settings_failed)
+    val openLinkFailedMessage = stringResource(R.string.settings_open_link_failed)
 
     val themeLabels = mapOf(
         ThemeMode.SYSTEM to stringResource(R.string.settings_theme_system),
@@ -168,6 +181,18 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             AboutCaption(stringResource(R.string.settings_about_font))
             AboutCaption(stringResource(R.string.settings_about_fluent))
             AboutCaption(stringResource(R.string.settings_about_usage_revoke))
+            // The zero-tracker claim is externally checkable; opening the
+            // report in the user's browser keeps SysMon itself internet-free.
+            AboutLink(
+                text = stringResource(R.string.settings_about_exodus),
+                onClick = {
+                    try {
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(EXODUS_URL)))
+                    } catch (_: Exception) {
+                        Toast.makeText(context, openLinkFailedMessage, Toast.LENGTH_SHORT).show()
+                    }
+                },
+            )
             Spacer(Modifier.height(12.dp))
             FluentStandardButton(
                 text = stringResource(R.string.settings_usage_access_settings),
@@ -248,6 +273,20 @@ private fun AboutCaption(text: String) {
         style = FluentTheme.typography.caption,
         color = FluentTheme.colors.textSecondary,
         modifier = Modifier.padding(bottom = 2.dp),
+    )
+}
+
+/** Accent-colored tappable caption row (external link / action). */
+@Composable
+private fun AboutLink(text: String, onClick: () -> Unit) {
+    Text(
+        text = text,
+        style = FluentTheme.typography.caption,
+        color = FluentTheme.colors.accent,
+        modifier = Modifier
+            .clip(RoundedCornerShape(4.dp))
+            .clickable(role = Role.Button, onClick = onClick)
+            .padding(vertical = 2.dp),
     )
 }
 

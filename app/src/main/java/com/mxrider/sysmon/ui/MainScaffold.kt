@@ -15,6 +15,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
@@ -89,16 +90,22 @@ private fun MainScaffold(settings: SysMonSettings) {
             onToggleExpand = { railExpanded = !railExpanded },
         )
         Box(Modifier.fillMaxSize()) {
+            // Crossfade drops a tab's composition when it leaves; without a
+            // SaveableStateHolder every rememberSaveable in the screens (panel
+            // selection, toggles, dialog flags) would reset on each tab switch.
+            val screenStateHolder = rememberSaveableStateHolder()
             Crossfade(targetState = tab, label = "tab") { destination ->
-                when (destination) {
-                    TabDestination.PROCESSES -> ProcessesScreen()
-                    TabDestination.PERFORMANCE -> PerformanceScreen()
-                    TabDestination.APP_HISTORY -> AppHistoryScreen()
-                    TabDestination.STARTUP -> StartupScreen()
-                    TabDestination.USERS -> UsersScreen()
-                    TabDestination.DETAILS -> DetailsScreen()
-                    TabDestination.SERVICES -> ServicesScreen()
-                    TabDestination.SETTINGS -> SettingsScreen()
+                screenStateHolder.SaveableStateProvider(destination) {
+                    when (destination) {
+                        TabDestination.PROCESSES -> ProcessesScreen()
+                        TabDestination.PERFORMANCE -> PerformanceScreen()
+                        TabDestination.APP_HISTORY -> AppHistoryScreen()
+                        TabDestination.STARTUP -> StartupScreen()
+                        TabDestination.USERS -> UsersScreen()
+                        TabDestination.DETAILS -> DetailsScreen()
+                        TabDestination.SERVICES -> ServicesScreen()
+                        TabDestination.SETTINGS -> SettingsScreen()
+                    }
                 }
             }
         }
