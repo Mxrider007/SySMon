@@ -94,18 +94,27 @@ private fun MainScaffold(
         }
     }
 
-    // The readout service follows its settings — which is also how the
-    // notifications return at the next app open after a reboot (no
-    // BOOT_COMPLETED by design). If the runtime permission was revoked
+    // The monitoring service follows its settings — which is also how the
+    // notifications (and logging) return at the next app open after a reboot
+    // (no BOOT_COMPLETED by design). If the runtime permission was revoked
     // behind our back, reconcile the settings instead of running a
     // foreground service nobody can see.
-    LaunchedEffect(settings.cpuNotification, settings.netNotification) {
-        if (settings.cpuNotification || settings.netNotification) {
+    LaunchedEffect(
+        settings.cpuNotification,
+        settings.netNotification,
+        settings.batteryNotification,
+        settings.logging,
+    ) {
+        val anythingOn = settings.cpuNotification || settings.netNotification ||
+            settings.batteryNotification || settings.logging
+        if (anythingOn) {
             if (CpuNotificationService.canPostNotifications(context)) {
                 CpuNotificationService.start(context)
             } else {
                 if (settings.cpuNotification) Graph.settings.setCpuNotification(false)
                 if (settings.netNotification) Graph.settings.setNetNotification(false)
+                if (settings.batteryNotification) Graph.settings.setBatteryNotification(false)
+                if (settings.logging) Graph.settings.setLogging(false)
             }
         }
     }

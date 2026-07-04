@@ -11,11 +11,11 @@
     <uses-permission android:name="android.permission.KILL_BACKGROUND_PROCESSES" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-    <!-- All three exist solely for the user-enabled readout-notification
-         toggles (CPU usage / network speed, both default OFF). specialUse is
-         the only FGS type that fits a continuous device-monitoring readout;
-         Play Console asks for a written justification + demo video for it
-         (CONSOLE_ANSWERS.md). -->
+    <!-- All three exist solely for the user-enabled monitoring toggles
+         (CPU / network / battery readout notifications and performance
+         logging, all default OFF). specialUse is the only FGS type that fits
+         a continuous device-monitoring readout; Play Console asks for a
+         written justification + demo video for it (CONSOLE_ANSWERS.md). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
@@ -62,7 +62,7 @@
             <!-- API 34+ / Play policy: state why no narrower FGS type fits. -->
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="User-enabled live CPU usage and network speed readouts shown as persistent silent notifications" />
+                android:value="User-enabled live CPU usage, network speed and battery readouts shown as persistent silent notifications, plus user-enabled performance logging to a local CSV file" />
         </service>
     </application>
 </manifest>

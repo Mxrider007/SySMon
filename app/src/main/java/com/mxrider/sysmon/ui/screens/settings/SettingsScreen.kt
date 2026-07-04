@@ -7,6 +7,7 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Build
 import android.widget.Toast
+import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -34,7 +35,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,17 +55,24 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mxrider.sysmon.Graph
 import com.mxrider.sysmon.R
 import com.mxrider.sysmon.core.AccentOption
+import com.mxrider.sysmon.core.Format
+import com.mxrider.sysmon.core.LogInterval
 import com.mxrider.sysmon.core.TabDestination
 import com.mxrider.sysmon.core.ThemeMode
 import com.mxrider.sysmon.core.UpdateSpeed
 import com.mxrider.sysmon.service.CpuNotificationService
 import com.mxrider.sysmon.ui.components.FluentCard
+import com.mxrider.sysmon.ui.components.FluentDialog
 import com.mxrider.sysmon.ui.components.FluentDropDown
 import com.mxrider.sysmon.ui.components.FluentStandardButton
 import com.mxrider.sysmon.ui.components.FluentToggle
 import com.mxrider.sysmon.ui.components.TitleBar
 import com.mxrider.sysmon.ui.theme.FluentMetrics
 import com.mxrider.sysmon.ui.theme.FluentTheme
+import java.text.DateFormat
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import kotlinx.coroutines.launch
 
 /**
@@ -86,27 +98,33 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
     val openLinkFailedMessage = stringResource(R.string.settings_open_link_failed)
     val copiedMessage = stringResource(R.string.settings_diagnostics_copied)
     val noEmailMessage = stringResource(R.string.settings_no_email_app)
-    val notifDeniedMessage = stringResource(R.string.settings_cpu_notification_denied)
 
-    // API 33+ needs the runtime grant before the toggle may turn on; the
-    // FGS itself would run without it, but its notification would be
+    // API 33+ needs the runtime grant before any of these toggles may turn
+    // on; the FGS itself would run without it, but its notification would be
     // invisible — a monitoring service nobody can see is not honest.
-    val requestNotifPermission = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission(),
-    ) { granted ->
-        if (granted) {
-            vm.setCpuNotification(true)
-        } else {
-            Toast.makeText(context, notifDeniedMessage, Toast.LENGTH_LONG).show()
-        }
-    }
-    val requestNetNotifPermission = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission(),
-    ) { granted ->
-        if (granted) {
-            vm.setNetNotification(true)
-        } else {
-            Toast.makeText(context, notifDeniedMessage, Toast.LENGTH_LONG).show()
+    val requestNotifPermission = rememberNotifPermissionRequest { vm.setCpuNotification(true) }
+    val requestNetNotifPermission = rememberNotifPermissionRequest { vm.setNetNotification(true) }
+    val requestBatNotifPermission = rememberNotifPermissionRequest { vm.setBatteryNotification(true) }
+    val requestLogPermission = rememberNotifPermissionRequest { vm.setLogging(true) }
+
+    val logStatus by vm.logStatus.collectAsStateWithLifecycle()
+    var showClearLog by rememberSaveable { mutableStateOf(false) }
+    val logFullMessage = stringResource(R.string.settings_log_full)
+    val logExportedMessage = stringResource(R.string.settings_log_exported)
+    val logExportFailedMessage = stringResource(R.string.settings_log_export_failed)
+    val logClearedMessage = stringResource(R.string.settings_log_cleared)
+    val exportLog = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("text/csv"),
+    ) { uri ->
+        if (uri != null) {
+            scope.launch {
+                val ok = Graph.perfLogger.exportTo(uri)
+                Toast.makeText(
+                    context,
+                    if (ok) logExportedMessage else logExportFailedMessage,
+                    Toast.LENGTH_SHORT,
+                ).show()
+            }
         }
     }
 
@@ -123,6 +141,12 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
     )
     val tabLabels: Map<TabDestination, String> =
         TabDestination.entries.associateWith { stringResource(tabTitleRes(it)) }
+    val logIntervalLabels = mapOf(
+        LogInterval.SEC_1 to stringResource(R.string.settings_log_interval_1s),
+        LogInterval.SEC_5 to stringResource(R.string.settings_log_interval_5s),
+        LogInterval.SEC_30 to stringResource(R.string.settings_log_interval_30s),
+        LogInterval.MIN_5 to stringResource(R.string.settings_log_interval_5m),
+    )
 
     Column(
         modifier
@@ -253,6 +277,121 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                     },
                 )
             }
+            RowDivider()
+            SettingRow(
+                label = stringResource(R.string.settings_bat_notification),
+                description = stringResource(R.string.settings_bat_notification_desc),
+            ) {
+                FluentToggle(
+                    checked = settings.batteryNotification,
+                    onCheckedChange = { checked ->
+                        when {
+                            !checked -> vm.setBatteryNotification(false)
+                            CpuNotificationService.canPostNotifications(context) ->
+                                vm.setBatteryNotification(true)
+                            else -> requestBatNotifPermission.launch(
+                                Manifest.permission.POST_NOTIFICATIONS,
+                            )
+                        }
+                    },
+                )
+            }
+        }
+        Spacer(Modifier.height(24.dp))
+
+        SectionHeader(stringResource(R.string.settings_section_logging))
+        FluentCard(Modifier.fillMaxWidth()) {
+            SettingRow(
+                label = stringResource(R.string.settings_logging),
+                description = stringResource(R.string.settings_logging_desc),
+            ) {
+                FluentToggle(
+                    checked = settings.logging,
+                    onCheckedChange = { checked ->
+                        when {
+                            !checked -> vm.setLogging(false)
+                            logStatus.isFull ->
+                                Toast.makeText(context, logFullMessage, Toast.LENGTH_LONG).show()
+                            CpuNotificationService.canPostNotifications(context) ->
+                                vm.setLogging(true)
+                            else -> requestLogPermission.launch(
+                                Manifest.permission.POST_NOTIFICATIONS,
+                            )
+                        }
+                    },
+                )
+            }
+            RowDivider()
+            SettingRow(label = stringResource(R.string.settings_log_interval)) {
+                FluentDropDown(
+                    options = LogInterval.entries,
+                    selected = settings.logInterval,
+                    onSelect = vm::setLogInterval,
+                    label = { logIntervalLabels.getValue(it) },
+                )
+            }
+            RowDivider()
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+            ) {
+                val dateTimeFormat = remember {
+                    DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT)
+                }
+                val statusText = if (logStatus.rowCount == 0L) {
+                    stringResource(R.string.settings_log_status_empty)
+                } else {
+                    stringResource(
+                        R.string.settings_log_status,
+                        Format.bytes(logStatus.sizeBytes),
+                        String.format(Locale.US, "%,d", logStatus.rowCount),
+                        logStatus.startedAt?.let { dateTimeFormat.format(Date(it)) } ?: "—",
+                    )
+                }
+                Text(
+                    text = statusText,
+                    style = FluentTheme.typography.caption,
+                    color = colors.textSecondary,
+                )
+                if (logStatus.isFull) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text = logFullMessage,
+                        style = FluentTheme.typography.caption,
+                        color = colors.danger,
+                    )
+                }
+                Spacer(Modifier.height(12.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FluentStandardButton(
+                        text = stringResource(R.string.settings_log_export),
+                        enabled = logStatus.rowCount > 0,
+                        onClick = { exportLog.launch(defaultLogExportName()) },
+                    )
+                    FluentStandardButton(
+                        text = stringResource(R.string.settings_log_clear),
+                        enabled = logStatus.sizeBytes > 0,
+                        onClick = { showClearLog = true },
+                    )
+                }
+            }
+        }
+        if (showClearLog) {
+            FluentDialog(
+                title = stringResource(R.string.settings_log_clear_title),
+                body = stringResource(R.string.settings_log_clear_body),
+                onDismiss = { showClearLog = false },
+                confirmText = stringResource(R.string.settings_log_clear_confirm),
+                danger = true,
+                onConfirm = {
+                    showClearLog = false
+                    scope.launch {
+                        Graph.perfLogger.clear()
+                        Toast.makeText(context, logClearedMessage, Toast.LENGTH_SHORT).show()
+                    }
+                },
+            )
         }
         Spacer(Modifier.height(24.dp))
 
@@ -325,6 +464,28 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
         Spacer(Modifier.height(16.dp))
     }
 }
+
+/** POST_NOTIFICATIONS request that runs [onGranted] or explains the denial. */
+@Composable
+private fun rememberNotifPermissionRequest(
+    onGranted: () -> Unit,
+): ManagedActivityResultLauncher<String, Boolean> {
+    val context = LocalContext.current
+    val deniedMessage = stringResource(R.string.settings_cpu_notification_denied)
+    return rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        if (granted) {
+            onGranted()
+        } else {
+            Toast.makeText(context, deniedMessage, Toast.LENGTH_LONG).show()
+        }
+    }
+}
+
+/** "sysmon-log-20260704-1402.csv" — local time, filename-safe. */
+private fun defaultLogExportName(): String =
+    "sysmon-log-" + SimpleDateFormat("yyyyMMdd-HHmm", Locale.US).format(Date()) + ".csv"
 
 @Composable
 private fun SectionHeader(text: String) {

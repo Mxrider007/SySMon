@@ -1,6 +1,7 @@
 package com.mxrider.sysmon.core
 
 import android.content.Intent
+import android.net.Uri
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -60,6 +61,39 @@ interface DiagnosticsReporter {
     suspend fun buildReport(): String
 }
 
+/** Status of the on-device performance log (CSV in app-private storage). */
+data class LogStatus(
+    val sizeBytes: Long,
+    val rowCount: Long,
+    /** Epoch millis of the oldest logged row; null while the log is empty. */
+    val startedAt: Long?,
+) {
+    /** At the cap the logger refuses appends and the service flips logging off. */
+    val isFull: Boolean get() = sizeBytes >= PerfLogger.MAX_LOG_BYTES
+}
+
+/**
+ * Append-only CSV performance log in app-private storage. Nothing leaves the
+ * device unless the user exports it themselves through the system document
+ * picker — SysMon still has no INTERNET permission.
+ */
+interface PerfLogger {
+    val status: Flow<LogStatus>
+
+    /** Appends one row; false (nothing written) once the log file is full. */
+    suspend fun append(sample: LogSample): Boolean
+
+    suspend fun clear()
+
+    /** Copies the CSV to [uri]; false on any I/O failure. */
+    suspend fun exportTo(uri: Uri): Boolean
+
+    companion object {
+        /** Hard cap: bounded private storage, and a visible number the Settings caption can promise. */
+        const val MAX_LOG_BYTES = 50L * 1024 * 1024
+    }
+}
+
 interface UsageRepository {
     suspend fun usageRows(range: UsageRange, includeNetwork: Boolean): List<UsageRow>
 }
@@ -95,6 +129,11 @@ enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
 enum class UpdateSpeed(val intervalMs: Long) {
     HIGH(500), NORMAL(1000), LOW(4000), PAUSED(0)
+}
+
+/** Sampling cadence of the on-device performance log. */
+enum class LogInterval(val intervalMs: Long) {
+    SEC_1(1_000), SEC_5(5_000), SEC_30(30_000), MIN_5(300_000)
 }
 
 enum class TabDestination { PROCESSES, PERFORMANCE, APP_HISTORY, STARTUP, USERS, DETAILS, SERVICES, SETTINGS }
@@ -143,6 +182,18 @@ data class SysMonSettings(
      * come from on-device TrafficStats counters — no INTERNET permission.
      */
     val netNotification: Boolean,
+    /**
+     * Ongoing battery readout notification (same foreground service): level,
+     * power draw and temperature straight from BatteryManager.
+     */
+    val batteryNotification: Boolean,
+    /**
+     * On-device performance logging (CSV in private storage, same foreground
+     * service). Unlike the readouts it keeps sampling while the screen is
+     * off — capturing what happens when nobody is looking is the point.
+     */
+    val logging: Boolean,
+    val logInterval: LogInterval,
     val onboardingDone: Boolean,
 ) {
     companion object {
@@ -156,6 +207,9 @@ data class SysMonSettings(
             cpuNotification = false,
             cpuNotificationBox = true,
             netNotification = false,
+            batteryNotification = false,
+            logging = false,
+            logInterval = LogInterval.SEC_5,
             onboardingDone = false,
         )
     }
@@ -172,5 +226,8 @@ interface SettingsStore {
     suspend fun setCpuNotification(value: Boolean)
     suspend fun setCpuNotificationBox(value: Boolean)
     suspend fun setNetNotification(value: Boolean)
+    suspend fun setBatteryNotification(value: Boolean)
+    suspend fun setLogging(value: Boolean)
+    suspend fun setLogInterval(value: LogInterval)
     suspend fun setOnboardingDone(value: Boolean)
 }

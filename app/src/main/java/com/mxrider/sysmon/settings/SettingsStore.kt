@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.mxrider.sysmon.core.AccentOption
+import com.mxrider.sysmon.core.LogInterval
 import com.mxrider.sysmon.core.SettingsStore
 import com.mxrider.sysmon.core.SysMonSettings
 import com.mxrider.sysmon.core.TabDestination
@@ -32,6 +33,9 @@ private object Keys {
     val CPU_NOTIFICATION = booleanPreferencesKey("cpu_notification")
     val CPU_NOTIFICATION_BOX = booleanPreferencesKey("cpu_notification_box")
     val NET_NOTIFICATION = booleanPreferencesKey("net_notification")
+    val BATTERY_NOTIFICATION = booleanPreferencesKey("battery_notification")
+    val LOGGING = booleanPreferencesKey("logging")
+    val LOG_INTERVAL = stringPreferencesKey("log_interval")
     val ONBOARDING_DONE = booleanPreferencesKey("onboarding_done")
 }
 
@@ -65,6 +69,10 @@ class DefaultSettingsStore(context: Context) : SettingsStore {
                 cpuNotification = prefs[Keys.CPU_NOTIFICATION] ?: defaults.cpuNotification,
                 cpuNotificationBox = prefs[Keys.CPU_NOTIFICATION_BOX] ?: defaults.cpuNotificationBox,
                 netNotification = prefs[Keys.NET_NOTIFICATION] ?: defaults.netNotification,
+                batteryNotification = prefs[Keys.BATTERY_NOTIFICATION]
+                    ?: defaults.batteryNotification,
+                logging = prefs[Keys.LOGGING] ?: defaults.logging,
+                logInterval = prefs[Keys.LOG_INTERVAL].asEnum(defaults.logInterval),
                 onboardingDone = prefs[Keys.ONBOARDING_DONE] ?: defaults.onboardingDone,
             )
         }
@@ -87,6 +95,14 @@ class DefaultSettingsStore(context: Context) : SettingsStore {
         setBoolean(Keys.CPU_NOTIFICATION_BOX, value)
 
     override suspend fun setNetNotification(value: Boolean) = setBoolean(Keys.NET_NOTIFICATION, value)
+
+    override suspend fun setBatteryNotification(value: Boolean) =
+        setBoolean(Keys.BATTERY_NOTIFICATION, value)
+
+    override suspend fun setLogging(value: Boolean) = setBoolean(Keys.LOGGING, value)
+
+    override suspend fun setLogInterval(value: LogInterval) =
+        setString(Keys.LOG_INTERVAL, value.name)
 
     override suspend fun setOnboardingDone(value: Boolean) = setBoolean(Keys.ONBOARDING_DONE, value)
 

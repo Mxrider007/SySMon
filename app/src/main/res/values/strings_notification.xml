@@ -18,4 +18,19 @@
     <!-- %1$s = network name, e.g. "Wi-Fi". -->
     <string name="net_notif_text_on">%1$s — tap to open Performance</string>
     <string name="net_notif_unavailable">Network counters aren\'t readable on this device</string>
+
+    <string name="bat_notif_channel_name">Battery readout</string>
+    <string name="bat_notif_channel_desc">Ongoing battery readout. Shown only while enabled in SysMon settings.</string>
+    <!-- %1$s = "84%" or "—". -->
+    <string name="bat_notif_title">Battery %1$s</string>
+    <!-- %1$s as above; %2$s = signed power draw, e.g. "-1.8 W" or "+412 mA". -->
+    <string name="bat_notif_title_power">Battery %1$s · %2$s</string>
+    <!-- %1$s = status segment, e.g. "Charging (USB) · 30.5 °C". -->
+    <string name="bat_notif_text_on">%1$s — tap to open Performance</string>
+    <string name="bat_notif_unavailable">Battery state isn\'t readable on this device</string>
+
+    <string name="log_notif_channel_name">Logging status</string>
+    <string name="log_notif_channel_desc">Shown while performance logging runs with no readout notification visible.</string>
+    <string name="log_notif_title">Logging performance</string>
+    <string name="log_notif_text">CPU, memory, battery and network — tap to manage</string>
 </resources>

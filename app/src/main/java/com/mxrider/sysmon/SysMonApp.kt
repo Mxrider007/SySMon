@@ -9,6 +9,7 @@ import com.mxrider.sysmon.core.DiagnosticsReporter
 import com.mxrider.sysmon.core.GpuInfoProvider
 import com.mxrider.sysmon.core.MemoryMonitor
 import com.mxrider.sysmon.core.NetworkMonitor
+import com.mxrider.sysmon.core.PerfLogger
 import com.mxrider.sysmon.core.ProcessRepository
 import com.mxrider.sysmon.core.ServiceRepository
 import com.mxrider.sysmon.core.SettingsStore
@@ -26,6 +27,7 @@ import com.mxrider.sysmon.data.apps.DefaultTaskKiller
 import com.mxrider.sysmon.data.apps.DefaultUsageAccess
 import com.mxrider.sysmon.data.apps.DefaultUsageRepository
 import com.mxrider.sysmon.data.apps.DefaultUserRepository
+import com.mxrider.sysmon.data.logging.DefaultPerfLogger
 import com.mxrider.sysmon.data.system.DefaultBatteryMonitor
 import com.mxrider.sysmon.data.system.DefaultCpuMonitor
 import com.mxrider.sysmon.data.system.DefaultDiagnostics
@@ -50,6 +52,7 @@ object Graph {
     lateinit var diagnostics: DiagnosticsReporter; private set
 
     lateinit var settings: SettingsStore; private set
+    lateinit var perfLogger: PerfLogger; private set
 
     lateinit var cpu: CpuMonitor; private set
     lateinit var memory: MemoryMonitor; private set
@@ -76,6 +79,7 @@ object Graph {
         diagnostics = DefaultDiagnostics(app, usageAccess).also { it.installCrashHandler() }
 
         settings = DefaultSettingsStore(app)
+        perfLogger = DefaultPerfLogger(app)
 
         cpu = DefaultCpuMonitor()
         memory = DefaultMemoryMonitor(app)

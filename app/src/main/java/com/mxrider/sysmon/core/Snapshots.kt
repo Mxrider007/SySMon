@@ -107,6 +107,20 @@ data class GpuInfo(
     val glVersion: String?,
 )
 
+/**
+ * One performance-log row. A null section means that sampler failed or is
+ * unsupported on this device — logged as empty CSV cells, never fabricated.
+ */
+data class LogSample(
+    val timeMillis: Long,
+    val cpu: CpuSnapshot?,
+    val memory: MemorySnapshot?,
+    val battery: BatterySnapshot?,
+    val network: NetworkSnapshot?,
+    /** Readouts pause while the screen is off; the log records it instead. */
+    val screenOn: Boolean,
+)
+
 /* ---------------------------- Apps & processes ---------------------------- */
 
 data class AppEntry(

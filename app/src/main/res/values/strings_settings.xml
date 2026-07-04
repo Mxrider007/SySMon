@@ -3,6 +3,7 @@
     <!-- Section headers -->
     <string name="settings_section_appearance">Appearance</string>
     <string name="settings_section_behavior">Behavior</string>
+    <string name="settings_section_logging">Logging</string>
     <string name="settings_section_about">About</string>
 
     <!-- Appearance -->
@@ -35,7 +36,30 @@
     <string name="settings_cpu_notification_box_desc">Adds a live percentage tile with per-core bars to the CPU notification</string>
     <string name="settings_net_notification">Network speed in notification</string>
     <string name="settings_net_notification_desc">Silent, ongoing notification with live download/upload rates. Reads on-device counters only — SysMon still has no internet access.</string>
+    <string name="settings_bat_notification">Battery in notification</string>
+    <string name="settings_bat_notification_desc">Silent, ongoing notification with the live battery readout — level, power draw and temperature. After a reboot it returns the next time you open SysMon.</string>
     <string name="settings_cpu_notification_denied">Notifications are turned off for SysMon. Allow them in system settings to use this.</string>
+
+    <!-- Logging -->
+    <string name="settings_logging">Performance logging</string>
+    <string name="settings_logging_desc">Records CPU, memory, battery and network to a CSV file on this device (up to 50 MB), even while the app is closed and the screen is off — this uses some battery. After a reboot it resumes the next time you open SysMon. Nothing leaves the device.</string>
+    <string name="settings_log_interval">Log every</string>
+    <string name="settings_log_interval_1s">1 second</string>
+    <string name="settings_log_interval_5s">5 seconds</string>
+    <string name="settings_log_interval_30s">30 seconds</string>
+    <string name="settings_log_interval_5m">5 minutes</string>
+    <string name="settings_log_status_empty">Log file: empty</string>
+    <!-- %1$s = size ("1.2 MB"), %2$s = row count ("8,412"), %3$s = first-row date/time. -->
+    <string name="settings_log_status">Log file: %1$s · %2$s rows · since %3$s</string>
+    <string name="settings_log_full">Log file is full (50 MB) — export or clear it to keep logging</string>
+    <string name="settings_log_export">Export log (CSV)…</string>
+    <string name="settings_log_clear">Clear log</string>
+    <string name="settings_log_clear_title">Clear the log?</string>
+    <string name="settings_log_clear_body">This permanently deletes every logged sample from this device.</string>
+    <string name="settings_log_clear_confirm">Clear</string>
+    <string name="settings_log_exported">Log exported</string>
+    <string name="settings_log_export_failed">Couldn\'t export the log</string>
+    <string name="settings_log_cleared">Log cleared</string>
 
     <!-- About -->
     <string name="settings_about_name_version">SysMon 1.0.0</string>

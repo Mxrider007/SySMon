@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mxrider.sysmon.Graph
 import com.mxrider.sysmon.core.AccentOption
+import com.mxrider.sysmon.core.LogInterval
+import com.mxrider.sysmon.core.LogStatus
 import com.mxrider.sysmon.core.SysMonSettings
 import com.mxrider.sysmon.core.TabDestination
 import com.mxrider.sysmon.core.ThemeMode
@@ -22,6 +24,13 @@ class SettingsViewModel : ViewModel() {
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = SysMonSettings.DEFAULT,
+        )
+
+    val logStatus: StateFlow<LogStatus> = Graph.perfLogger.status
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = LogStatus(0, 0, null),
         )
 
     fun setThemeMode(value: ThemeMode) {
@@ -58,5 +67,17 @@ class SettingsViewModel : ViewModel() {
 
     fun setNetNotification(value: Boolean) {
         viewModelScope.launch { store.setNetNotification(value) }
+    }
+
+    fun setBatteryNotification(value: Boolean) {
+        viewModelScope.launch { store.setBatteryNotification(value) }
+    }
+
+    fun setLogging(value: Boolean) {
+        viewModelScope.launch { store.setLogging(value) }
+    }
+
+    fun setLogInterval(value: LogInterval) {
+        viewModelScope.launch { store.setLogInterval(value) }
     }
 }

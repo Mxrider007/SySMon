@@ -10,3 +10,6 @@ local.properties
 keystore.properties
 *.keystore
 *.jks
+
+# Kotlin compiler session data
+.kotlin/
