@@ -82,27 +82,27 @@ private fun MainScaffold(settings: SysMonSettings) {
 
     KeepScreenOn(settings.keepScreenOn)
 
-    // Notification taps land here as tab requests.
+    // Notification taps land here as tab requests. Channel iteration (not a
+    // StateFlow collect) so repeated identical requests are never conflated
+    // away — see the TabIntents doc.
     LaunchedEffect(Unit) {
-        TabIntents.pending.collect { requested ->
-            if (requested != null) {
-                tab = requested
-                TabIntents.pending.value = null
-            }
+        for (requested in TabIntents.pending) {
+            tab = requested
         }
     }
 
-    // The CPU-notification service follows its setting — which is also how
-    // the notification returns at the next app open after a reboot (no
+    // The readout service follows its settings — which is also how the
+    // notifications return at the next app open after a reboot (no
     // BOOT_COMPLETED by design). If the runtime permission was revoked
-    // behind our back, reconcile the setting instead of running a foreground
-    // service nobody can see.
-    LaunchedEffect(settings.cpuNotification) {
-        if (settings.cpuNotification) {
+    // behind our back, reconcile the settings instead of running a
+    // foreground service nobody can see.
+    LaunchedEffect(settings.cpuNotification, settings.netNotification) {
+        if (settings.cpuNotification || settings.netNotification) {
             if (CpuNotificationService.canPostNotifications(context)) {
                 CpuNotificationService.start(context)
             } else {
-                Graph.settings.setCpuNotification(false)
+                if (settings.cpuNotification) Graph.settings.setCpuNotification(false)
+                if (settings.netNotification) Graph.settings.setNetNotification(false)
             }
         }
     }

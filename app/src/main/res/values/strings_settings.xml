@@ -31,6 +31,10 @@
     <string name="settings_show_system_apps_desc">Include system apps in process and app lists</string>
     <string name="settings_cpu_notification">CPU usage in notification</string>
     <string name="settings_cpu_notification_desc">Silent, ongoing notification with the live CPU readout (~ marks an estimate). Uses a little battery while on. After a reboot it returns the next time you open SysMon.</string>
+    <string name="settings_cpu_notification_box">Show usage box</string>
+    <string name="settings_cpu_notification_box_desc">Adds a live percentage tile with per-core bars to the CPU notification</string>
+    <string name="settings_net_notification">Network speed in notification</string>
+    <string name="settings_net_notification_desc">Silent, ongoing notification with live download/upload rates. Reads on-device counters only — SysMon still has no internet access.</string>
     <string name="settings_cpu_notification_denied">Notifications are turned off for SysMon. Allow them in system settings to use this.</string>
 
     <!-- About -->

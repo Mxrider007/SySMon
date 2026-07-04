@@ -100,6 +100,15 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             Toast.makeText(context, notifDeniedMessage, Toast.LENGTH_LONG).show()
         }
     }
+    val requestNetNotifPermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        if (granted) {
+            vm.setNetNotification(true)
+        } else {
+            Toast.makeText(context, notifDeniedMessage, Toast.LENGTH_LONG).show()
+        }
+    }
 
     val themeLabels = mapOf(
         ThemeMode.SYSTEM to stringResource(R.string.settings_theme_system),
@@ -208,6 +217,36 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                             CpuNotificationService.canPostNotifications(context) ->
                                 vm.setCpuNotification(true)
                             else -> requestNotifPermission.launch(
+                                Manifest.permission.POST_NOTIFICATIONS,
+                            )
+                        }
+                    },
+                )
+            }
+            RowDivider()
+            SettingRow(
+                label = stringResource(R.string.settings_cpu_notification_box),
+                description = stringResource(R.string.settings_cpu_notification_box_desc),
+            ) {
+                FluentToggle(
+                    checked = settings.cpuNotification && settings.cpuNotificationBox,
+                    onCheckedChange = vm::setCpuNotificationBox,
+                    enabled = settings.cpuNotification,
+                )
+            }
+            RowDivider()
+            SettingRow(
+                label = stringResource(R.string.settings_net_notification),
+                description = stringResource(R.string.settings_net_notification_desc),
+            ) {
+                FluentToggle(
+                    checked = settings.netNotification,
+                    onCheckedChange = { checked ->
+                        when {
+                            !checked -> vm.setNetNotification(false)
+                            CpuNotificationService.canPostNotifications(context) ->
+                                vm.setNetNotification(true)
+                            else -> requestNetNotifPermission.launch(
                                 Manifest.permission.POST_NOTIFICATIONS,
                             )
                         }

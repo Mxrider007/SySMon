@@ -132,6 +132,17 @@ data class SysMonSettings(
      * the "does nothing you didn't ask for" brand.
      */
     val cpuNotification: Boolean,
+    /**
+     * Live percentage tile (large icon) on the CPU notification. Sub-option
+     * of [cpuNotification]; defaults ON because it only shows once the user
+     * has already opted into the readout.
+     */
+    val cpuNotificationBox: Boolean,
+    /**
+     * Ongoing network-speed notification (same foreground service). Rates
+     * come from on-device TrafficStats counters — no INTERNET permission.
+     */
+    val netNotification: Boolean,
     val onboardingDone: Boolean,
 ) {
     companion object {
@@ -143,6 +154,8 @@ data class SysMonSettings(
             keepScreenOn = false,
             showSystemApps = false,
             cpuNotification = false,
+            cpuNotificationBox = true,
+            netNotification = false,
             onboardingDone = false,
         )
     }
@@ -157,5 +170,7 @@ interface SettingsStore {
     suspend fun setKeepScreenOn(value: Boolean)
     suspend fun setShowSystemApps(value: Boolean)
     suspend fun setCpuNotification(value: Boolean)
+    suspend fun setCpuNotificationBox(value: Boolean)
+    suspend fun setNetNotification(value: Boolean)
     suspend fun setOnboardingDone(value: Boolean)
 }

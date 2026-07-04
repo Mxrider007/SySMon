@@ -51,4 +51,12 @@ class SettingsViewModel : ViewModel() {
     fun setCpuNotification(value: Boolean) {
         viewModelScope.launch { store.setCpuNotification(value) }
     }
+
+    fun setCpuNotificationBox(value: Boolean) {
+        viewModelScope.launch { store.setCpuNotificationBox(value) }
+    }
+
+    fun setNetNotification(value: Boolean) {
+        viewModelScope.launch { store.setNetNotification(value) }
+    }
 }

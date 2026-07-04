@@ -8,22 +8,29 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import com.mxrider.sysmon.core.TabDestination
 import com.mxrider.sysmon.ui.SysMonRoot
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.channels.Channel
 
 /**
- * Mailbox for "open this tab" requests carried by Intent extras (the CPU
- * notification's tap). MainScaffold consumes and clears it; a plain state
- * flow keeps this free of any navigation library.
+ * Mailbox for "open this tab" requests carried by Intent extras (the readout
+ * notifications' tap). MainScaffold consumes it; a plain channel keeps this
+ * free of any navigation library.
+ *
+ * A conflated [Channel], deliberately not a StateFlow: StateFlow's equality
+ * conflation swallows a request identical to one left unconsumed, and a
+ * single wedged PERFORMANCE value would turn every later notification tap
+ * into a silent no-op (observed once on-device, session 7). The channel
+ * delivers every send, and still buffers the latest request across the gap
+ * between onCreate/onNewIntent and the scaffold collector attaching.
  */
 internal object TabIntents {
     const val EXTRA_OPEN_TAB = "com.mxrider.sysmon.extra.OPEN_TAB"
 
-    val pending = MutableStateFlow<TabDestination?>(null)
+    val pending = Channel<TabDestination>(Channel.CONFLATED)
 
     fun offer(intent: Intent?) {
         val name = intent?.getStringExtra(EXTRA_OPEN_TAB) ?: return
         val tab = runCatching { TabDestination.valueOf(name) }.getOrNull() ?: return
-        pending.value = tab
+        pending.trySend(tab)
     }
 }
 

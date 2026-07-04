@@ -30,6 +30,8 @@ private object Keys {
     val KEEP_SCREEN_ON = booleanPreferencesKey("keep_screen_on")
     val SHOW_SYSTEM_APPS = booleanPreferencesKey("show_system_apps")
     val CPU_NOTIFICATION = booleanPreferencesKey("cpu_notification")
+    val CPU_NOTIFICATION_BOX = booleanPreferencesKey("cpu_notification_box")
+    val NET_NOTIFICATION = booleanPreferencesKey("net_notification")
     val ONBOARDING_DONE = booleanPreferencesKey("onboarding_done")
 }
 
@@ -61,6 +63,8 @@ class DefaultSettingsStore(context: Context) : SettingsStore {
                 keepScreenOn = prefs[Keys.KEEP_SCREEN_ON] ?: defaults.keepScreenOn,
                 showSystemApps = prefs[Keys.SHOW_SYSTEM_APPS] ?: defaults.showSystemApps,
                 cpuNotification = prefs[Keys.CPU_NOTIFICATION] ?: defaults.cpuNotification,
+                cpuNotificationBox = prefs[Keys.CPU_NOTIFICATION_BOX] ?: defaults.cpuNotificationBox,
+                netNotification = prefs[Keys.NET_NOTIFICATION] ?: defaults.netNotification,
                 onboardingDone = prefs[Keys.ONBOARDING_DONE] ?: defaults.onboardingDone,
             )
         }
@@ -78,6 +82,11 @@ class DefaultSettingsStore(context: Context) : SettingsStore {
     override suspend fun setShowSystemApps(value: Boolean) = setBoolean(Keys.SHOW_SYSTEM_APPS, value)
 
     override suspend fun setCpuNotification(value: Boolean) = setBoolean(Keys.CPU_NOTIFICATION, value)
+
+    override suspend fun setCpuNotificationBox(value: Boolean) =
+        setBoolean(Keys.CPU_NOTIFICATION_BOX, value)
+
+    override suspend fun setNetNotification(value: Boolean) = setBoolean(Keys.NET_NOTIFICATION, value)
 
     override suspend fun setOnboardingDone(value: Boolean) = setBoolean(Keys.ONBOARDING_DONE, value)
 
