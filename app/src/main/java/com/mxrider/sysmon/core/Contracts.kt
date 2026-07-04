@@ -172,11 +172,12 @@ data class SysMonSettings(
      */
     val cpuNotification: Boolean,
     /**
-     * Live percentage tile (large icon) on the CPU notification. Sub-option
-     * of [cpuNotification]; defaults ON because it only shows once the user
-     * has already opted into the readout.
+     * Live usage tiles (large icons) on every readout notification —
+     * per-core bars for CPU, fill bars for memory and battery, stacked
+     * rates for network. Sub-option of the readouts; defaults ON because
+     * tiles only show once the user has already opted into a readout.
      */
-    val cpuNotificationBox: Boolean,
+    val notificationBoxes: Boolean,
     /**
      * Ongoing network-speed notification (same foreground service). Rates
      * come from on-device TrafficStats counters — no INTERNET permission.
@@ -187,6 +188,11 @@ data class SysMonSettings(
      * power draw and temperature straight from BatteryManager.
      */
     val batteryNotification: Boolean,
+    /**
+     * Ongoing memory readout notification (same foreground service): used,
+     * total and available RAM from ActivityManager.
+     */
+    val memoryNotification: Boolean,
     /**
      * On-device performance logging (CSV in private storage, same foreground
      * service). Unlike the readouts it keeps sampling while the screen is
@@ -205,9 +211,10 @@ data class SysMonSettings(
             keepScreenOn = false,
             showSystemApps = false,
             cpuNotification = false,
-            cpuNotificationBox = true,
+            notificationBoxes = true,
             netNotification = false,
             batteryNotification = false,
+            memoryNotification = false,
             logging = false,
             logInterval = LogInterval.SEC_5,
             onboardingDone = false,
@@ -224,9 +231,10 @@ interface SettingsStore {
     suspend fun setKeepScreenOn(value: Boolean)
     suspend fun setShowSystemApps(value: Boolean)
     suspend fun setCpuNotification(value: Boolean)
-    suspend fun setCpuNotificationBox(value: Boolean)
+    suspend fun setNotificationBoxes(value: Boolean)
     suspend fun setNetNotification(value: Boolean)
     suspend fun setBatteryNotification(value: Boolean)
+    suspend fun setMemoryNotification(value: Boolean)
     suspend fun setLogging(value: Boolean)
     suspend fun setLogInterval(value: LogInterval)
     suspend fun setOnboardingDone(value: Boolean)

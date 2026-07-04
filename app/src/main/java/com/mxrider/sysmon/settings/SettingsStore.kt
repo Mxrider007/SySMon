@@ -31,9 +31,10 @@ private object Keys {
     val KEEP_SCREEN_ON = booleanPreferencesKey("keep_screen_on")
     val SHOW_SYSTEM_APPS = booleanPreferencesKey("show_system_apps")
     val CPU_NOTIFICATION = booleanPreferencesKey("cpu_notification")
-    val CPU_NOTIFICATION_BOX = booleanPreferencesKey("cpu_notification_box")
+    val NOTIFICATION_BOXES = booleanPreferencesKey("notification_boxes")
     val NET_NOTIFICATION = booleanPreferencesKey("net_notification")
     val BATTERY_NOTIFICATION = booleanPreferencesKey("battery_notification")
+    val MEMORY_NOTIFICATION = booleanPreferencesKey("memory_notification")
     val LOGGING = booleanPreferencesKey("logging")
     val LOG_INTERVAL = stringPreferencesKey("log_interval")
     val ONBOARDING_DONE = booleanPreferencesKey("onboarding_done")
@@ -67,10 +68,12 @@ class DefaultSettingsStore(context: Context) : SettingsStore {
                 keepScreenOn = prefs[Keys.KEEP_SCREEN_ON] ?: defaults.keepScreenOn,
                 showSystemApps = prefs[Keys.SHOW_SYSTEM_APPS] ?: defaults.showSystemApps,
                 cpuNotification = prefs[Keys.CPU_NOTIFICATION] ?: defaults.cpuNotification,
-                cpuNotificationBox = prefs[Keys.CPU_NOTIFICATION_BOX] ?: defaults.cpuNotificationBox,
+                notificationBoxes = prefs[Keys.NOTIFICATION_BOXES] ?: defaults.notificationBoxes,
                 netNotification = prefs[Keys.NET_NOTIFICATION] ?: defaults.netNotification,
                 batteryNotification = prefs[Keys.BATTERY_NOTIFICATION]
                     ?: defaults.batteryNotification,
+                memoryNotification = prefs[Keys.MEMORY_NOTIFICATION]
+                    ?: defaults.memoryNotification,
                 logging = prefs[Keys.LOGGING] ?: defaults.logging,
                 logInterval = prefs[Keys.LOG_INTERVAL].asEnum(defaults.logInterval),
                 onboardingDone = prefs[Keys.ONBOARDING_DONE] ?: defaults.onboardingDone,
@@ -91,13 +94,16 @@ class DefaultSettingsStore(context: Context) : SettingsStore {
 
     override suspend fun setCpuNotification(value: Boolean) = setBoolean(Keys.CPU_NOTIFICATION, value)
 
-    override suspend fun setCpuNotificationBox(value: Boolean) =
-        setBoolean(Keys.CPU_NOTIFICATION_BOX, value)
+    override suspend fun setNotificationBoxes(value: Boolean) =
+        setBoolean(Keys.NOTIFICATION_BOXES, value)
 
     override suspend fun setNetNotification(value: Boolean) = setBoolean(Keys.NET_NOTIFICATION, value)
 
     override suspend fun setBatteryNotification(value: Boolean) =
         setBoolean(Keys.BATTERY_NOTIFICATION, value)
+
+    override suspend fun setMemoryNotification(value: Boolean) =
+        setBoolean(Keys.MEMORY_NOTIFICATION, value)
 
     override suspend fun setLogging(value: Boolean) = setBoolean(Keys.LOGGING, value)
 

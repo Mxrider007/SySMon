@@ -29,6 +29,16 @@
     <string name="bat_notif_text_on">%1$s — tap to open Performance</string>
     <string name="bat_notif_unavailable">Battery state isn\'t readable on this device</string>
 
+    <string name="mem_notif_channel_name">Memory readout</string>
+    <string name="mem_notif_channel_desc">Ongoing memory readout. Shown only while enabled in SysMon settings.</string>
+    <!-- %1$s = "63%" or "—". -->
+    <string name="mem_notif_title">Memory %1$s</string>
+    <!-- %1$s as above; %2$s = used / total, e.g. "3.6 / 5.6 GB". -->
+    <string name="mem_notif_title_used">Memory %1$s · %2$s</string>
+    <!-- %1$s = available memory, e.g. "2.0 GB". -->
+    <string name="mem_notif_text_on">%1$s available — tap to open Performance</string>
+    <string name="mem_notif_unavailable">Memory state isn\'t readable on this device</string>
+
     <string name="log_notif_channel_name">Logging status</string>
     <string name="log_notif_channel_desc">Shown while performance logging runs with no readout notification visible.</string>
     <string name="log_notif_title">Logging performance</string>

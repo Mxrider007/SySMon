@@ -16,12 +16,15 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffXfermode
 import android.graphics.Typeface
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.drawable.IconCompat
 import com.mxrider.sysmon.Graph
 import com.mxrider.sysmon.MainActivity
 import com.mxrider.sysmon.R
@@ -44,16 +47,21 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 /**
  * User-enabled foreground service for everything that monitors while the app
  * is away: the silent ongoing readout notifications — live CPU
- * ("CPU ~43% · 1.03 GHz", optionally with a rendered percentage tile as its
- * large icon), network speed ("Net ↓ 2.1 Mbps · ↑ 340 Kbps") and battery
- * ("Battery 84% · -1.8 W") — plus the on-device performance log (CSV rows of
- * all of the above). The ~ marks the frequency estimate — the same honesty
- * rule as the Performance tab; network rates come from on-device
- * TrafficStats counters, never from the network itself.
+ * ("CPU ~43% · 1.03 GHz"), network speed ("Net ↓ 2.1 Mbps · ↑ 340 Kbps"),
+ * battery ("Battery 84% · -1.8 W") and memory ("Memory 63% · 3.6 / 5.6 GB")
+ * — plus the on-device performance log (CSV rows of all of the above). Each
+ * readout optionally carries a rendered usage tile as its large icon, and its
+ * status-bar icon is the live value itself, repainted every tick (a white
+ * box with the number punched out; the net readout stacks its two rates).
+ * The ~ marks the frequency estimate — the same honesty rule as the
+ * Performance tab; network rates come from on-device TrafficStats counters,
+ * never from the network itself.
  *
  * Lifecycle follows the monitoring settings as the single source of truth:
  * MainScaffold starts the service whenever any readout or logging is on
@@ -76,7 +84,16 @@ class CpuNotificationService : Service() {
     private var lastCpuTitle: String? = null
     private var lastNetTitle: String? = null
     private var lastBatKey: String? = null
+    private var lastMemTitle: String? = null
     private var anchorId = 0
+
+    // Serializes applySettings against the update loop's iterations. Without
+    // it, a toggle-off's cancel() can interleave with an in-flight iteration
+    // whose repaint guard was just reset: the iteration re-posts the readout
+    // AFTER the cancel and the notification is orphaned in the shade forever
+    // (the sampler never touches that readout again). Holding the lock across
+    // a sample is milliseconds against a 2 s cadence.
+    private val stateMutex = Mutex()
 
     @Volatile
     private var current: SysMonSettings? = null
@@ -135,7 +152,7 @@ class CpuNotificationService : Service() {
                 screenOn.collectLatest { on ->
                     if (on) {
                         while (true) {
-                            update()
+                            stateMutex.withLock { update() }
                             delay(UPDATE_INTERVAL_MS)
                         }
                     }
@@ -173,19 +190,20 @@ class CpuNotificationService : Service() {
     }
 
     /** Reconciles anchor, visible notifications, and repaint guards. */
-    private suspend fun applySettings(settings: SysMonSettings) {
+    private suspend fun applySettings(settings: SysMonSettings) = stateMutex.withLock {
         val previous = current
         current = settings
         if (!settings.cpuNotification && !settings.netNotification &&
-            !settings.batteryNotification && !settings.logging
+            !settings.batteryNotification && !settings.memoryNotification && !settings.logging
         ) {
             stopCompletely()
-            return
+            return@withLock
         }
         val wantedAnchor = when {
             settings.cpuNotification -> CPU_NOTIFICATION_ID
             settings.netNotification -> NET_NOTIFICATION_ID
             settings.batteryNotification -> BAT_NOTIFICATION_ID
+            settings.memoryNotification -> MEM_NOTIFICATION_ID
             else -> LOG_NOTIFICATION_ID // logging is the only thing left on
         }
         if (wantedAnchor != anchorId) {
@@ -194,6 +212,7 @@ class CpuNotificationService : Service() {
             lastCpuTitle = null
             lastNetTitle = null
             lastBatKey = null
+            lastMemTitle = null
         }
         // startForeground only manages its own id; a readout that just got
         // disabled has to be cancelled explicitly. The logging notification
@@ -203,17 +222,24 @@ class CpuNotificationService : Service() {
         if (!settings.cpuNotification) manager?.cancel(CPU_NOTIFICATION_ID)
         if (!settings.netNotification) manager?.cancel(NET_NOTIFICATION_ID)
         if (!settings.batteryNotification) manager?.cancel(BAT_NOTIFICATION_ID)
+        if (!settings.memoryNotification) manager?.cancel(MEM_NOTIFICATION_ID)
         if (anchorId != LOG_NOTIFICATION_ID) manager?.cancel(LOG_NOTIFICATION_ID)
         // Accent or box changes repaint the same title text; toggling a
         // readout back on must repost it even if its title never changed.
-        if (previous?.accent != settings.accent ||
-            previous?.cpuNotificationBox != settings.cpuNotificationBox ||
-            previous?.cpuNotification != settings.cpuNotification
-        ) {
+        val repaintAll = previous?.accent != settings.accent ||
+            previous?.notificationBoxes != settings.notificationBoxes
+        if (repaintAll || previous?.cpuNotification != settings.cpuNotification) {
             lastCpuTitle = null
         }
-        if (previous?.netNotification != settings.netNotification) lastNetTitle = null
-        if (previous?.batteryNotification != settings.batteryNotification) lastBatKey = null
+        if (repaintAll || previous?.netNotification != settings.netNotification) {
+            lastNetTitle = null
+        }
+        if (repaintAll || previous?.batteryNotification != settings.batteryNotification) {
+            lastBatKey = null
+        }
+        if (repaintAll || previous?.memoryNotification != settings.memoryNotification) {
+            lastMemTitle = null
+        }
         update()
     }
 
@@ -222,16 +248,19 @@ class CpuNotificationService : Service() {
         manager?.cancel(CPU_NOTIFICATION_ID)
         manager?.cancel(NET_NOTIFICATION_ID)
         manager?.cancel(BAT_NOTIFICATION_ID)
+        manager?.cancel(MEM_NOTIFICATION_ID)
         manager?.cancel(LOG_NOTIFICATION_ID)
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
 
+    /** Callers must hold [stateMutex]. */
     private suspend fun update() {
         val settings = current ?: return
         if (settings.cpuNotification) updateCpu(settings)
-        if (settings.netNotification) updateNet()
-        if (settings.batteryNotification) updateBattery()
+        if (settings.netNotification) updateNet(settings)
+        if (settings.batteryNotification) updateBattery(settings)
+        if (settings.memoryNotification) updateMemory(settings)
     }
 
     private suspend fun updateCpu(settings: SysMonSettings) {
@@ -263,23 +292,33 @@ class CpuNotificationService : Service() {
         }
         if (title != lastCpuTitle) {
             lastCpuTitle = title
-            val box = if (settings.cpuNotificationBox && percent != null && snapshot != null) {
-                renderUsageBox(
-                    percentText = percent,
-                    perCore = snapshot.perCore.map { if (it.online) it.utilization else 0f },
+            val box = if (settings.notificationBoxes && percent != null && snapshot != null) {
+                renderTile(
                     accentArgb = settings.accent.controlLightArgb,
+                    lines = listOf(percent),
+                    bars = snapshot.perCore.map { if (it.online) it.utilization else 0f },
                 )
             } else {
                 null
             }
             postUpdate(
                 CPU_NOTIFICATION_ID,
-                buildReadoutNotification(CPU_CHANNEL_ID, R.drawable.ic_stat_cpu, title, text, box),
+                buildReadoutNotification(
+                    CPU_CHANNEL_ID,
+                    R.drawable.ic_stat_cpu,
+                    title,
+                    text,
+                    box,
+                    // The % is dropped from the punch-out — three glyphs is
+                    // already the legibility limit — but the ~ honesty
+                    // marker stays.
+                    liveIcon = percent?.let { renderStatusValue(it.removeSuffix("%")) },
+                ),
             )
         }
     }
 
-    private suspend fun updateNet() {
+    private suspend fun updateNet(settings: SysMonSettings) {
         val snapshot = try {
             netMonitor.sample()
         } catch (_: Exception) {
@@ -287,6 +326,9 @@ class CpuNotificationService : Service() {
         }
         val title: String
         val text: String?
+        // Compact down/up pair for the tile and the status-bar icon; null
+        // while the counters are unreadable.
+        var rates: Pair<String, String>? = null
         // Zero totals after a sample means TrafficStats is unsupported here:
         // on any real device the boot process alone moves bytes.
         if (snapshot == null || (snapshot.totalRxBytes == 0L && snapshot.totalTxBytes == 0L)) {
@@ -304,17 +346,33 @@ class CpuNotificationService : Service() {
             } else {
                 getString(R.string.cpu_notif_text)
             }
+            rates = compactBits(snapshot.rxBytesPerSec) to compactBits(snapshot.txBytesPerSec)
         }
         if (title != lastNetTitle) {
             lastNetTitle = title
+            val box = if (settings.notificationBoxes && rates != null) {
+                renderTile(
+                    accentArgb = settings.accent.controlLightArgb,
+                    lines = listOf("↓ ${rates.first}", "↑ ${rates.second}"),
+                )
+            } else {
+                null
+            }
             postUpdate(
                 NET_NOTIFICATION_ID,
-                buildReadoutNotification(NET_CHANNEL_ID, R.drawable.ic_stat_net, title, text, null),
+                buildReadoutNotification(
+                    NET_CHANNEL_ID,
+                    R.drawable.ic_stat_net,
+                    title,
+                    text,
+                    box,
+                    liveIcon = rates?.let { renderStatusRates(it.first, it.second) },
+                ),
             )
         }
     }
 
-    private suspend fun updateBattery() {
+    private suspend fun updateBattery(settings: SysMonSettings) {
         val snapshot = try {
             Graph.battery.sample()
         } catch (_: Exception) {
@@ -353,9 +411,75 @@ class CpuNotificationService : Service() {
         val key = "$title|$text"
         if (key != lastBatKey) {
             lastBatKey = key
+            val box = if (settings.notificationBoxes && snapshot != null) {
+                renderTile(
+                    accentArgb = settings.accent.controlLightArgb,
+                    lines = listOf("${snapshot.levelPercent}%"),
+                    fill = snapshot.levelPercent / 100f,
+                )
+            } else {
+                null
+            }
             postUpdate(
                 BAT_NOTIFICATION_ID,
-                buildReadoutNotification(BAT_CHANNEL_ID, R.drawable.ic_stat_battery, title, text, null),
+                buildReadoutNotification(
+                    BAT_CHANNEL_ID,
+                    R.drawable.ic_stat_battery,
+                    title,
+                    text,
+                    box,
+                    liveIcon = snapshot?.let { renderStatusValue("${it.levelPercent}") },
+                ),
+            )
+        }
+    }
+
+    private suspend fun updateMemory(settings: SysMonSettings) {
+        val snapshot = try {
+            Graph.memory.sample()
+        } catch (_: Exception) {
+            null
+        }
+        val title: String
+        val text: String?
+        var percent: String? = null
+        var usedFraction = 0f
+        if (snapshot == null || snapshot.totalBytes <= 0) {
+            title = getString(R.string.mem_notif_title, DASH)
+            text = getString(R.string.mem_notif_unavailable)
+        } else {
+            usedFraction = (snapshot.usedBytes.toFloat() / snapshot.totalBytes).coerceIn(0f, 1f)
+            percent = Format.percent(usedFraction)
+            title = getString(
+                R.string.mem_notif_title_used,
+                percent,
+                usedOfTotal(snapshot.usedBytes, snapshot.totalBytes),
+            )
+            text = getString(R.string.mem_notif_text_on, Format.bytes(snapshot.availBytes))
+        }
+        // Percent, the GB pair and available all move together, so the title
+        // alone is guard enough (like CPU and net).
+        if (title != lastMemTitle) {
+            lastMemTitle = title
+            val box = if (settings.notificationBoxes && percent != null) {
+                renderTile(
+                    accentArgb = settings.accent.controlLightArgb,
+                    lines = listOf(percent),
+                    fill = usedFraction,
+                )
+            } else {
+                null
+            }
+            postUpdate(
+                MEM_NOTIFICATION_ID,
+                buildReadoutNotification(
+                    MEM_CHANNEL_ID,
+                    R.drawable.ic_stat_memory,
+                    title,
+                    text,
+                    box,
+                    liveIcon = percent?.let { renderStatusValue(it.removeSuffix("%")) },
+                ),
             )
         }
     }
@@ -417,6 +541,14 @@ class CpuNotificationService : Service() {
             null,
         )
 
+        MEM_NOTIFICATION_ID -> buildReadoutNotification(
+            MEM_CHANNEL_ID,
+            R.drawable.ic_stat_memory,
+            getString(R.string.mem_notif_title, DASH),
+            null,
+            null,
+        )
+
         // Static by design: a live "log size" counter would turn the anchor
         // of last resort into a fourth readout nobody asked for.
         LOG_NOTIFICATION_ID -> buildReadoutNotification(
@@ -443,6 +575,12 @@ class CpuNotificationService : Service() {
         title: String,
         text: String?,
         largeIcon: Bitmap?,
+        /**
+         * Live status-bar icon for this tick; falls back to the static
+         * [smallIcon] glyph when the value is unreadable (DASH states) — a
+         * frozen number would be a lie, the glyph is not.
+         */
+        liveIcon: Bitmap? = null,
         destination: TabDestination = TabDestination.PERFORMANCE,
     ): Notification {
         val tap = PendingIntent.getActivity(
@@ -457,7 +595,13 @@ class CpuNotificationService : Service() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
         return NotificationCompat.Builder(this, channelId)
-            .setSmallIcon(smallIcon)
+            .apply {
+                if (liveIcon != null) {
+                    setSmallIcon(IconCompat.createWithBitmap(liveIcon))
+                } else {
+                    setSmallIcon(smallIcon)
+                }
+            }
             .setContentTitle(title)
             .apply { if (text != null) setContentText(text) }
             .apply { if (largeIcon != null) setLargeIcon(largeIcon) }
@@ -473,14 +617,18 @@ class CpuNotificationService : Service() {
     }
 
     /**
-     * The "usage box": an accent-colored rounded tile with the same percent
-     * string as the title (tilde included — the estimate marker survives) over
-     * faint per-core bars. Rendered, not a layout, so it can be the large icon.
+     * The "usage box" (large icon): an accent-colored rounded tile with the
+     * readout's headline value(s) — the same strings as the title, tilde
+     * included — over an optional utilization drawing: faint per-core [bars]
+     * for the CPU, a bottom [fill] bar for memory/battery, neither for the
+     * network (its two stacked rate lines fill the tile). Rendered, not a
+     * layout, so it can be the large icon.
      */
-    private fun renderUsageBox(
-        percentText: String,
-        perCore: List<Float>,
+    private fun renderTile(
         accentArgb: Long,
+        lines: List<String>,
+        bars: List<Float> = emptyList(),
+        fill: Float? = null,
     ): Bitmap {
         val size = BOX_SIZE_PX
         val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
@@ -488,11 +636,11 @@ class CpuNotificationService : Service() {
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
         paint.color = accentArgb.toInt()
         canvas.drawRoundRect(0f, 0f, size.toFloat(), size.toFloat(), 40f, 40f, paint)
-        if (perCore.isNotEmpty()) {
+        if (bars.isNotEmpty()) {
             paint.color = 0x4DFFFFFF // 30% white
             val gap = 8f
-            val barWidth = (size - gap * (perCore.size + 1)) / perCore.size
-            perCore.forEachIndexed { index, utilization ->
+            val barWidth = (size - gap * (bars.size + 1)) / bars.size
+            bars.forEachIndexed { index, utilization ->
                 val height = (size - 32f) * utilization.coerceIn(0f, 1f)
                 val left = gap + index * (barWidth + gap)
                 // Clip inside the rounded corners rather than clipping the
@@ -500,16 +648,116 @@ class CpuNotificationService : Service() {
                 canvas.drawRect(left, size - 8f - height, left + barWidth, size - 8f, paint)
             }
         }
+        if (fill != null) {
+            // Same idiom as the core bars: a fainter track under a 30%-white
+            // fill, sitting where the bars would.
+            val top = size - 48f
+            val bottom = size - 20f
+            paint.color = 0x26FFFFFF // 15% white
+            canvas.drawRect(20f, top, size - 20f, bottom, paint)
+            paint.color = 0x4DFFFFFF // 30% white
+            canvas.drawRect(20f, top, 20f + (size - 40f) * fill.coerceIn(0f, 1f), bottom, paint)
+        }
         paint.color = Color.WHITE
         paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         paint.textAlign = Paint.Align.CENTER
-        paint.textSize = 84f
         val maxWidth = size - 24f
-        val measured = paint.measureText(percentText)
-        if (measured > maxWidth) paint.textSize = 84f * maxWidth / measured
-        val baseline = size / 2f - (paint.descent() + paint.ascent()) / 2f
-        canvas.drawText(percentText, size / 2f, baseline, paint)
+        // One line sits dead center; two share the tile as stacked halves.
+        // Both lines shrink together so mixed sizes never look ragged.
+        val baseSize = if (lines.size == 1) 84f else 64f
+        paint.textSize = baseSize
+        val widest = lines.maxOf { paint.measureText(it) }
+        if (widest > maxWidth) paint.textSize = baseSize * maxWidth / widest
+        lines.forEachIndexed { index, line ->
+            val centerY = size * (2 * index + 1) / (2f * lines.size)
+            val baseline = centerY - (paint.descent() + paint.ascent()) / 2f
+            canvas.drawText(line, size / 2f, baseline, paint)
+        }
         return bitmap
+    }
+
+    /**
+     * Live status-bar small icon: an opaque white rounded box with the value
+     * punched out of it (so the digits are holes in the box). Status-bar
+     * icons are pure alpha masks — the system discards color and keeps the
+     * silhouette, which is exactly what a punch-out is. Repainting it every
+     * tick is the "animated box on the top bar".
+     */
+    private fun renderStatusValue(text: String): Bitmap {
+        val size = STATUS_ICON_SIZE_PX
+        val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        paint.color = Color.WHITE
+        // A hair of inset so the box outline never touches the icon bounds
+        // (some status bars shave edge pixels when scaling).
+        canvas.drawRoundRect(4f, 4f, size - 4f, size - 4f, 16f, 16f, paint)
+        paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.CLEAR)
+        paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        paint.textAlign = Paint.Align.CENTER
+        paint.textSize = 68f
+        val maxWidth = size - 22f
+        val measured = paint.measureText(text)
+        if (measured > maxWidth) paint.textSize = 68f * maxWidth / measured
+        val baseline = size / 2f - (paint.descent() + paint.ascent()) / 2f
+        canvas.drawText(text, size / 2f, baseline, paint)
+        return bitmap
+    }
+
+    /**
+     * Net status-bar icon: two stacked compact rates (down over up) as plain
+     * text with no box — box padding would make two lines unreadable at
+     * status-bar size. Both lines shrink together.
+     */
+    private fun renderStatusRates(down: String, up: String): Bitmap {
+        val size = STATUS_ICON_SIZE_PX
+        val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        paint.color = Color.WHITE
+        paint.typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+        paint.textAlign = Paint.Align.CENTER
+        paint.textSize = 46f
+        val widest = maxOf(paint.measureText(down), paint.measureText(up))
+        if (widest > size) paint.textSize = 46f * size / widest
+        listOf(down, up).forEachIndexed { index, line ->
+            val centerY = size * (2 * index + 1) / 4f
+            val baseline = centerY - (paint.descent() + paint.ascent()) / 2f
+            canvas.drawText(line, size / 2f, baseline, paint)
+        }
+        return bitmap
+    }
+
+    /**
+     * Rate for the tile and status icon: value plus one letter ("1.2M",
+     * "340K", "0"), bits like [Format.bitsPerSec] but too terse for anything
+     * except an icon — which is why it lives here and not in core.
+     */
+    private fun compactBits(bytesPerSec: Double): String {
+        val bps = bytesPerSec * 8
+        fun value(v: Double): String =
+            String.format(Locale.US, if (v >= 10) "%.0f" else "%.1f", v)
+        return when {
+            bps >= 1_000_000_000 -> value(bps / 1_000_000_000) + "G"
+            bps >= 1_000_000 -> value(bps / 1_000_000) + "M"
+            bps >= 1_000 -> value(bps / 1_000) + "K"
+            else -> String.format(Locale.US, "%.0f", bps)
+        }
+    }
+
+    /**
+     * "3.6 / 5.6 GB" — used and total sharing one unit so the title stays
+     * short. Total RAM is ≥1 GB on anything that can install this app, but
+     * degrade to two full [Format.bytes] values rather than ever printing a
+     * wrong number.
+     */
+    private fun usedOfTotal(usedBytes: Long, totalBytes: Long): String {
+        val gb = 1024.0 * 1024.0 * 1024.0
+        return if (totalBytes >= gb) {
+            String.format(Locale.US, "%.1f / %.1f GB", usedBytes / gb, totalBytes / gb)
+        } else {
+            "${Format.bytes(usedBytes)} / ${Format.bytes(totalBytes)}"
+        }
     }
 
     private fun createChannels() {
@@ -546,6 +794,16 @@ class CpuNotificationService : Service() {
         )
         manager.createNotificationChannel(
             NotificationChannel(
+                MEM_CHANNEL_ID,
+                getString(R.string.mem_notif_channel_name),
+                NotificationManager.IMPORTANCE_LOW,
+            ).apply {
+                description = getString(R.string.mem_notif_channel_desc)
+                setShowBadge(false)
+            },
+        )
+        manager.createNotificationChannel(
+            NotificationChannel(
                 LOG_CHANNEL_ID,
                 getString(R.string.log_notif_channel_name),
                 NotificationManager.IMPORTANCE_LOW,
@@ -560,13 +818,20 @@ class CpuNotificationService : Service() {
         private const val CPU_CHANNEL_ID = "cpu_readout"
         private const val NET_CHANNEL_ID = "net_readout"
         private const val BAT_CHANNEL_ID = "battery_readout"
+        private const val MEM_CHANNEL_ID = "memory_readout"
         private const val LOG_CHANNEL_ID = "logging_status"
+        // Anchor priority CPU > NET > BAT > MEM > LOG; MEM slots in above LOG
+        // (the anchor of last resort) so the earlier ids keep their meaning.
         private const val CPU_NOTIFICATION_ID = 1
         private const val NET_NOTIFICATION_ID = 2
         private const val BAT_NOTIFICATION_ID = 3
         private const val LOG_NOTIFICATION_ID = 4
+        private const val MEM_NOTIFICATION_ID = 5
         private const val UPDATE_INTERVAL_MS = 2_000L
         private const val BOX_SIZE_PX = 256
+
+        /** ~24 dp at 4x — the status bar scales the alpha mask down from here. */
+        private const val STATUS_ICON_SIZE_PX = 96
 
         /** Same placeholder convention as the panels: never a fabricated value. */
         private const val DASH = "—"

@@ -103,10 +103,11 @@ private fun MainScaffold(
         settings.cpuNotification,
         settings.netNotification,
         settings.batteryNotification,
+        settings.memoryNotification,
         settings.logging,
     ) {
         val anythingOn = settings.cpuNotification || settings.netNotification ||
-            settings.batteryNotification || settings.logging
+            settings.batteryNotification || settings.memoryNotification || settings.logging
         if (anythingOn) {
             if (CpuNotificationService.canPostNotifications(context)) {
                 CpuNotificationService.start(context)
@@ -114,6 +115,7 @@ private fun MainScaffold(
                 if (settings.cpuNotification) Graph.settings.setCpuNotification(false)
                 if (settings.netNotification) Graph.settings.setNetNotification(false)
                 if (settings.batteryNotification) Graph.settings.setBatteryNotification(false)
+                if (settings.memoryNotification) Graph.settings.setMemoryNotification(false)
                 if (settings.logging) Graph.settings.setLogging(false)
             }
         }

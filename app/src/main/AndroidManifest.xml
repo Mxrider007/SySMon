@@ -62,7 +62,7 @@
             <!-- API 34+ / Play policy: state why no narrower FGS type fits. -->
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="User-enabled live CPU usage, network speed and battery readouts shown as persistent silent notifications, plus user-enabled performance logging to a local CSV file" />
+                android:value="User-enabled live CPU usage, memory, network speed and battery readouts shown as persistent silent notifications, plus user-enabled performance logging to a local CSV file" />
         </service>
     </application>
 </manifest>

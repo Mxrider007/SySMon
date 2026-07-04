@@ -105,6 +105,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
     val requestNotifPermission = rememberNotifPermissionRequest { vm.setCpuNotification(true) }
     val requestNetNotifPermission = rememberNotifPermissionRequest { vm.setNetNotification(true) }
     val requestBatNotifPermission = rememberNotifPermissionRequest { vm.setBatteryNotification(true) }
+    val requestMemNotifPermission = rememberNotifPermissionRequest { vm.setMemoryNotification(true) }
     val requestLogPermission = rememberNotifPermissionRequest { vm.setLogging(true) }
 
     val logStatus by vm.logStatus.collectAsStateWithLifecycle()
@@ -249,17 +250,6 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             }
             RowDivider()
             SettingRow(
-                label = stringResource(R.string.settings_cpu_notification_box),
-                description = stringResource(R.string.settings_cpu_notification_box_desc),
-            ) {
-                FluentToggle(
-                    checked = settings.cpuNotification && settings.cpuNotificationBox,
-                    onCheckedChange = vm::setCpuNotificationBox,
-                    enabled = settings.cpuNotification,
-                )
-            }
-            RowDivider()
-            SettingRow(
                 label = stringResource(R.string.settings_net_notification),
                 description = stringResource(R.string.settings_net_notification_desc),
             ) {
@@ -294,6 +284,40 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                             )
                         }
                     },
+                )
+            }
+            RowDivider()
+            SettingRow(
+                label = stringResource(R.string.settings_mem_notification),
+                description = stringResource(R.string.settings_mem_notification_desc),
+            ) {
+                FluentToggle(
+                    checked = settings.memoryNotification,
+                    onCheckedChange = { checked ->
+                        when {
+                            !checked -> vm.setMemoryNotification(false)
+                            CpuNotificationService.canPostNotifications(context) ->
+                                vm.setMemoryNotification(true)
+                            else -> requestMemNotifPermission.launch(
+                                Manifest.permission.POST_NOTIFICATIONS,
+                            )
+                        }
+                    },
+                )
+            }
+            RowDivider()
+            // One global switch: every enabled readout gets its live tile, so
+            // the row is meaningless until some readout is on.
+            SettingRow(
+                label = stringResource(R.string.settings_notification_boxes),
+                description = stringResource(R.string.settings_notification_boxes_desc),
+            ) {
+                val anyReadoutOn = settings.cpuNotification || settings.netNotification ||
+                    settings.batteryNotification || settings.memoryNotification
+                FluentToggle(
+                    checked = anyReadoutOn && settings.notificationBoxes,
+                    onCheckedChange = vm::setNotificationBoxes,
+                    enabled = anyReadoutOn,
                 )
             }
         }
