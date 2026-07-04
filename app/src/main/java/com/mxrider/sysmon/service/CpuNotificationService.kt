@@ -136,9 +136,14 @@ class CpuNotificationService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         // Enter the foreground within the grace window, before the first
         // sample or settings emission lands: a placeholder readout beats an
-        // ANR. The settings collector re-anchors within milliseconds if the
-        // CPU readout turns out to be the disabled one.
-        startInForeground(CPU_NOTIFICATION_ID, placeholderNotification(CPU_NOTIFICATION_ID))
+        // ANR. On repeat start commands (the UI calls start() on every
+        // toggle flip) this must re-post the CURRENT anchor, not CPU's:
+        // moving the anchor cancels the old anchor notification, and the
+        // settings collector cannot repair that — an unchanged StateFlow
+        // never re-emits, and a readout whose values are stable (a full
+        // idle battery) is then held blank by its own repaint guard.
+        val entryAnchor = if (anchorId != 0) anchorId else CPU_NOTIFICATION_ID
+        startInForeground(entryAnchor, placeholderNotification(entryAnchor))
         if (!running) {
             running = true
             scope.launch {
@@ -172,6 +177,19 @@ class CpuNotificationService : Service() {
                             delay(interval.intervalMs)
                         }
                     }
+            }
+        } else {
+            scope.launch {
+                // The placeholder above just overwrote the live anchor
+                // content; repaint everything enabled right away instead of
+                // waiting out the repaint guards.
+                stateMutex.withLock {
+                    lastCpuTitle = null
+                    lastNetTitle = null
+                    lastBatKey = null
+                    lastMemTitle = null
+                    update()
+                }
             }
         }
         // The user explicitly asked for a persistent readout; if the system
@@ -609,6 +627,12 @@ class CpuNotificationService : Service() {
             .setOngoing(true)
             .setOnlyAlertOnce(true)
             .setShowWhen(false)
+            // One single-child group per readout (the channel id is a handy
+            // stable key). Ungrouped, the ranker auto-groups 2+ readouts and
+            // the status bar then shows only the summary's static launcher
+            // glyph — hiding every live value icon. Single-child groups
+            // render standalone, so nothing else changes.
+            .setGroup(channelId)
             .setCategory(NotificationCompat.CATEGORY_SERVICE)
             // 31+ otherwise delays FGS notifications ~10s; a readout the
             // user just toggled on has to appear immediately.
