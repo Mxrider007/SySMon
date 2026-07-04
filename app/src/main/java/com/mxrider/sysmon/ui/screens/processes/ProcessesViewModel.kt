@@ -4,13 +4,18 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mxrider.sysmon.Graph
 import com.mxrider.sysmon.core.ProcessRow
+import com.mxrider.sysmon.core.UpdateSpeed
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -61,10 +66,29 @@ class ProcessesViewModel : ViewModel() {
                 false
             }
             _state.update { recompute(it.copy(showSystem = showSystem)) }
-            while (true) {
-                refreshNow()
-                delay(REFRESH_INTERVAL_MS)
-            }
+        }
+        // Refresh loop, gated on active UI subscribers: the VM is activity-
+        // scoped (Crossfade tabs) and this is the default start page, so an
+        // ungated loop would enumerate usage/storage/network stats for every
+        // installed app every 30s for as long as the process lives, even
+        // backgrounded. collectLatest cancels the loop when the screen is not
+        // collecting; PAUSED update speed also suspends auto-refresh (manual
+        // Refresh and the returning-visit reload still work).
+        viewModelScope.launch {
+            combine(
+                _state.subscriptionCount.map { it > 0 }.distinctUntilChanged(),
+                settingsStore.settings.map { it.updateSpeed == UpdateSpeed.PAUSED }
+                    .distinctUntilChanged(),
+            ) { subscribed, paused -> subscribed && !paused }
+                .distinctUntilChanged()
+                .collectLatest { active ->
+                    if (active) {
+                        while (true) {
+                            refreshNow()
+                            delay(REFRESH_INTERVAL_MS)
+                        }
+                    }
+                }
         }
     }
 

@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.drawText
@@ -81,7 +82,12 @@ fun PerfChart(
         } else null
     }
 
-    val dashEffect = remember { PathEffect.dashPathEffect(floatArrayOf(8f, 8f)) }
+    // 4dp on/off per contract; raw pixels would render near-solid on xxhdpi,
+    // erasing the only non-color cue distinguishing the secondary series.
+    val density = LocalDensity.current
+    val dashEffect = remember(density) {
+        with(density) { PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 4.dp.toPx())) }
+    }
     val linePath = remember { Path() }
     val fillPath = remember { Path() }
     val secondaryPath = remember { Path() }

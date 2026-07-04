@@ -142,7 +142,8 @@ data class UsageRow(
     val isSystem: Boolean,
     val screenTimeMs: Long,
     val lastUsed: Long,
-    val launches: Int,
+    /** Event-derived; null for multi-day ranges where events are pruned. */
+    val launches: Int?,
     val wifiBytes: Long?,
     val mobileBytes: Long?,
 )

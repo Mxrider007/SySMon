@@ -8,17 +8,21 @@
         android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
 
-    <!-- Core purpose of the app is device/app inspection; requires the
-         "broad app visibility" declaration in Play Console. -->
-    <uses-permission
-        android:name="android.permission.QUERY_ALL_PACKAGES"
-        tools:ignore="QueryAllPackagesPermission" />
-
     <uses-permission android:name="android.permission.KILL_BACKGROUND_PROCESSES" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
 
-    <!-- Deliberately NO INTERNET permission: nothing ever leaves the device. -->
+    <!-- Deliberately NO INTERNET permission: nothing ever leaves the device.
+         Deliberately NO QUERY_ALL_PACKAGES: task managers are not on Play's
+         permitted-use list and the declaration is a rejection/termination
+         risk for a new account. Launcher-intent queries below make every
+         user-facing app visible, which is the honest scope for this app;
+         packages surfaced by UsageStats events resolve through it too. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+    </queries>
 
     <application
         android:name=".SysMonApp"

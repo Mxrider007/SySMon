@@ -28,10 +28,10 @@ class DefaultNetworkMonitor(context: Context) : NetworkMonitor {
 
     private val lock = Any()
     private var prevElapsedMs = -1L
-    private var prevRx = 0L
-    private var prevTx = 0L
-    private var prevMobileRx = 0L
-    private var prevMobileTx = 0L
+    private var prevRx = -1L
+    private var prevTx = -1L
+    private var prevMobileRx = -1L
+    private var prevMobileTx = -1L
 
     override suspend fun sample(): NetworkSnapshot {
         val now = SystemClock.elapsedRealtime()
@@ -44,21 +44,29 @@ class DefaultNetworkMonitor(context: Context) : NetworkMonitor {
         var txRate = 0.0
         var mobileRxRate = 0.0
         var mobileTxRate = 0.0
+        var totalRx = 0L
+        var totalTx = 0L
         synchronized(lock) {
             if (prevElapsedMs >= 0) {
                 val deltaSec = (now - prevElapsedMs) / 1000.0
                 if (deltaSec > 0) {
-                    rxRate = (rx - prevRx).coerceAtLeast(0L) / deltaSec
-                    txRate = (tx - prevTx).coerceAtLeast(0L) / deltaSec
-                    mobileRxRate = (mobileRx - prevMobileRx).coerceAtLeast(0L) / deltaSec
-                    mobileTxRate = (mobileTx - prevMobileTx).coerceAtLeast(0L) / deltaSec
+                    rxRate = rate(rx, prevRx, deltaSec)
+                    txRate = rate(tx, prevTx, deltaSec)
+                    mobileRxRate = rate(mobileRx, prevMobileRx, deltaSec)
+                    mobileTxRate = rate(mobileTx, prevMobileTx, deltaSec)
                 }
             }
             prevElapsedMs = now
-            prevRx = rx
-            prevTx = tx
-            prevMobileRx = mobileRx
-            prevMobileTx = mobileTx
+            // Keep the last-known-good counter across a transient UNSUPPORTED
+            // read: overwriting with a sentinel would make the next valid
+            // sample compute a bytes-since-boot "spike" that flattens the
+            // autoscaled network chart for a full window.
+            if (rx >= 0L) prevRx = rx
+            if (tx >= 0L) prevTx = tx
+            if (mobileRx >= 0L) prevMobileRx = mobileRx
+            if (mobileTx >= 0L) prevMobileTx = mobileTx
+            totalRx = maxOf(prevRx, 0L)
+            totalTx = maxOf(prevTx, 0L)
         }
 
         val transport = currentTransport()
@@ -67,8 +75,8 @@ class DefaultNetworkMonitor(context: Context) : NetworkMonitor {
         return NetworkSnapshot(
             rxBytesPerSec = rxRate,
             txBytesPerSec = txRate,
-            totalRxBytes = rx,
-            totalTxBytes = tx,
+            totalRxBytes = totalRx,
+            totalTxBytes = totalTx,
             mobileRxBytesPerSec = mobileRxRate,
             mobileTxBytesPerSec = mobileTxRate,
             transport = transport,
@@ -78,15 +86,19 @@ class DefaultNetworkMonitor(context: Context) : NetworkMonitor {
         )
     }
 
-    /** TrafficStats.UNSUPPORTED (-1) and other negatives are treated as 0. */
+    /** TrafficStats.UNSUPPORTED and failures normalize to the -1 sentinel. */
     private inline fun counter(read: () -> Long): Long {
         val v = try {
             read()
         } catch (_: Exception) {
-            0L
+            -1L
         }
-        return if (v < 0L) 0L else v
+        return if (v < 0L) -1L else v
     }
+
+    /** A rate needs two valid readings; sentinel on either side means 0. */
+    private fun rate(cur: Long, prev: Long, deltaSec: Double): Double =
+        if (cur >= 0L && prev >= 0L) (cur - prev).coerceAtLeast(0L) / deltaSec else 0.0
 
     private fun currentTransport(): NetTransport = try {
         val cm = connectivityManager

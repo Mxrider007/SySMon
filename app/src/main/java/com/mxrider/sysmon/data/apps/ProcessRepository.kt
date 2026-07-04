@@ -5,6 +5,7 @@ import com.mxrider.sysmon.core.AppRepository
 import com.mxrider.sysmon.core.ProcStatus
 import com.mxrider.sysmon.core.ProcessRepository
 import com.mxrider.sysmon.core.ProcessRow
+import com.mxrider.sysmon.core.UsageAccess
 import com.mxrider.sysmon.core.UsageRange
 import com.mxrider.sysmon.core.UsageRepository
 import java.util.Calendar
@@ -19,10 +20,10 @@ class DefaultProcessRepository(
     context: Context,
     private val apps: AppRepository,
     private val usage: UsageRepository,
+    private val usageAccess: UsageAccess,
 ) : ProcessRepository {
 
     private val appContext = context.applicationContext
-    private val usageAccess = DefaultUsageAccess(appContext)
 
     override suspend fun processRows(): List<ProcessRow> {
         val hasAccess = usageAccess.hasPermission()

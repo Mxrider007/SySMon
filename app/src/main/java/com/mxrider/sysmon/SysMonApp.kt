@@ -78,7 +78,7 @@ object Graph {
         usageAccess = DefaultUsageAccess(app)
         apps = DefaultAppRepository(app)
         usage = DefaultUsageRepository(app)
-        processes = DefaultProcessRepository(app, apps, usage)
+        processes = DefaultProcessRepository(app, apps, usage, usageAccess)
         services = DefaultServiceRepository(app)
         startup = DefaultStartupRepository(app)
         users = DefaultUserRepository(app)

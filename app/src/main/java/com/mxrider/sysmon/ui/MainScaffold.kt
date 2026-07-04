@@ -12,15 +12,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.mxrider.sysmon.Graph
+import com.mxrider.sysmon.core.AccentOption
 import com.mxrider.sysmon.core.SysMonSettings
 import com.mxrider.sysmon.core.TabDestination
+import com.mxrider.sysmon.core.ThemeMode
 import com.mxrider.sysmon.ui.components.NavRail
 import com.mxrider.sysmon.ui.onboarding.OnboardingScreen
 import com.mxrider.sysmon.ui.screens.apphistory.AppHistoryScreen
@@ -36,16 +38,33 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun SysMonRoot() {
-    val settings by Graph.settings.settings.collectAsStateWithLifecycle(SysMonSettings.DEFAULT)
+    // Nullable until DataStore's first disk read lands: seeding with DEFAULT
+    // would flash the onboarding screen at every cold start for users who
+    // already finished it (and seed `tab` from the wrong start page).
+    val settings by produceState<SysMonSettings?>(null) {
+        Graph.settings.settings.collect { value = it }
+    }
     val scope = rememberCoroutineScope()
 
-    FluentTheme(themeMode = settings.themeMode, accent = settings.accent) {
-        if (!settings.onboardingDone) {
+    val loaded = settings
+    if (loaded == null) {
+        FluentTheme(themeMode = ThemeMode.SYSTEM, accent = AccentOption.BLUE) {
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .background(FluentTheme.colors.window),
+            )
+        }
+        return
+    }
+
+    FluentTheme(themeMode = loaded.themeMode, accent = loaded.accent) {
+        if (!loaded.onboardingDone) {
             OnboardingScreen(
                 onDone = { scope.launch { Graph.settings.setOnboardingDone(true) } },
             )
         } else {
-            MainScaffold(settings)
+            MainScaffold(loaded)
         }
     }
 }

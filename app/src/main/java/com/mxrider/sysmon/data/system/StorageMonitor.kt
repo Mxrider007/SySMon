@@ -28,7 +28,13 @@ class DefaultStorageMonitor(context: Context) : StorageMonitor {
             val storageVolumes = storageManager?.storageVolumes.orEmpty()
             for (volume in storageVolumes) {
                 try {
-                    if (volume.state != Environment.MEDIA_MOUNTED) continue
+                    // Read-only counts too: write-protected SD cards report
+                    // MEDIA_MOUNTED_READ_ONLY and StatFs works fine on them.
+                    if (volume.state != Environment.MEDIA_MOUNTED &&
+                        volume.state != Environment.MEDIA_MOUNTED_READ_ONLY
+                    ) {
+                        continue
+                    }
                     val directory: File? = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                         volume.directory
                     } else if (volume.isPrimary) {

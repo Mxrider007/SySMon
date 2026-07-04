@@ -31,7 +31,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mxrider.sysmon.Graph
 import com.mxrider.sysmon.R
@@ -66,6 +69,9 @@ fun AppHistoryScreen(modifier: Modifier = Modifier) {
     val state by vm.state.collectAsStateWithLifecycle()
     val range by vm.range.collectAsStateWithLifecycle()
     val colors = FluentTheme.colors
+
+    // The VM outlives tab switches; reload on revisit so rows never go stale.
+    LaunchedEffect(Unit) { vm.refreshIfStale() }
 
     val sinceDate = remember(state.rangeStartMillis) {
         DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(state.rangeStartMillis))
@@ -105,7 +111,7 @@ fun AppHistoryScreen(modifier: Modifier = Modifier) {
                 width = 90.dp,
                 alignEnd = true,
                 comparator = AppHistoryViewModel.COMPARATOR_LAUNCHES,
-            ) { row -> ValueCell(row.launches.toString()) },
+            ) { row -> ValueCell(row.launches?.toString() ?: DASH) },
             TableColumn<UsageRow>(
                 key = AppHistoryViewModel.COL_WIFI,
                 title = wifiTitle,
@@ -211,10 +217,15 @@ fun AppHistoryScreen(modifier: Modifier = Modifier) {
 @Composable
 private fun UsageAccessGate(onRecheck: () -> Unit, modifier: Modifier = Modifier) {
     val context = LocalContext.current
+    // repeatOnLifecycle: a plain delay-loop LaunchedEffect keeps polling the
+    // AppOps binder every 2s even while the activity is stopped.
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(Unit) {
-        while (true) {
-            delay(2_000L)
-            onRecheck()
+        lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            while (true) {
+                delay(2_000L)
+                onRecheck()
+            }
         }
     }
     EmptyState(

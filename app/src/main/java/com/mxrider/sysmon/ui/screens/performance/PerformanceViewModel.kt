@@ -18,7 +18,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -80,14 +82,21 @@ class PerformanceViewModel : ViewModel() {
         }
 
         // Keep windowPoints in sync with the selected speed. PAUSED retains
-        // the previous window so frozen charts keep their scale.
+        // the previous window so frozen charts keep their scale. When the
+        // cadence actually changes, drop the buffers: 500ms and 4s samples
+        // mixed under one "60 seconds" axis would be a wrong timeline.
         viewModelScope.launch {
+            var appliedIntervalMs: Long? = null
             Graph.settings.settings
                 .map { it.updateSpeed }
                 .distinctUntilChanged()
                 .collect { speed ->
                     if (speed != UpdateSpeed.PAUSED) {
                         val interval = speed.intervalMs
+                        if (appliedIntervalMs != null && appliedIntervalMs != interval) {
+                            clearHistories()
+                        }
+                        appliedIntervalMs = interval
                         _uiState.update {
                             it.copy(
                                 intervalMs = interval,
@@ -98,12 +107,44 @@ class PerformanceViewModel : ViewModel() {
                 }
         }
 
-        // Sampling loop. The ticker stops entirely while PAUSED.
+        // Sampling loop, gated on active UI subscribers. The VM is activity-
+        // scoped and outlives the screen (Crossfade tabs), so an ungated
+        // ticker would keep hitting /proc, sysfs and the battery HAL behind
+        // other tabs and after Home - a system monitor must not itself drain
+        // the battery. collectAsStateWithLifecycle drops the subscription on
+        // STOP/tab-switch, which cancels the inner collect via collectLatest.
         viewModelScope.launch {
-            ticker(Graph.settings.settings.map { it.updateSpeed }).collect { tick ->
-                onTick(tick)
-            }
+            _uiState.subscriptionCount
+                .map { it > 0 }
+                .distinctUntilChanged()
+                .collectLatest { active ->
+                    if (active) {
+                        // With PAUSED persisted the ticker never fires; take
+                        // one sample per visit so panels freeze on real data
+                        // instead of showing "Loading" forever.
+                        val speed = try {
+                            Graph.settings.settings.first().updateSpeed
+                        } catch (_: Exception) {
+                            UpdateSpeed.NORMAL
+                        }
+                        if (speed == UpdateSpeed.PAUSED) onTick(0L)
+                        ticker(Graph.settings.settings.map { it.updateSpeed }).collect { tick ->
+                            onTick(tick)
+                        }
+                    }
+                }
         }
+    }
+
+    private fun clearHistories() {
+        cpuHistory.clear()
+        memoryHistory.clear()
+        netRxHistory.clear()
+        netTxHistory.clear()
+        batteryHistory.clear()
+        storageHistory.clear()
+        gpuHistory.clear()
+        coreHistories.forEach { it.clear() }
     }
 
     /** Loads GPU info the first time the GPU panel is shown; provider caches. */
@@ -159,7 +200,9 @@ class PerformanceViewModel : ViewModel() {
 
         netRxHistory.push(batch.network.rxBytesPerSec.toFloat().coerceAtLeast(0f))
         netTxHistory.push(batch.network.txBytesPerSec.toFloat().coerceAtLeast(0f))
-        batteryHistory.push(batch.battery.levelPercent.toFloat().coerceIn(0f, 100f))
+        // Fraction like CPU/memory: the MiniChartTile autoscale would otherwise
+        // render 42% battery as a nearly-full sparkline (nice-ceiling of 50).
+        batteryHistory.push((batch.battery.levelPercent / 100f).coerceIn(0f, 1f))
         gpuHistory.push(0f)
 
         if (batch.storage != null) lastStorage = batch.storage

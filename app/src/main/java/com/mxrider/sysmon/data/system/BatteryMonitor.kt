@@ -30,8 +30,11 @@ class DefaultBatteryMonitor(context: Context) : BatteryMonitor {
             statusCode == BatteryManager.BATTERY_STATUS_FULL
 
         val level = levelPercent(intent)
+        // A known set of OEM kernels report EXTRA_VOLTAGE in µV (~3,850,000);
+        // anything over a 20 V plausibility ceiling gets scaled back to mV.
         val voltage = intent?.getIntExtra(BatteryManager.EXTRA_VOLTAGE, -1)
             ?.takeIf { it > 0 }
+            ?.let { if (it > 20_000) it / 1000 else it }
         val current = normalizedCurrentMicroA(statusCode)
         val power = if (voltage != null && current != null) {
             (voltage / 1000.0) * (current / 1_000_000.0)
@@ -65,8 +68,11 @@ class DefaultBatteryMonitor(context: Context) : BatteryMonitor {
     }
 
     private fun levelPercent(intent: Intent?): Int {
+        // 0 excluded: some older OEM HALs report 0 for "unsupported" instead
+        // of Integer.MIN_VALUE; a genuinely empty battery still reads 0 via
+        // the intent fallback below.
         val capacity = intProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
-        if (capacity != null && capacity in 0..100) return capacity
+        if (capacity != null && capacity in 1..100) return capacity
         if (intent != null) {
             val level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1)
             val scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1)

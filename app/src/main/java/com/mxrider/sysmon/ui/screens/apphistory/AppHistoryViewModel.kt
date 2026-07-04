@@ -56,6 +56,19 @@ class AppHistoryViewModel : ViewModel() {
         _range.value = range
     }
 
+    /**
+     * Reloads the current range when the data is older than [maxAgeMs]; the
+     * screen calls this on every visit so an app left in recents overnight
+     * doesn't present stale rows as "Today".
+     */
+    fun refreshIfStale(maxAgeMs: Long = 60_000L) {
+        if (System.currentTimeMillis() - lastLoadedAt > maxAgeMs) {
+            viewModelScope.launch { loadNow(_range.value) }
+        }
+    }
+
+    private var lastLoadedAt = 0L
+
     fun setSort(key: String, ascending: Boolean) {
         _state.update { recompute(it.copy(sortKey = key, ascending = ascending)) }
     }
@@ -96,6 +109,7 @@ class AppHistoryViewModel : ViewModel() {
         _state.update {
             recompute(it.copy(rows = rows, usageAccessGranted = granted, loading = false))
         }
+        lastLoadedAt = System.currentTimeMillis()
     }
 
     /**
@@ -124,7 +138,8 @@ class AppHistoryViewModel : ViewModel() {
 
         val COMPARATOR_SCREEN_TIME: Comparator<UsageRow> = compareBy { it.screenTimeMs }
 
-        val COMPARATOR_LAUNCHES: Comparator<UsageRow> = compareBy { it.launches }
+        /** Nulls (multi-day ranges have no launch counts) sort below every real value. */
+        val COMPARATOR_LAUNCHES: Comparator<UsageRow> = compareBy { it.launches ?: -1 }
 
         /** Nulls (no usage access) sort below every real value. */
         val COMPARATOR_WIFI: Comparator<UsageRow> = compareBy { it.wifiBytes ?: -1L }

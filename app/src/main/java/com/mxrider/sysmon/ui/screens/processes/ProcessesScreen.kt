@@ -37,7 +37,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mxrider.sysmon.Graph
 import com.mxrider.sysmon.R
@@ -292,10 +295,15 @@ fun ProcessesScreen(modifier: Modifier = Modifier) {
 @Composable
 private fun UsageAccessGate(onRecheck: () -> Unit) {
     val context = LocalContext.current
+    // repeatOnLifecycle: a plain delay-loop LaunchedEffect keeps polling the
+    // AppOps binder every 2s even while the activity is stopped.
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(Unit) {
-        while (true) {
-            delay(2_000L)
-            onRecheck()
+        lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            while (true) {
+                delay(2_000L)
+                onRecheck()
+            }
         }
     }
     EmptyState(

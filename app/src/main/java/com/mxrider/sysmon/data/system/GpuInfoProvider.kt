@@ -12,9 +12,11 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 /**
- * One-time GPU identification via a 1x1 offscreen EGL/GLES2 context. The
- * result (including a failed all-null result) is cached after the first
- * query; a [Mutex] guards against concurrent double-initialization.
+ * One-time GPU identification via a 1x1 offscreen EGL/GLES2 context. Only a
+ * successful result is cached forever (per the contract); transient EGL
+ * failures right after process start are retried on later calls, capped at
+ * [MAX_ATTEMPTS] before the all-null result is accepted as final. A [Mutex]
+ * guards against concurrent double-initialization.
  */
 class DefaultGpuInfoProvider : GpuInfoProvider {
 
@@ -22,13 +24,19 @@ class DefaultGpuInfoProvider : GpuInfoProvider {
 
     @Volatile
     private var cached: GpuInfo? = null
+    private var attempts = 0
 
     override suspend fun get(): GpuInfo {
         cached?.let { return it }
         return mutex.withLock {
-            cached ?: queryGpuInfo().also { cached = it }
+            cached ?: queryGpuInfo().also { info ->
+                attempts++
+                val success = info.renderer != null || info.vendor != null || info.glVersion != null
+                if (success || attempts >= MAX_ATTEMPTS) cached = info
+            }
         }
     }
+
 
     private fun queryGpuInfo(): GpuInfo {
         var display: EGLDisplay = EGL14.EGL_NO_DISPLAY
@@ -105,6 +113,7 @@ class DefaultGpuInfoProvider : GpuInfoProvider {
     }
 
     private companion object {
+        const val MAX_ATTEMPTS = 3
         val UNKNOWN = GpuInfo(renderer = null, vendor = null, glVersion = null)
     }
 }

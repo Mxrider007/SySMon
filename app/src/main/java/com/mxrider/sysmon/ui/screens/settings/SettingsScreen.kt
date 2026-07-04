@@ -293,7 +293,10 @@ private fun AccentSwatch(
                 Icon(
                     imageVector = Icons.Filled.Check,
                     contentDescription = null,
-                    tint = colors.onAccentControl,
+                    // The fill is always the light-mode control color, whose
+                    // validated foreground is white; onAccentControl is black
+                    // in dark theme and would vanish on these swatches.
+                    tint = Color.White,
                     modifier = Modifier.size(16.dp),
                 )
             }

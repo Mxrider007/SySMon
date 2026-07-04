@@ -41,12 +41,12 @@ internal fun BatteryPanel(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(260.dp),
-            maxValue = 100f,
+            maxValue = 1f,
             topLeftLabel = stringResource(R.string.perf_axis_charge),
             topRightLabel = stringResource(R.string.perf_axis_100),
             bottomLeftLabel = stringResource(R.string.perf_axis_60s),
             bottomRightLabel = stringResource(R.string.perf_axis_0),
-            valueFormatter = { "${it.toInt()}%" },
+            valueFormatter = { "${(it * 100).toInt()}%" },
             contentDescription = stringResource(R.string.perf_cd_battery, levelText),
         )
 
