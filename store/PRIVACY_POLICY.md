@@ -31,7 +31,7 @@ There are no ads, no analytics, no crash-reporting services, no trackers, and no
 
 If SysMon ever crashes, a technical crash log is written to the app's private storage **on your device only**. You can copy it — together with your device model, Android version and app version — from Settings ("Copy diagnostics") and choose to email it to support yourself. Nothing is ever sent automatically, and the log contains no personal information.
 
-If you enable the optional **performance logging** feature (off by default), SysMon records system metrics — CPU utilization, memory use, battery level/power/temperature, and network transfer rates — as a CSV file **in the app's private storage on your device only** (capped at 50 MB). It contains device metrics, not personal information, and it is never transmitted anywhere: it leaves your device only if you export it yourself through the system file picker, and you can clear it at any time in Settings. Uninstalling the app deletes it.
+If you enable the optional **performance logging** feature (off by default), SysMon records system metrics — CPU utilization, memory use, battery level/power/temperature, and network transfer rates — as a CSV file **in the app's private storage on your device only** (rolling, capped at 50 MB — the oldest samples are dropped first). It contains device metrics, not personal information, and it is never transmitted anywhere: it leaves your device only if you export it yourself through the system file picker, and you can clear it at any time in Settings. Uninstalling the app deletes it.
 
 ## What SysMon reads on your device
 

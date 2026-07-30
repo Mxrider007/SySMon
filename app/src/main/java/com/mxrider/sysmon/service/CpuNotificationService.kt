@@ -692,7 +692,7 @@ class CpuNotificationService : Service() {
         }
     }
 
-    /** One log row; false ends the loop (file full or unwritable). */
+    /** One log row; false ends the loop (unwritable — the ring never fills). */
     private suspend fun logOnce(): Boolean {
         val sample = LogSample(
             timeMillis = System.currentTimeMillis(),

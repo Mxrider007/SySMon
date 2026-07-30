@@ -22,22 +22,41 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /**
- * CSV performance log at `files/perf_log.csv` — deliberately OUTSIDE the
- * backed-up `datastore` path (backup_rules.xml is include-only): a file
- * allowed to grow to 50 MB would blow the ~25 MB auto-backup quota, and a
- * performance history of one device is meaningless restored onto another.
+ * CSV performance log as a TWO-FILE RING at `files/perf_log.csv` (active) +
+ * `files/perf_log.1.csv` (sealed previous) — deliberately OUTSIDE the
+ * backed-up `datastore` path (backup_rules.xml is include-only): 50 MB would
+ * blow the ~25 MB auto-backup quota, and a performance history of one device
+ * is meaningless restored onto another.
  *
- * All file access is serialized by a mutex and runs on Dispatchers.IO. The
- * first status collection (and the first append after process death) re-reads
- * the file, so counters survive restarts without a second bookkeeping file.
+ * When the active file reaches half of [PerfLogger.MAX_LOG_BYTES] it becomes
+ * the sealed previous file (replacing the older one) and a fresh active file
+ * starts, so logging RUNS FOREVER inside the cap and only the oldest half
+ * ever drops — a hard stop used to kill multi-day captures silently, which
+ * is exactly what the feature is for. Status, export and clear all treat the
+ * pair as one log: combined sizes and row counts, one header on export,
+ * oldest surviving row as the start time.
+ *
+ * All file access is serialized by a mutex and runs on Dispatchers.IO. Init
+ * (and rotation, which is rare) re-reads the files, so counters survive
+ * restarts without a bookkeeping file and self-heal if a rename ever fails.
  */
 class DefaultPerfLogger(context: Context) : PerfLogger {
 
     private val appContext = context.applicationContext
-    private val file: File get() = File(appContext.filesDir, LOG_FILE)
+    private val activeFile: File get() = File(appContext.filesDir, LOG_FILE)
+    private val previousFile: File get() = File(appContext.filesDir, PREVIOUS_FILE)
     private val mutex = Mutex()
     private var initialized = false
     private val state = MutableStateFlow(LogStatus(0, 0, null))
+
+    // Split bookkeeping so a normal append is O(1); the exposed LogStatus is
+    // always previous + active.
+    private var activeSize = 0L
+    private var activeRows = 0L
+    private var activeStartedAt: Long? = null
+    private var prevSize = 0L
+    private var prevRows = 0L
+    private var prevStartedAt: Long? = null
 
     override val status: Flow<LogStatus> = state.onStart {
         mutex.withLock { ensureInitLocked() }
@@ -45,11 +64,9 @@ class DefaultPerfLogger(context: Context) : PerfLogger {
 
     override suspend fun append(sample: LogSample): Boolean = mutex.withLock {
         ensureInitLocked()
-        val current = state.value
-        if (current.isFull) return@withLock false
         val newSize = withContext(Dispatchers.IO) {
             try {
-                val f = file
+                val f = activeFile
                 f.appendText(
                     buildString {
                         if (!f.exists() || f.length() == 0L) appendLine(HEADER)
@@ -62,11 +79,11 @@ class DefaultPerfLogger(context: Context) : PerfLogger {
             }
         }
         if (newSize < 0) return@withLock false
-        state.value = LogStatus(
-            sizeBytes = newSize,
-            rowCount = current.rowCount + 1,
-            startedAt = current.startedAt ?: sample.timeMillis,
-        )
+        activeSize = newSize
+        activeRows++
+        if (activeStartedAt == null) activeStartedAt = sample.timeMillis
+        if (activeSize >= ROTATE_BYTES) rotateLocked()
+        publishLocked()
         true
     }
 
@@ -74,13 +91,15 @@ class DefaultPerfLogger(context: Context) : PerfLogger {
         mutex.withLock {
             withContext(Dispatchers.IO) {
                 try {
-                    file.delete()
+                    activeFile.delete()
+                    previousFile.delete()
                 } catch (_: Exception) {
-                    // Re-read below reports whatever is really on disk.
+                    // refresh below reports whatever is really on disk.
                 }
+                refreshFromDiskLocked()
             }
-            state.value = withContext(Dispatchers.IO) { readStatus() }
             initialized = true
+            publishLocked()
         }
     }
 
@@ -88,12 +107,27 @@ class DefaultPerfLogger(context: Context) : PerfLogger {
         ensureInitLocked()
         withContext(Dispatchers.IO) {
             try {
-                val f = file
-                if (!f.exists()) return@withContext false
+                if (!previousFile.exists() && !activeFile.exists()) return@withContext false
                 // "wt" truncates: the picker may hand back an existing document.
                 val out = appContext.contentResolver.openOutputStream(uri, "wt")
                     ?: return@withContext false
-                out.use { stream -> f.inputStream().use { it.copyTo(stream) } }
+                out.bufferedWriter().use { writer ->
+                    // One header for the whole ring; each file then contributes
+                    // its data rows only (both carry their own header line).
+                    writer.write(HEADER)
+                    writer.newLine()
+                    for (f in listOf(previousFile, activeFile)) {
+                        if (!f.exists()) continue
+                        f.bufferedReader().useLines { lines ->
+                            lines.drop(1).forEach { line ->
+                                if (line.isNotBlank()) {
+                                    writer.write(line)
+                                    writer.newLine()
+                                }
+                            }
+                        }
+                    }
+                }
                 true
             } catch (_: Exception) {
                 false
@@ -101,38 +135,73 @@ class DefaultPerfLogger(context: Context) : PerfLogger {
         }
     }
 
+    /**
+     * Seals the active file as the previous one (dropping the older half) and
+     * re-reads disk truth — rotation is rare enough that a full rescan is
+     * cheap, and it self-heals the counters if the rename failed.
+     */
+    private suspend fun rotateLocked() {
+        withContext(Dispatchers.IO) {
+            try {
+                previousFile.delete()
+                activeFile.renameTo(previousFile)
+            } catch (_: Exception) {
+                // refresh below reports whatever really happened.
+            }
+            refreshFromDiskLocked()
+        }
+    }
+
     private suspend fun ensureInitLocked() {
         if (initialized) return
-        state.value = withContext(Dispatchers.IO) {
+        withContext(Dispatchers.IO) {
             repairTailNewline()
-            readStatus()
+            refreshFromDiskLocked()
         }
         initialized = true
+        publishLocked()
+    }
+
+    private fun publishLocked() {
+        state.value = LogStatus(
+            sizeBytes = prevSize + activeSize,
+            rowCount = prevRows + activeRows,
+            startedAt = prevStartedAt ?: activeStartedAt,
+        )
     }
 
     /**
      * A process death mid-append can leave a partial last line with no
      * terminator; the next append would then concatenate onto it and corrupt
-     * two rows into one. Terminating the tail once at init keeps every later
-     * append row-aligned (the partial row itself stays, truncated — honest
-     * about what was actually written).
+     * two rows into one. Only the active file can be torn — the previous file
+     * is always a cleanly-appended file that got renamed.
      */
     private fun repairTailNewline() {
         try {
-            val f = file
+            val f = activeFile
             if (!f.exists() || f.length() == 0L) return
             RandomAccessFile(f, "rw").use { raf ->
                 raf.seek(raf.length() - 1)
                 if (raf.read() != '\n'.code) raf.write('\n'.code)
             }
         } catch (_: Exception) {
-            // readStatus() reports whatever is really on disk.
+            // refreshFromDiskLocked() reports whatever is really on disk.
         }
     }
 
-    /** Streams the file once: size, data-row count, first row's timestamp. */
-    private fun readStatus(): LogStatus = try {
-        val f = file
+    /** Streams both files once: sizes, data-row counts, first timestamps. */
+    private fun refreshFromDiskLocked() {
+        val prev = scanFile(previousFile)
+        prevSize = prev.sizeBytes
+        prevRows = prev.rowCount
+        prevStartedAt = prev.startedAt
+        val active = scanFile(activeFile)
+        activeSize = active.sizeBytes
+        activeRows = active.rowCount
+        activeStartedAt = active.startedAt
+    }
+
+    private fun scanFile(f: File): LogStatus = try {
         if (!f.exists() || f.length() == 0L) {
             LogStatus(0, 0, null)
         } else {
@@ -189,6 +258,10 @@ class DefaultPerfLogger(context: Context) : PerfLogger {
 
     private companion object {
         const val LOG_FILE = "perf_log.csv"
+        const val PREVIOUS_FILE = "perf_log.1.csv"
+
+        /** Rotate at half the total cap: two files ≤ MAX_LOG_BYTES together. */
+        const val ROTATE_BYTES = PerfLogger.MAX_LOG_BYTES / 2
 
         /** Column names use unambiguous units; empty cell = unavailable. */
         const val HEADER = "time_iso,time_unix_ms,cpu_pct,cpu_source,cpu_avg_freq_khz," +

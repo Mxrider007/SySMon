@@ -61,35 +61,35 @@ interface DiagnosticsReporter {
     suspend fun buildReport(): String
 }
 
-/** Status of the on-device performance log (CSV in app-private storage). */
+/** Status of the on-device performance log (CSV ring in app-private storage). */
 data class LogStatus(
+    /** Combined bytes across the ring. */
     val sizeBytes: Long,
     val rowCount: Long,
-    /** Epoch millis of the oldest logged row; null while the log is empty. */
+    /** Epoch millis of the oldest SURVIVING row; null while the log is empty. */
     val startedAt: Long?,
-) {
-    /** At the cap the logger refuses appends and the service flips logging off. */
-    val isFull: Boolean get() = sizeBytes >= PerfLogger.MAX_LOG_BYTES
-}
+)
 
 /**
- * Append-only CSV performance log in app-private storage. Nothing leaves the
- * device unless the user exports it themselves through the system document
- * picker — SysMon still has no INTERNET permission.
+ * Rolling CSV performance log in app-private storage: bounded by
+ * [MAX_LOG_BYTES] as a two-file ring, so long captures keep running and only
+ * the oldest half ever drops. Nothing leaves the device unless the user
+ * exports it themselves through the system document picker — SysMon still
+ * has no INTERNET permission.
  */
 interface PerfLogger {
     val status: Flow<LogStatus>
 
-    /** Appends one row; false (nothing written) once the log file is full. */
+    /** Appends one row; false only when the row could not be written (I/O). */
     suspend fun append(sample: LogSample): Boolean
 
     suspend fun clear()
 
-    /** Copies the CSV to [uri]; false on any I/O failure. */
+    /** Writes the whole ring as one CSV to [uri]; false on any I/O failure. */
     suspend fun exportTo(uri: Uri): Boolean
 
     companion object {
-        /** Hard cap: bounded private storage, and a visible number the Settings caption can promise. */
+        /** Total cap across the ring: bounded private storage, and a visible number the Settings caption can promise. */
         const val MAX_LOG_BYTES = 50L * 1024 * 1024
     }
 }

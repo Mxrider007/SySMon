@@ -4,7 +4,11 @@ import android.app.ActivityManager
 import android.content.Context
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
+import android.net.TrafficStats
 import android.os.Build
+import android.provider.Settings
+import com.mxrider.sysmon.Graph
+import com.mxrider.sysmon.core.CpuSource
 import com.mxrider.sysmon.core.DiagnosticsReporter
 import com.mxrider.sysmon.core.UsageAccess
 import java.io.File
@@ -48,6 +52,7 @@ class DefaultDiagnostics(
     }
 
     override suspend fun buildReport(): String = withContext(Dispatchers.IO) {
+        val samplers = samplerMatrix()
         buildString {
             appendLine("SysMon diagnostics")
             appendLine("App: ${appVersion()}")
@@ -58,6 +63,7 @@ class DefaultDiagnostics(
             val config = appContext.resources.configuration
             appendLine("Locale: ${config.locales.toLanguageTags()}, font scale ${config.fontScale}")
             appendLine("Usage access: ${if (usageAccess.hasPermission()) "granted" else "not granted"}")
+            append(samplers)
             val crash = readLastCrash()
             if (crash == null) {
                 appendLine("Last crash: none recorded")
@@ -68,6 +74,51 @@ class DefaultDiagnostics(
             }
         }.trimEnd()
     }
+
+    /**
+     * What each sampler can actually see on THIS device — the answer to
+     * every "why does CPU show ~ / why is X a dash" support mail in one
+     * block, without asking the user to describe screens.
+     */
+    private suspend fun samplerMatrix(): String = buildString {
+        appendLine("Samplers:")
+        val cpu = runCatching { Graph.cpu.sample() }.getOrNull()
+        val online = cpu?.perCore?.count { it.online } ?: 0
+        appendLine(
+            "  CPU: ${cpu?.source?.name?.lowercase(Locale.US) ?: "unavailable"}" +
+                " (${online}/${cpu?.perCore?.size ?: 0} cores online)",
+        )
+        val mem = runCatching { Graph.memory.sample() }.getOrNull()
+        appendLine(
+            "  Memory: ${if (mem != null && mem.totalBytes > 0) "ok" else "unavailable"}," +
+                " meminfo cached ${if ((mem?.cachedBytes ?: -1L) >= 0L) "readable" else "blocked"}",
+        )
+        val rx = try {
+            TrafficStats.getTotalRxBytes()
+        } catch (_: Exception) {
+            TrafficStats.UNSUPPORTED.toLong()
+        }
+        appendLine(
+            "  TrafficStats: " +
+                if (rx > 0) "supported" else "unsupported",
+        )
+        val bat = runCatching { Graph.battery.sample() }.getOrNull()
+        appendLine(
+            "  Battery: current=${present(bat?.currentMicroA)}," +
+                " voltage=${present(bat?.voltageMilliV)}, temp=${present(bat?.temperatureC)}," +
+                " charge counter=${present(bat?.chargeCounterMicroAh)}," +
+                " design capacity=${present(bat?.designCapacityMAh)}," +
+                " cycles=${present(bat?.cycleCount)}",
+        )
+        val storage = runCatching { Graph.storage.sample() }.getOrNull()
+        appendLine("  Storage volumes: ${storage?.volumes?.size ?: 0}")
+        appendLine(
+            "  Overlay permission: " +
+                if (Settings.canDrawOverlays(appContext)) "granted" else "not granted",
+        )
+    }
+
+    private fun present(value: Any?): String = if (value != null) "yes" else "no"
 
     private fun writeCrash(thread: Thread, throwable: Throwable) {
         val trace = StringWriter().also { sw ->

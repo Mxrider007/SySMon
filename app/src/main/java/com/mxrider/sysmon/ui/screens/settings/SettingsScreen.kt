@@ -110,7 +110,6 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
 
     val logStatus by vm.logStatus.collectAsStateWithLifecycle()
     var showClearLog by rememberSaveable { mutableStateOf(false) }
-    val logFullMessage = stringResource(R.string.settings_log_full)
     val logExportedMessage = stringResource(R.string.settings_log_exported)
     val logExportFailedMessage = stringResource(R.string.settings_log_export_failed)
     val logClearedMessage = stringResource(R.string.settings_log_cleared)
@@ -381,8 +380,6 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                     onCheckedChange = { checked ->
                         when {
                             !checked -> vm.setLogging(false)
-                            logStatus.isFull ->
-                                Toast.makeText(context, logFullMessage, Toast.LENGTH_LONG).show()
                             CpuNotificationService.canPostNotifications(context) ->
                                 vm.setLogging(true)
                             else -> requestLogPermission.launch(
@@ -425,14 +422,6 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                     style = FluentTheme.typography.caption,
                     color = colors.textSecondary,
                 )
-                if (logStatus.isFull) {
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        text = logFullMessage,
-                        style = FluentTheme.typography.caption,
-                        color = colors.danger,
-                    )
-                }
                 Spacer(Modifier.height(12.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FluentStandardButton(

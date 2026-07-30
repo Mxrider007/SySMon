@@ -47,7 +47,7 @@
 
     <!-- Logging -->
     <string name="settings_logging">Performance logging</string>
-    <string name="settings_logging_desc">Records CPU, memory, battery and network to a CSV file on this device (up to 50 MB), even while the app is closed and the screen is off — this uses some battery. After a reboot it resumes the next time you open SysMon. Nothing leaves the device.</string>
+    <string name="settings_logging_desc">Records CPU, memory, battery and network to a CSV file on this device (rolling, up to 50 MB — the oldest samples drop first), even while the app is closed and the screen is off — this uses some battery. After a reboot it resumes the next time you open SysMon. Nothing leaves the device.</string>
     <string name="settings_log_interval">Log every</string>
     <string name="settings_log_interval_1s">1 second</string>
     <string name="settings_log_interval_5s">5 seconds</string>
@@ -56,7 +56,6 @@
     <string name="settings_log_status_empty">Log file: empty</string>
     <!-- %1$s = size ("1.2 MB"), %2$s = row count ("8,412"), %3$s = first-row date/time. -->
     <string name="settings_log_status">Log file: %1$s · %2$s rows · since %3$s</string>
-    <string name="settings_log_full">Log file is full (50 MB) — export or clear it to keep logging</string>
     <string name="settings_log_export">Export log (CSV)…</string>
     <string name="settings_log_clear">Clear log</string>
     <string name="settings_log_clear_title">Clear the log?</string>
