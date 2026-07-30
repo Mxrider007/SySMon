@@ -23,6 +23,8 @@ To do its job as a monitor, SysMon reads the following information **on-device o
 - **Installed-app metadata** (app names, versions, sizes, install dates, declared services and boot receivers) from the Android package manager.
 - **Hardware and system counters**: CPU frequency, memory, network traffic totals, storage, battery, temperature sensors and thermal status, and GPU information exposed by Android.
 
+If you use the **Export CSV** button on the Details screen, SysMon writes the app-inventory table you are looking at to a temporary file and hands it to the app you choose in the system share sheet. Nothing is sent anywhere on its own — you pick the destination, and the file contains only the information already shown on that screen.
+
 Your only stored data — settings (theme, accent color, update speed, start page, notification and logging preferences) and the optional performance log described above — is kept locally on your device.
 
 ## Honesty about what the app shows

@@ -9,7 +9,7 @@ A Windows 11 Task Manager–style system monitor for Android. Native Kotlin + Je
 | Win11 tab | SysMon screen | Data source |
 |---|---|---|
 | Processes | Processes — recently active apps, screen time, network & storage per app, End task | `UsageStatsManager`, `NetworkStatsManager`, `StorageStatsManager` |
-| Performance | Live 60-second charts: CPU (incl. per-core small multiples), Memory (+composition bar), Network (receive/send), Storage, Battery (power draw in watts + temperature, with a fuel-gauge capacity estimate), Thermal (OS throttling status + per-sensor temperatures where the device permits them), GPU info | `/proc`, `/sys` cpufreq, `/sys/class/thermal`, `ActivityManager`, `TrafficStats`, `BatteryManager`, `PowerManager`, `StorageManager`, EGL |
+| Performance | Live 60-second charts: CPU (incl. per-core small multiples), Memory (+composition bar), Network (receive/send), Storage, Battery (power draw in watts + temperature, with a fuel-gauge capacity estimate), Thermal (OS throttling status + per-sensor temperatures where the device permits them), GPU (identity always; total load only where the vendor's counter is readable, which is a minority of devices) | `/proc`, `/sys` cpufreq, `/sys/class/thermal`, `/sys/class/kgsl`, `ActivityManager`, `TrafficStats`, `BatteryManager`, `PowerManager`, `StorageManager`, EGL |
 | App history | Screen time / launches / Wi-Fi & mobile data per app over Today / 7 / 30 days | `UsageStatsManager`, `NetworkStatsManager` |
 | Startup apps | Apps registered for boot (`BOOT_COMPLETED` receivers) with impact heuristic | `PackageManager` |
 | Users | Device users & work profiles (Android exposes limited info) | `UserManager` |
