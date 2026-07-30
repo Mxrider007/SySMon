@@ -9,7 +9,7 @@ A Windows 11 Task Manager–style system monitor for Android. Native Kotlin + Je
 | Win11 tab | SysMon screen | Data source |
 |---|---|---|
 | Processes | Processes — recently active apps, screen time, network & storage per app, End task | `UsageStatsManager`, `NetworkStatsManager`, `StorageStatsManager` |
-| Performance | Live 60-second charts: CPU (incl. per-core small multiples), Memory (+composition bar), Network (receive/send), Storage, Battery (power draw in watts + temperature, with a fuel-gauge capacity estimate), GPU info | `/proc`, `/sys` cpufreq, `ActivityManager`, `TrafficStats`, `BatteryManager`, `StorageManager`, EGL |
+| Performance | Live 60-second charts: CPU (incl. per-core small multiples), Memory (+composition bar), Network (receive/send), Storage, Battery (power draw in watts + temperature, with a fuel-gauge capacity estimate), Thermal (OS throttling status + per-sensor temperatures where the device permits them), GPU info | `/proc`, `/sys` cpufreq, `/sys/class/thermal`, `ActivityManager`, `TrafficStats`, `BatteryManager`, `PowerManager`, `StorageManager`, EGL |
 | App history | Screen time / launches / Wi-Fi & mobile data per app over Today / 7 / 30 days | `UsageStatsManager`, `NetworkStatsManager` |
 | Startup apps | Apps registered for boot (`BOOT_COMPLETED` receivers) with impact heuristic | `PackageManager` |
 | Users | Device users & work profiles (Android exposes limited info) | `UserManager` |
@@ -20,7 +20,7 @@ A Windows 11 Task Manager–style system monitor for Android. Native Kotlin + Je
 ### Honest platform limits (surfaced in-app, never faked)
 - Per-process CPU/RAM of *other* apps is not available to third-party apps on modern Android. CPU utilization is measured from `/proc/stat` where readable, otherwise estimated from per-core frequency scaling and labeled as such.
 - The optional "CPU usage in notification" readout (foreground service, off by default) shows the same figure under the same rules — estimates stay marked with ~, and sampling pauses while the screen is off.
-- The optional floating mini-monitor (same service, off by default, needs "Display over other apps") shows live CPU/memory/network/battery in a draggable always-on-top card under the same honesty rules; if the special access is revoked, the toggle turns itself off rather than pretend.
+- The optional floating mini-monitor (same service, off by default, needs "Display over other apps") shows live CPU/memory/network/battery in a draggable always-on-top card under the same honesty rules; if the special access is revoked, the toggle turns itself off rather than pretend. Android itself hides *all* third-party overlays while security-sensitive screens are in front (the Settings app does this to prevent tapjacking), so the card disappears there and returns on its own — that is the OS protecting you, not a failure.
 - The home-screen widget (Glance) samples at refresh time — ↻ tap or the platform's 30-minute cycle — and stamps every card with "Updated HH:mm" instead of passing a stale number off as live. CPU and network get a real one-second two-sample window per refresh, never a fabricated first-call zero.
 - "End task" uses `killBackgroundProcesses` (a no-op for other apps since API 34) and always offers the App-info deep link where the user can Force stop.
 - Live service state is not exposed; the Services screen shows declared services.
