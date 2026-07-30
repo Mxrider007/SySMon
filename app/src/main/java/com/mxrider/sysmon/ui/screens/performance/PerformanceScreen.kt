@@ -170,7 +170,7 @@ private fun PanelContent(panel: PerfPanel, state: PerfUiState, vm: PerformanceVi
         PerfPanel.MEMORY -> MemoryPanel(state, vm.memoryHistory)
         PerfPanel.NETWORK -> NetworkPanel(state, vm.netRxHistory, vm.netTxHistory)
         PerfPanel.STORAGE -> StoragePanel(state)
-        PerfPanel.BATTERY -> BatteryPanel(state, vm.batteryHistory)
+        PerfPanel.BATTERY -> BatteryPanel(state, vm.batteryPowerHistory, vm.batteryTempHistory)
         PerfPanel.GPU -> GpuPanel(state)
     }
 }

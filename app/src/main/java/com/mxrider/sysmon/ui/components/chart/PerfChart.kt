@@ -51,6 +51,12 @@ fun PerfChart(
     modifier: Modifier = Modifier,
     maxValue: Float = 1f,
     autoScale: Boolean = false,
+    /**
+     * Auto-scale floor. The default fits byte-rate series (1 KiB/s); series
+     * in other units (watts) pass their own floor so idle noise never
+     * renders full-height.
+     */
+    minAutoScale: Float = MIN_AUTO_SCALE,
     secondaryHistory: ChartHistory? = null,
     topLeftLabel: String? = null,
     topRightLabel: String? = null,
@@ -181,6 +187,7 @@ fun PerfChart(
                 windowPoints = windowPoints,
                 maxValue = maxValue,
                 autoScale = autoScale,
+                minAutoScale = minAutoScale,
                 width = w,
                 height = h,
             )
@@ -345,6 +352,7 @@ private class ChartGeometryCache {
     private var windowPoints = 0
     private var maxValue = 0f
     private var autoScale = false
+    private var minAutoScale = 0f
     private var width = 0f
     private var height = 0f
 
@@ -366,6 +374,7 @@ private class ChartGeometryCache {
         windowPoints: Int,
         maxValue: Float,
         autoScale: Boolean,
+        minAutoScale: Float,
         width: Float,
         height: Float,
     ) {
@@ -374,6 +383,7 @@ private class ChartGeometryCache {
             windowPoints == this.windowPoints &&
             maxValue == this.maxValue &&
             autoScale == this.autoScale &&
+            minAutoScale == this.minAutoScale &&
             width == this.width &&
             height == this.height
         ) {
@@ -384,6 +394,7 @@ private class ChartGeometryCache {
         this.windowPoints = windowPoints
         this.maxValue = maxValue
         this.autoScale = autoScale
+        this.minAutoScale = minAutoScale
         this.width = width
         this.height = height
 
@@ -397,7 +408,7 @@ private class ChartGeometryCache {
             if (secondary != null) {
                 for (v in secondary) if (v.isFinite() && v > windowMax) windowMax = v
             }
-            niceCeil(max(windowMax, MIN_AUTO_SCALE))
+            niceCeil(max(windowMax, minAutoScale))
         } else {
             maxValue
         }

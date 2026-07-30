@@ -22,7 +22,8 @@ import java.util.Locale
 @Composable
 internal fun BatteryPanel(
     state: PerfUiState,
-    history: ChartHistory,
+    powerHistory: ChartHistory,
+    tempHistory: ChartHistory,
     modifier: Modifier = Modifier,
 ) {
     val bat = state.battery
@@ -40,19 +41,46 @@ internal fun BatteryPanel(
         )
         Spacer(Modifier.height(12.dp))
 
+        // Power draw, not level: over a 60-second window the level is a flat
+        // line on every healthy phone, while draw is the signal people open
+        // this panel for. Magnitude only — the signed Power stat below keeps
+        // the charge/discharge direction.
         PerfChart(
-            history = history,
+            history = powerHistory,
             windowPoints = state.windowPoints,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(260.dp),
-            maxValue = 1f,
-            topLeftLabel = stringResource(R.string.perf_axis_charge),
-            topRightLabel = stringResource(R.string.perf_axis_100),
+                .height(200.dp),
+            autoScale = true,
+            minAutoScale = 1f, // watts, not bytes: 1 W floor keeps idle honest
+            topLeftLabel = stringResource(R.string.perf_axis_power),
             bottomLeftLabel = stringResource(R.string.perf_axis_60s),
             bottomRightLabel = stringResource(R.string.perf_axis_0),
-            valueFormatter = { "${(it * 100).toInt()}%" },
-            contentDescription = stringResource(R.string.perf_cd_battery, levelText),
+            valueFormatter = { Format.watts(it.toDouble()) },
+            contentDescription = stringResource(
+                R.string.perf_cd_battery_power,
+                bat?.powerWatts?.let { Format.watts(it) } ?: DASH,
+            ),
+        )
+        Spacer(Modifier.height(12.dp))
+        // Fixed 0-50 °C so a healthy ~30 °C reads mid-chart and heat shows as
+        // a real climb; autoscale would zoom noise into drama.
+        PerfChart(
+            history = tempHistory,
+            windowPoints = state.windowPoints,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(120.dp),
+            maxValue = 50f,
+            topLeftLabel = stringResource(R.string.perf_axis_temperature),
+            topRightLabel = stringResource(R.string.perf_axis_50c),
+            bottomLeftLabel = stringResource(R.string.perf_axis_60s),
+            bottomRightLabel = stringResource(R.string.perf_axis_0),
+            valueFormatter = { Format.celsius(it.toDouble()) },
+            contentDescription = stringResource(
+                R.string.perf_cd_battery_temp,
+                bat?.temperatureC?.let { Format.celsius(it) } ?: DASH,
+            ),
         )
 
         Spacer(Modifier.height(16.dp))
@@ -110,6 +138,27 @@ internal fun BatteryPanel(
             StatTile(
                 label = stringResource(R.string.perf_battery_cycles),
                 value = bat?.cycleCount?.toString() ?: DASH,
+            )
+            // Wear estimate: fuel-gauge charge counter extrapolated by level,
+            // against the ROM's design figure where readable. Every part is
+            // an estimate and says so; missing parts degrade to a dash, never
+            // to an invented number.
+            val estFull = bat?.estimatedFullCapacityMAh()
+            val design = bat?.designCapacityMAh
+            StatTile(
+                label = stringResource(R.string.perf_battery_capacity),
+                value = estFull?.let {
+                    String.format(Locale.US, "~%,d mAh", it.toInt())
+                } ?: DASH,
+                secondary = when {
+                    estFull != null && design != null -> stringResource(
+                        R.string.perf_battery_capacity_of_design,
+                        (estFull * 100.0 / design).toInt(),
+                        String.format(Locale.US, "%,d", design.toInt()),
+                    )
+                    estFull != null -> stringResource(R.string.perf_battery_capacity_basis)
+                    else -> null
+                },
             )
         }
     }

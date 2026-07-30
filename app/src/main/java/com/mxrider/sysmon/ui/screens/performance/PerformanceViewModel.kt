@@ -53,6 +53,8 @@ class PerformanceViewModel : ViewModel() {
     val netRxHistory = ChartHistory(HISTORY_CAPACITY)
     val netTxHistory = ChartHistory(HISTORY_CAPACITY)
     val batteryHistory = ChartHistory(HISTORY_CAPACITY)
+    val batteryPowerHistory = ChartHistory(HISTORY_CAPACITY)
+    val batteryTempHistory = ChartHistory(HISTORY_CAPACITY)
 
     /** Fed with the latest used fraction each tick (flat line between storage samples). */
     val storageHistory = ChartHistory(HISTORY_CAPACITY)
@@ -142,6 +144,8 @@ class PerformanceViewModel : ViewModel() {
         netRxHistory.clear()
         netTxHistory.clear()
         batteryHistory.clear()
+        batteryPowerHistory.clear()
+        batteryTempHistory.clear()
         storageHistory.clear()
         gpuHistory.clear()
         coreHistories.forEach { it.clear() }
@@ -203,6 +207,12 @@ class PerformanceViewModel : ViewModel() {
         // Fraction like CPU/memory: the MiniChartTile autoscale would otherwise
         // render 42% battery as a nearly-full sparkline (nice-ceiling of 50).
         batteryHistory.push((batch.battery.levelPercent / 100f).coerceIn(0f, 1f))
+        // Magnitude: PerfChart plots 0..max, and the panel's signed Power stat
+        // right under the chart carries the charging/discharging direction.
+        batteryPowerHistory.push(
+            batch.battery.powerWatts?.let { kotlin.math.abs(it).toFloat() } ?: Float.NaN,
+        )
+        batteryTempHistory.push(batch.battery.temperatureC?.toFloat() ?: Float.NaN)
         // Android exposes no GPU load to third-party apps; NaN renders the
         // sparkline blank ("no data"), where a pushed 0 would fabricate a
         // measured flat 0 % — the exact thing the app promises never to do.

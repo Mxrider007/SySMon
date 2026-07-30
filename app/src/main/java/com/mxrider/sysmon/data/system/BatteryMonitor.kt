@@ -58,6 +58,11 @@ class DefaultBatteryMonitor(context: Context) : BatteryMonitor {
             technology = intent?.getStringExtra(BatteryManager.EXTRA_TECHNOLOGY),
             cycleCount = cycleCount(intent),
             status = status,
+            // Plausibility 50 mAh..20 Ah: outside that the HAL is reporting
+            // garbage (some report µC or placeholder constants).
+            chargeCounterMicroAh = intProperty(BatteryManager.BATTERY_PROPERTY_CHARGE_COUNTER)
+                ?.toLong()?.takeIf { it in 50_000..20_000_000 },
+            designCapacityMAh = BatteryDesignCapacity.mAh(appContext),
         )
     }
 
@@ -175,5 +180,30 @@ class DefaultBatteryMonitor(context: Context) : BatteryMonitor {
 
         /** BatteryManager.BATTERY_PLUGGED_DOCK, constant value 8 (API 33+). */
         const val BATTERY_PLUGGED_DOCK = 8
+    }
+}
+
+/**
+ * Design capacity from the ROM's PowerProfile overlay, via reflection —
+ * there is no public API for it. The sysfs `charge_full_design` nodes are
+ * SELinux-blocked for apps on modern Android (verified: even the adb shell
+ * gets Permission denied on the test device), so this reflection is the only
+ * honest source left; where a ROM blocks it too, the UI degrades to a dash.
+ * Resolved once and cached: the value is a build-time constant.
+ */
+internal object BatteryDesignCapacity {
+    @Volatile private var cached: Double? = null
+
+    @Volatile private var resolved = false
+
+    fun mAh(context: Context): Double? {
+        if (resolved) return cached
+        cached = runCatching {
+            val cls = Class.forName("com.android.internal.os.PowerProfile")
+            val profile = cls.getConstructor(Context::class.java).newInstance(context)
+            cls.getMethod("getBatteryCapacity").invoke(profile) as Double
+        }.getOrNull()?.takeIf { it in 100.0..20_000.0 } // placeholder overlays report 0 or 1000000
+        resolved = true
+        return cached
     }
 }

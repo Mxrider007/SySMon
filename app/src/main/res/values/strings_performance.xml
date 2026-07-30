@@ -19,11 +19,13 @@
     <!-- Chart axis labels -->
     <string name="perf_axis_utilization" formatted="false">% Utilization</string>
     <string name="perf_axis_100" formatted="false">100%</string>
+    <string name="perf_axis_power">Power draw</string>
+    <string name="perf_axis_temperature">Temperature</string>
+    <string name="perf_axis_50c">50 °C</string>
     <string name="perf_axis_60s">60 seconds</string>
     <string name="perf_axis_0">0</string>
     <string name="perf_axis_memory_usage">Memory usage</string>
     <string name="perf_axis_throughput">Throughput</string>
-    <string name="perf_axis_charge" formatted="false">% Charge</string>
 
     <!-- CPU panel -->
     <string name="perf_stat_utilization">Utilization</string>
@@ -98,6 +100,10 @@
     <string name="perf_battery_health">Health</string>
     <string name="perf_battery_technology">Technology</string>
     <string name="perf_battery_cycles">Charge cycles</string>
+    <string name="perf_battery_capacity">Capacity (est.)</string>
+    <!-- %1$d = whole percent, %2$s = design mAh, e.g. "~99% of 2,683 mAh design". -->
+    <string name="perf_battery_capacity_of_design">~%1$d%% of %2$s mAh design</string>
+    <string name="perf_battery_capacity_basis">fuel-gauge estimate</string>
 
     <!-- GPU panel -->
     <string name="perf_gpu_renderer">Renderer</string>
@@ -109,6 +115,7 @@
     <string name="perf_cd_cpu">CPU utilization chart, currently %1$s</string>
     <string name="perf_cd_core">Core %1$d utilization chart, currently %2$s</string>
     <string name="perf_cd_memory">Memory usage chart, currently %1$s</string>
+    <string name="perf_cd_battery_power">Battery power draw chart, currently %1$s</string>
+    <string name="perf_cd_battery_temp">Battery temperature chart, currently %1$s</string>
     <string name="perf_cd_network">Network throughput chart, receiving %1$s, sending %2$s</string>
-    <string name="perf_cd_battery">Battery level chart, currently %1$s</string>
 </resources>

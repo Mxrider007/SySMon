@@ -9,7 +9,7 @@ A Windows 11 Task Manager–style system monitor for Android. Native Kotlin + Je
 | Win11 tab | SysMon screen | Data source |
 |---|---|---|
 | Processes | Processes — recently active apps, screen time, network & storage per app, End task | `UsageStatsManager`, `NetworkStatsManager`, `StorageStatsManager` |
-| Performance | Live 60-second charts: CPU (incl. per-core small multiples), Memory (+composition bar), Network (receive/send), Storage, Battery (power draw in watts), GPU info | `/proc`, `/sys` cpufreq, `ActivityManager`, `TrafficStats`, `BatteryManager`, `StorageManager`, EGL |
+| Performance | Live 60-second charts: CPU (incl. per-core small multiples), Memory (+composition bar), Network (receive/send), Storage, Battery (power draw in watts + temperature, with a fuel-gauge capacity estimate), GPU info | `/proc`, `/sys` cpufreq, `ActivityManager`, `TrafficStats`, `BatteryManager`, `StorageManager`, EGL |
 | App history | Screen time / launches / Wi-Fi & mobile data per app over Today / 7 / 30 days | `UsageStatsManager`, `NetworkStatsManager` |
 | Startup apps | Apps registered for boot (`BOOT_COMPLETED` receivers) with impact heuristic | `PackageManager` |
 | Users | Device users & work profiles (Android exposes limited info) | `UserManager` |

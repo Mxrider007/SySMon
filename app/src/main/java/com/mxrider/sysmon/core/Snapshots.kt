@@ -88,7 +88,22 @@ data class BatterySnapshot(
     /** Charge cycles, API 34+; null when unavailable. */
     val cycleCount: Int?,
     val status: String,
-)
+    /** Fuel-gauge charge counter in microampere-hours; null if unsupported. */
+    val chargeCounterMicroAh: Long?,
+    /** ROM PowerProfile design capacity in mAh; null where blocked/absent. */
+    val designCapacityMAh: Double?,
+) {
+    /**
+     * Estimated FULL capacity in mAh, extrapolated from the fuel gauge:
+     * charge counter scaled by the level. Levels under 20 % amplify gauge
+     * error too much to be honest, so they return null.
+     */
+    fun estimatedFullCapacityMAh(): Double? {
+        val counter = chargeCounterMicroAh ?: return null
+        if (levelPercent < 20) return null
+        return counter / 1000.0 * 100.0 / levelPercent
+    }
+}
 
 data class VolumeInfo(
     val label: String,
