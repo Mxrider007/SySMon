@@ -112,6 +112,14 @@ class DefaultDiagnostics(
         )
         val storage = runCatching { Graph.storage.sample() }.getOrNull()
         appendLine("  Storage volumes: ${storage?.volumes?.size ?: 0}")
+        val thermal = runCatching { Graph.thermal.sample() }.getOrNull()
+        appendLine(
+            "  Thermal: status=${thermal?.status?.name?.lowercase(Locale.US) ?: "unavailable"}," +
+                " headroom=${present(thermal?.headroom)}," +
+                " zones=${thermal?.zones?.size ?: 0}" +
+                " (${thermal?.zoneAccess?.name?.lowercase(Locale.US) ?: "unknown"}," +
+                " ${thermal?.hiddenZoneCount ?: 0} implausible)",
+        )
         appendLine(
             "  Overlay permission: " +
                 if (Settings.canDrawOverlays(appContext)) "granted" else "not granted",

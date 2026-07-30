@@ -105,6 +105,51 @@ data class BatterySnapshot(
     }
 }
 
+/**
+ * The OS's own throttling verdict (PowerManager, API 29+). This is the one
+ * thermal signal Android guarantees to every app, so it anchors the panel on
+ * devices whose sensor files are unreadable.
+ */
+enum class ThermalStatus { NONE, LIGHT, MODERATE, SEVERE, CRITICAL, EMERGENCY, SHUTDOWN, UNKNOWN }
+
+/** Why the per-sensor list is empty — "blocked" and "none exist" are different truths. */
+enum class ZoneAccess {
+    /** At least one zone produced a plausible reading. */
+    OK,
+
+    /** `/sys/class/thermal` exists but SELinux/DAC denies this app's reads. */
+    BLOCKED,
+
+    /** The kernel exposes no thermal zones at all. */
+    ABSENT,
+}
+
+/**
+ * One kernel thermal zone. [rawType] is kept verbatim next to the prettified
+ * [name] so a curious user can always see what the kernel actually called it.
+ */
+data class ThermalZone(
+    val name: String,
+    val rawType: String,
+    val temperatureC: Double,
+)
+
+data class ThermalSnapshot(
+    val status: ThermalStatus,
+    /**
+     * Normalized thermal headroom forecast (API 30+): 1.0 means throttling is
+     * imminent. Null where the device does not implement it — most do not.
+     */
+    val headroom: Float?,
+    /** Plausible zones only, hottest first. */
+    val zones: List<ThermalZone>,
+    val zoneAccess: ZoneAccess,
+    /** Zones discovered but omitted this sample because their value was implausible. */
+    val hiddenZoneCount: Int,
+) {
+    val hottest: ThermalZone? get() = zones.firstOrNull()
+}
+
 data class VolumeInfo(
     val label: String,
     val totalBytes: Long,

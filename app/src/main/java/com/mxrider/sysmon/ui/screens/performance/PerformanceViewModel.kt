@@ -12,6 +12,7 @@ import com.mxrider.sysmon.core.GpuInfo
 import com.mxrider.sysmon.core.MemorySnapshot
 import com.mxrider.sysmon.core.NetworkSnapshot
 import com.mxrider.sysmon.core.StorageSnapshot
+import com.mxrider.sysmon.core.ThermalSnapshot
 import com.mxrider.sysmon.core.UpdateSpeed
 import com.mxrider.sysmon.core.ticker
 import kotlinx.coroutines.Dispatchers
@@ -38,6 +39,7 @@ data class PerfUiState(
     val network: NetworkSnapshot? = null,
     val battery: BatterySnapshot? = null,
     val storage: StorageSnapshot? = null,
+    val thermal: ThermalSnapshot? = null,
     val gpu: GpuInfo? = null,
     /** Samples visible in each chart = 60 s / update interval, min 15. */
     val windowPoints: Int = (60_000L / UpdateSpeed.NORMAL.intervalMs).toInt(),
@@ -58,6 +60,9 @@ class PerformanceViewModel : ViewModel() {
 
     /** Fed with the latest used fraction each tick (flat line between storage samples). */
     val storageHistory = ChartHistory(HISTORY_CAPACITY)
+
+    /** Hottest zone per tick; NaN whenever no sensor is readable. */
+    val thermalHistory = ChartHistory(HISTORY_CAPACITY)
 
     /** Info-only tile: a flat zero series — no per-app GPU data exists on Android. */
     val gpuHistory = ChartHistory(HISTORY_CAPACITY)
@@ -147,6 +152,7 @@ class PerformanceViewModel : ViewModel() {
         batteryPowerHistory.clear()
         batteryTempHistory.clear()
         storageHistory.clear()
+        thermalHistory.clear()
         gpuHistory.clear()
         coreHistories.forEach { it.clear() }
     }
@@ -175,6 +181,7 @@ class PerformanceViewModel : ViewModel() {
                     network = Graph.network.sample(),
                     battery = Graph.battery.sample(),
                     storage = if (sampleStorage) Graph.storage.sample() else null,
+                    thermal = Graph.thermal.sample(),
                 )
             }
         } catch (_: Exception) {
@@ -221,6 +228,11 @@ class PerformanceViewModel : ViewModel() {
         if (batch.storage != null) lastStorage = batch.storage
         val storage = lastStorage
         storageHistory.push(storageUsedFraction(storage) ?: Float.NaN)
+        // No readable sensor pushes NaN (blank chart = "no data"), never a 0 °C
+        // that would read as a real, absurdly cold measurement.
+        thermalHistory.push(
+            batch.thermal.hottest?.temperatureC?.toFloat() ?: Float.NaN,
+        )
 
         _uiState.update {
             it.copy(
@@ -229,6 +241,7 @@ class PerformanceViewModel : ViewModel() {
                 network = batch.network,
                 battery = batch.battery,
                 storage = storage,
+                thermal = batch.thermal,
                 coreHistoryCount = coreHistories.size,
             )
         }
@@ -252,4 +265,5 @@ private data class TickBatch(
     val network: NetworkSnapshot,
     val battery: BatterySnapshot,
     val storage: StorageSnapshot?,
+    val thermal: ThermalSnapshot,
 )

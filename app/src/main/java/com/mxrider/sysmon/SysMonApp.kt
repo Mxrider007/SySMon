@@ -16,6 +16,7 @@ import com.mxrider.sysmon.core.SettingsStore
 import com.mxrider.sysmon.core.StartupRepository
 import com.mxrider.sysmon.core.StorageMonitor
 import com.mxrider.sysmon.core.TaskKiller
+import com.mxrider.sysmon.core.ThermalMonitor
 import com.mxrider.sysmon.core.UsageAccess
 import com.mxrider.sysmon.core.UsageRepository
 import com.mxrider.sysmon.core.UserRepository
@@ -35,6 +36,7 @@ import com.mxrider.sysmon.data.system.DefaultGpuInfoProvider
 import com.mxrider.sysmon.data.system.DefaultMemoryMonitor
 import com.mxrider.sysmon.data.system.DefaultNetworkMonitor
 import com.mxrider.sysmon.data.system.DefaultStorageMonitor
+import com.mxrider.sysmon.data.system.DefaultThermalMonitor
 import com.mxrider.sysmon.settings.DefaultSettingsStore
 
 class SysMonApp : Application() {
@@ -59,6 +61,7 @@ object Graph {
     lateinit var network: NetworkMonitor; private set
     lateinit var battery: BatteryMonitor; private set
     lateinit var storage: StorageMonitor; private set
+    lateinit var thermal: ThermalMonitor; private set
     lateinit var gpu: GpuInfoProvider; private set
 
     lateinit var usageAccess: UsageAccess; private set
@@ -86,6 +89,7 @@ object Graph {
         network = DefaultNetworkMonitor(app)
         battery = DefaultBatteryMonitor(app)
         storage = DefaultStorageMonitor(app)
+        thermal = DefaultThermalMonitor(app)
         gpu = DefaultGpuInfoProvider()
 
         apps = DefaultAppRepository(app)

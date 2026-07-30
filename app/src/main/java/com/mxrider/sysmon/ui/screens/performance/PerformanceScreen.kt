@@ -38,7 +38,7 @@ import com.mxrider.sysmon.ui.components.chart.MiniChartTile
 import com.mxrider.sysmon.ui.theme.FluentMetrics
 
 /** Sidebar entries of the Performance page, in Win11 Task Manager order. */
-internal enum class PerfPanel { CPU, MEMORY, NETWORK, STORAGE, BATTERY, GPU }
+internal enum class PerfPanel { CPU, MEMORY, NETWORK, STORAGE, BATTERY, THERMAL, GPU }
 
 private val TILE_COLUMN_WIDTH = 230.dp
 private val COMPACT_BREAKPOINT = 600.dp
@@ -171,6 +171,7 @@ private fun PanelContent(panel: PerfPanel, state: PerfUiState, vm: PerformanceVi
         PerfPanel.NETWORK -> NetworkPanel(state, vm.netRxHistory, vm.netTxHistory)
         PerfPanel.STORAGE -> StoragePanel(state)
         PerfPanel.BATTERY -> BatteryPanel(state, vm.batteryPowerHistory, vm.batteryTempHistory)
+        PerfPanel.THERMAL -> ThermalPanel(state, vm.thermalHistory)
         PerfPanel.GPU -> GpuPanel(state)
     }
 }
@@ -275,6 +276,26 @@ private fun PerfTile(
                     listOfNotNull(b.status, b.temperatureC?.let { Format.celsius(it) })
                         .joinToString(" • ")
                 },
+            )
+        }
+        PerfPanel.THERMAL -> {
+            val thermal = state.thermal
+            val hottest = thermal?.hottest
+            MiniChartTile(
+                title = stringResource(R.string.perf_tile_thermal),
+                // Falls back to the OS throttling verdict where sensors are
+                // blocked, so the tile is never a bare dash on those devices.
+                value = hottest?.let { Format.celsius(it.temperatureC) }
+                    ?: stringResource(statusLabel(thermal?.status)),
+                history = vm.thermalHistory,
+                windowPoints = state.windowPoints,
+                selected = selected,
+                onClick = onClick,
+                modifier = modifier,
+                secondaryValue = hottest?.name,
+                // Matches the panel's fixed 0-100 °C scale; autoscale would
+                // make a cool 30 °C sparkline look identical to a hot 85 °C one.
+                minScale = 100f,
             )
         }
         PerfPanel.GPU -> {

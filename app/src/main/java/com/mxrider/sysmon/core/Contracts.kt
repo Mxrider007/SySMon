@@ -30,6 +30,9 @@ interface BatteryMonitor : Sampler<BatterySnapshot>
 
 interface StorageMonitor : Sampler<StorageSnapshot>
 
+/** Stateful: discovers the kernel's thermal zones once, then re-reads them. */
+interface ThermalMonitor : Sampler<ThermalSnapshot>
+
 interface GpuInfoProvider {
     /** Cached after the first successful query. */
     suspend fun get(): GpuInfo

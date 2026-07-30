@@ -105,6 +105,44 @@
     <string name="perf_battery_capacity_of_design">~%1$d%% of %2$s mAh design</string>
     <string name="perf_battery_capacity_basis">fuel-gauge estimate</string>
 
+    <!-- Thermal panel -->
+    <string name="perf_tile_thermal">Thermal</string>
+    <string name="perf_axis_100c">100 °C</string>
+    <string name="perf_thermal_status">Throttling status</string>
+    <string name="perf_thermal_headroom">Headroom</string>
+    <string name="perf_thermal_hottest">Hottest sensor</string>
+    <string name="perf_thermal_sensors">Sensors</string>
+    <string name="perf_thermal_status_none">None</string>
+    <string name="perf_thermal_status_light">Light</string>
+    <string name="perf_thermal_status_moderate">Moderate</string>
+    <string name="perf_thermal_status_severe">Severe</string>
+    <string name="perf_thermal_status_critical">Critical</string>
+    <string name="perf_thermal_status_emergency">Emergency</string>
+    <string name="perf_thermal_status_shutdown">Shutdown imminent</string>
+    <string name="perf_thermal_status_unknown">Not reported</string>
+    <string name="perf_thermal_status_explain_none">The system reports no thermal throttling right now</string>
+    <string name="perf_thermal_status_explain_light">The system has begun light throttling — you would not normally notice it</string>
+    <string name="perf_thermal_status_explain_moderate">The system is throttling to shed heat; sustained performance is reduced</string>
+    <string name="perf_thermal_status_explain_severe">The system is throttling heavily to protect the hardware</string>
+    <string name="perf_thermal_status_explain_critical">The device is very hot and is throttling as hard as it can</string>
+    <string name="perf_thermal_status_explain_emergency">The device is overheating; Android may shut down features to cool it</string>
+    <string name="perf_thermal_status_explain_shutdown">The device is about to shut down to protect itself</string>
+    <string name="perf_thermal_status_explain_unknown">This Android version does not report a thermal status (Android 10 and later do)</string>
+    <string name="perf_thermal_headroom_note">1.00 means throttling is imminent</string>
+    <string name="perf_thermal_headroom_absent">This device does not report a headroom forecast</string>
+    <!-- %1$d = number of sensors whose reading was outside any plausible range. -->
+    <plurals name="perf_thermal_hidden_note">
+        <item quantity="one">%1$d sensor hidden: the value it reported is not a plausible temperature</item>
+        <item quantity="other">%1$d sensors hidden: the values they reported are not plausible temperatures</item>
+    </plurals>
+    <string name="perf_thermal_blocked_title">Per-sensor temperatures: blocked by device policy</string>
+    <string name="perf_thermal_blocked_body">Android\'s security policy stops apps on this device from reading the kernel\'s thermal sensors directly. The throttling status above comes from the operating system itself and still works; the battery temperature on the Battery page is also unaffected.</string>
+    <string name="perf_thermal_absent_title">Per-sensor temperatures: none on this device</string>
+    <string name="perf_thermal_absent_body">This device\'s kernel exposes no thermal zones. The throttling status above comes from the operating system itself and still works.</string>
+    <string name="perf_thermal_implausible_title">Per-sensor temperatures: no usable readings</string>
+    <string name="perf_thermal_implausible_body">This device\'s thermal sensors can be read, but none of them reported a value that is a plausible temperature, so SysMon shows none rather than inventing numbers. The throttling status above comes from the operating system itself and still works.</string>
+    <string name="perf_thermal_note">Sensor names come from the kernel and vary by device; SysMon shows them as reported</string>
+
     <!-- GPU panel -->
     <string name="perf_gpu_renderer">Renderer</string>
     <string name="perf_gpu_vendor">Vendor</string>
@@ -118,4 +156,5 @@
     <string name="perf_cd_battery_power">Battery power draw chart, currently %1$s</string>
     <string name="perf_cd_battery_temp">Battery temperature chart, currently %1$s</string>
     <string name="perf_cd_network">Network throughput chart, receiving %1$s, sending %2$s</string>
+    <string name="perf_cd_thermal">Hottest sensor temperature chart, currently %1$s</string>
 </resources>
