@@ -1,5 +1,6 @@
 package com.mxrider.sysmon.ui.theme
 
+import android.app.Activity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ColorScheme
@@ -11,8 +12,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -20,6 +23,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.view.WindowCompat
 import com.mxrider.sysmon.R
 import com.mxrider.sysmon.core.AccentOption
 import com.mxrider.sysmon.core.ThemeMode
@@ -226,6 +230,22 @@ fun FluentTheme(
         fluentLightColors(Color(accent.lightArgb), Color(accent.controlLightArgb))
     }
     val typography = fluentTypography()
+
+    // The in-app theme can disagree with the system theme (Light setting on a
+    // dark-mode phone), and enableEdgeToEdge only follows the SYSTEM uiMode —
+    // without this the status-bar clock/icons render white over the app's
+    // light surfaces (invisible). The window icon contrast must follow the
+    // theme actually drawn underneath it.
+    val view = LocalView.current
+    if (!view.isInEditMode) {
+        SideEffect {
+            (view.context as? Activity)?.window?.let { window ->
+                val controller = WindowCompat.getInsetsController(window, view)
+                controller.isAppearanceLightStatusBars = !dark
+                controller.isAppearanceLightNavigationBars = !dark
+            }
+        }
+    }
 
     CompositionLocalProvider(
         LocalFluentColors provides colors,
