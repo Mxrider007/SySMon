@@ -67,13 +67,25 @@ class ProcessesViewModel : ViewModel() {
             }
             _state.update { recompute(it.copy(showSystem = showSystem)) }
         }
+        // PAUSED suspends the periodic loop below entirely, so without this
+        // one-shot the app's default tab would sit on its loading spinner
+        // forever when the update speed was left on Paused. One load, then
+        // frozen — which is what Paused means.
+        viewModelScope.launch {
+            val paused = try {
+                settingsStore.settings.first().updateSpeed == UpdateSpeed.PAUSED
+            } catch (e: Exception) {
+                false
+            }
+            if (paused) refreshNow()
+        }
         // Refresh loop, gated on active UI subscribers: the VM is activity-
         // scoped (Crossfade tabs) and this is the default start page, so an
         // ungated loop would enumerate usage/storage/network stats for every
         // installed app every 30s for as long as the process lives, even
         // backgrounded. collectLatest cancels the loop when the screen is not
-        // collecting; PAUSED update speed also suspends auto-refresh (manual
-        // Refresh and the returning-visit reload still work).
+        // collecting; PAUSED update speed also suspends auto-refresh (the
+        // one-shot above still populates the table once).
         viewModelScope.launch {
             combine(
                 _state.subscriptionCount.map { it > 0 }.distinctUntilChanged(),
@@ -192,7 +204,11 @@ class ProcessesViewModel : ViewModel() {
         }
         val comparator = comparatorFor(state.sortKey)
         if (comparator != null) {
-            list = list.sortedWith(if (state.ascending) comparator else comparator.reversed())
+            // A→Z app tiebreak applied AFTER the direction flip: reversing a
+            // comparator with an embedded tiebreak would list every equal-value
+            // group Z→A (the whole table, in the no-usage-access degraded mode).
+            val directed = if (state.ascending) comparator else comparator.reversed()
+            list = list.sortedWith(directed.then(COMPARATOR_APP))
         }
         // Drop the selection when its row is filtered/refreshed away so
         // "End task" never targets an invisible row.
@@ -214,18 +230,20 @@ class ProcessesViewModel : ViewModel() {
             compareBy<ProcessRow, String>(String.CASE_INSENSITIVE_ORDER) { it.label }
                 .thenBy { it.packageName }
 
+        // Pure primaries — recompute() appends the A→Z tiebreak after the
+        // direction flip, so it must not be baked in here.
         val COMPARATOR_STATUS: Comparator<ProcessRow> =
-            compareBy<ProcessRow> { it.status }.then(COMPARATOR_APP)
+            compareBy { it.status }
 
         val COMPARATOR_SCREEN_TIME: Comparator<ProcessRow> =
-            compareBy<ProcessRow> { it.foregroundTimeTodayMs }.then(COMPARATOR_APP)
+            compareBy { it.foregroundTimeTodayMs }
 
         /** Nulls (no usage access) sort below every real value. */
         val COMPARATOR_NETWORK: Comparator<ProcessRow> =
-            compareBy<ProcessRow> { it.networkTodayBytes ?: -1L }.then(COMPARATOR_APP)
+            compareBy { it.networkTodayBytes ?: -1L }
 
         val COMPARATOR_STORAGE: Comparator<ProcessRow> =
-            compareBy<ProcessRow> { it.storageBytes ?: -1L }.then(COMPARATOR_APP)
+            compareBy { it.storageBytes ?: -1L }
 
         fun comparatorFor(key: String): Comparator<ProcessRow>? = when (key) {
             COL_APP -> COMPARATOR_APP

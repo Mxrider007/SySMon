@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -45,6 +46,10 @@ fun ServicesScreen(modifier: Modifier = Modifier) {
     val vm: ServicesViewModel = viewModel()
     val state by vm.state.collectAsStateWithLifecycle()
     val colors = FluentTheme.colors
+
+    // The VM outlives the tab (Crossfade + activity-scoped): re-check the
+    // inventory on each visit so installs/uninstalls eventually show up.
+    LaunchedEffect(Unit) { vm.refreshIfStale() }
 
     val serviceTitle = stringResource(R.string.services_col_service)
     val appTitle = stringResource(R.string.services_col_app)
@@ -122,7 +127,11 @@ fun ServicesScreen(modifier: Modifier = Modifier) {
                 .padding(top = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            FluentToggle(checked = state.hideSystem, onCheckedChange = vm::setHideSystem)
+            FluentToggle(
+                checked = state.hideSystem,
+                onCheckedChange = vm::setHideSystem,
+                label = stringResource(R.string.services_hide_system),
+            )
             Spacer(Modifier.width(8.dp))
             Text(
                 text = stringResource(R.string.services_hide_system),

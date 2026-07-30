@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
 import android.os.Build
+import android.os.PowerManager
 import com.mxrider.sysmon.core.BatteryMonitor
 import com.mxrider.sysmon.core.BatterySnapshot
 import kotlin.math.abs
@@ -35,7 +36,7 @@ class DefaultBatteryMonitor(context: Context) : BatteryMonitor {
         val voltage = intent?.getIntExtra(BatteryManager.EXTRA_VOLTAGE, -1)
             ?.takeIf { it > 0 }
             ?.let { if (it > 20_000) it / 1000 else it }
-        val current = normalizedCurrentMicroA(statusCode)
+        val current = normalizedCurrentMicroA(statusCode, voltage)
         val power = if (voltage != null && current != null) {
             (voltage / 1000.0) * (current / 1_000_000.0)
         } else {
@@ -83,19 +84,46 @@ class DefaultBatteryMonitor(context: Context) : BatteryMonitor {
 
     /**
      * Reads BATTERY_PROPERTY_CURRENT_NOW (µA) applying two OEM quirks:
-     * values under 10 000 in magnitude are actually mA (scale by 1000), and
+     * values under 10 000 in magnitude are usually mA (scale by 1000), and
      * some devices invert the sign — normalize using the charging status
      * (charging => positive, discharging => negative).
      */
-    private fun normalizedCurrentMicroA(statusCode: Int): Long? {
+    private fun normalizedCurrentMicroA(statusCode: Int, voltageMilliV: Int?): Long? {
         val raw = intProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW) ?: return null
         var microA = raw.toLong()
-        if (abs(microA) < 10_000L) microA *= 1000L
+        if (abs(microA) < 10_000L && scaledIsPlausible(microA * 1000L, voltageMilliV, statusCode)) {
+            microA *= 1000L
+        }
         when (statusCode) {
             BatteryManager.BATTERY_STATUS_CHARGING -> if (microA < 0) microA = -microA
             BatteryManager.BATTERY_STATUS_DISCHARGING -> if (microA > 0) microA = -microA
         }
         return microA
+    }
+
+    /**
+     * Sanity gate for the mA quirk scaling: genuine sub-10 mA µA readings
+     * exist — a dozing phone draws 1–9 mA, exactly when the performance
+     * logger samples — and blindly scaling them fabricates a 20–40 W draw.
+     * The ×1000 interpretation is accepted only when the power it implies is
+     * physically plausible for the current charge/screen state; a screen-off
+     * discharging phone cannot draw double-digit watts, while an mA-reporting
+     * HAL's real values always land inside these caps. With no voltage to
+     * judge by, scaling is kept — the historical behavior the quirk exists for.
+     */
+    private fun scaledIsPlausible(scaledMicroA: Long, voltageMilliV: Int?, statusCode: Int): Boolean {
+        if (voltageMilliV == null) return true
+        val watts = abs(scaledMicroA / 1_000_000.0 * (voltageMilliV / 1000.0))
+        val charging = statusCode == BatteryManager.BATTERY_STATUS_CHARGING ||
+            statusCode == BatteryManager.BATTERY_STATUS_FULL
+        val screenOff =
+            appContext.getSystemService(PowerManager::class.java)?.isInteractive == false
+        val capWatts = when {
+            charging -> 30.0
+            screenOff -> 2.0
+            else -> 12.0
+        }
+        return watts <= capWatts
     }
 
     /** Integer.MIN_VALUE from getIntProperty means unsupported -> null. */

@@ -60,7 +60,12 @@ fun PerformanceScreen(modifier: Modifier = Modifier) {
     // moves the one panel subtree between the two slots with state intact.
     val panelBody = remember {
         movableContentOf { panel: PerfPanel, panelState: PerfUiState, bodyModifier: Modifier ->
-            Column(bodyModifier.verticalScroll(rememberScrollState())) {
+            val scrollState = rememberScrollState()
+            // One ScrollState lives inside this movable slot, so switching
+            // panels would otherwise inherit the previous panel's offset
+            // (Battery opening pre-scrolled to where CPU's specs were).
+            LaunchedEffect(panel) { scrollState.scrollTo(0) }
+            Column(bodyModifier.verticalScroll(scrollState)) {
                 PanelContent(panel, panelState, vm)
             }
         }
@@ -236,6 +241,10 @@ private fun PerfTile(
                 secondaryValue = net?.let {
                     stringResource(R.string.perf_net_tx_short, Format.bitsPerSec(it.txBytesPerSec))
                 },
+                // Same auto-scale floor as the big network chart (1 KiB/s):
+                // without it idle keepalive chatter renders full-height spikes
+                // here while the main chart correctly shows a near-zero line.
+                minScale = 1024f,
             )
         }
         PerfPanel.STORAGE -> {

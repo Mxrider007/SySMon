@@ -111,6 +111,7 @@ class DefaultServiceRepository(context: Context) : ServiceRepository {
             0x0400 to "systemExempted",
             0x0800 to "shortService",
             0x1000 to "fileManagement",
+            0x2000 to "mediaProcessing",
             0x40000000 to "specialUse",
         )
     }

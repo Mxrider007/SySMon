@@ -86,14 +86,21 @@ class DefaultUsageRepository(context: Context) : UsageRepository {
 
         /**
          * Credits the open interval (or, when the window's first observed
-         * event is an exit, the segment from [windowStart]) and stamps the
-         * exit time.
+         * event is an exit AND [creditWindowStart], the segment from
+         * [windowStart]) and stamps the exit time.
+         *
+         * [creditWindowStart] is true only for ACTIVITY_PAUSED: an app that
+         * was genuinely foreground across midnight always pauses before it
+         * stops, so a PAUSED-first stream earns the windowStart→event
+         * segment. A STOPPED-first stream means the app was already
+         * backgrounded when the window opened (PiP dismissed, swiped from
+         * recents) — crediting it would fabricate hours of screen time.
          */
-        fun closeSession(endTime: Long, windowStart: Long) {
+        fun closeSession(endTime: Long, windowStart: Long, creditWindowStart: Boolean) {
             if (openSince >= 0L) {
                 screenTimeMs += (endTime - openSince).coerceAtLeast(0L)
                 openSince = -1L
-            } else if (lastEnter == 0L && lastExit == 0L) {
+            } else if (creditWindowStart && lastEnter == 0L && lastExit == 0L) {
                 // First event in the window is an exit: the session was
                 // already open at `windowStart` - credit that segment.
                 screenTimeMs += (endTime - windowStart).coerceAtLeast(0L)
@@ -126,7 +133,9 @@ class DefaultUsageRepository(context: Context) : UsageRepository {
                 when (event.eventType) {
                     UsageEvents.Event.DEVICE_SHUTDOWN -> {
                         for (acc in result.values) {
-                            if (acc.openSince >= 0L) acc.closeSession(event.timeStamp, start)
+                            if (acc.openSince >= 0L) {
+                                acc.closeSession(event.timeStamp, start, creditWindowStart = true)
+                            }
                             acc.resumedActivities.clear()
                         }
                         continue
@@ -134,7 +143,11 @@ class DefaultUsageRepository(context: Context) : UsageRepository {
                     UsageEvents.Event.DEVICE_STARTUP -> {
                         for (acc in result.values) {
                             if (acc.openSince >= 0L) {
-                                acc.closeSession(maxOf(acc.lastEnter, acc.lastExit), start)
+                                acc.closeSession(
+                                    maxOf(acc.lastEnter, acc.lastExit),
+                                    start,
+                                    creditWindowStart = true,
+                                )
                             }
                             acc.resumedActivities.clear()
                         }
@@ -172,7 +185,12 @@ class DefaultUsageRepository(context: Context) : UsageRepository {
                         val acc = result.getOrPut(pkg) { UsageAcc() }
                         acc.resumedActivities.remove(event.className ?: "")
                         if (acc.resumedActivities.isEmpty()) {
-                            acc.closeSession(event.timeStamp, start)
+                            acc.closeSession(
+                                event.timeStamp,
+                                start,
+                                creditWindowStart =
+                                    event.eventType == UsageEvents.Event.ACTIVITY_PAUSED,
+                            )
                         }
                     }
                 }

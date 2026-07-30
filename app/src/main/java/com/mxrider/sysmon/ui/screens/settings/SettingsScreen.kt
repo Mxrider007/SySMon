@@ -217,6 +217,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                 FluentToggle(
                     checked = settings.keepScreenOn,
                     onCheckedChange = vm::setKeepScreenOn,
+                    label = stringResource(R.string.settings_keep_screen_on),
                 )
             }
             RowDivider()
@@ -227,6 +228,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                 FluentToggle(
                     checked = settings.showSystemApps,
                     onCheckedChange = vm::setShowSystemApps,
+                    label = stringResource(R.string.settings_show_system_apps),
                 )
             }
             RowDivider()
@@ -236,6 +238,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             ) {
                 FluentToggle(
                     checked = settings.cpuNotification,
+                    label = stringResource(R.string.settings_cpu_notification),
                     onCheckedChange = { checked ->
                         when {
                             !checked -> vm.setCpuNotification(false)
@@ -255,6 +258,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             ) {
                 FluentToggle(
                     checked = settings.netNotification,
+                    label = stringResource(R.string.settings_net_notification),
                     onCheckedChange = { checked ->
                         when {
                             !checked -> vm.setNetNotification(false)
@@ -274,6 +278,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             ) {
                 FluentToggle(
                     checked = settings.batteryNotification,
+                    label = stringResource(R.string.settings_bat_notification),
                     onCheckedChange = { checked ->
                         when {
                             !checked -> vm.setBatteryNotification(false)
@@ -293,6 +298,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             ) {
                 FluentToggle(
                     checked = settings.memoryNotification,
+                    label = stringResource(R.string.settings_mem_notification),
                     onCheckedChange = { checked ->
                         when {
                             !checked -> vm.setMemoryNotification(false)
@@ -318,6 +324,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                     checked = anyReadoutOn && settings.notificationBoxes,
                     onCheckedChange = vm::setNotificationBoxes,
                     enabled = anyReadoutOn,
+                    label = stringResource(R.string.settings_notification_boxes),
                 )
             }
         }
@@ -331,6 +338,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
             ) {
                 FluentToggle(
                     checked = settings.logging,
+                    label = stringResource(R.string.settings_logging),
                     onCheckedChange = { checked ->
                         when {
                             !checked -> vm.setLogging(false)

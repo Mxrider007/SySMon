@@ -37,7 +37,9 @@ import kotlin.math.max
  * selection shows the Win11 accent pill on the left edge.
  *
  * The sparkline auto-scales to the nice ceiling of the window max, never below
- * 1, so 0..1 fraction series keep a fixed full-scale of 1.
+ * [minScale], so 0..1 fraction series keep a fixed full-scale of 1. Rate
+ * series must pass the same floor as their big chart (1 KiB/s) or idle noise
+ * renders full-height here while the main chart shows a flat line.
  */
 @Composable
 fun MiniChartTile(
@@ -49,6 +51,7 @@ fun MiniChartTile(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     secondaryValue: String? = null,
+    minScale: Float = 1f,
 ) {
     val colors = FluentTheme.colors
     val typography = FluentTheme.typography
@@ -81,7 +84,7 @@ fun MiniChartTile(
             val values = history.window(windowPoints)
             var windowMax = 0f
             for (v in values) if (v.isFinite() && v > windowMax) windowMax = v
-            val effectiveMax = max(1f, niceCeil(windowMax))
+            val effectiveMax = max(minScale, niceCeil(windowMax))
             val hairline = 1.dp.toPx()
 
             buildSeriesPaths(values, effectiveMax, size.width, size.height, linePath, fillPath)

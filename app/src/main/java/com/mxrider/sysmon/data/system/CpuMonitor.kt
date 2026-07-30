@@ -73,8 +73,9 @@ class DefaultCpuMonitor : CpuMonitor {
 
         var overall = 0f
         val coreUtil = FloatArray(coreCount)
+        val hadPrev: Boolean
         synchronized(lock) {
-            val hadPrev = prevAggTotal >= 0
+            hadPrev = prevAggTotal >= 0
             if (hadPrev) {
                 val dTotal = agg.total - prevAggTotal
                 val dBusy = agg.busy - prevAggBusy
@@ -101,6 +102,11 @@ class DefaultCpuMonitor : CpuMonitor {
                 }
             }
         }
+        // No previous counters yet: a delta needs two reads, and reporting a
+        // confident 0 % PROC_STAT sample would be fabricated. Fall back to the
+        // frequency estimate (honestly ~-labeled) for this one sample; the
+        // counters just stored make the next call a real measurement.
+        if (!hadPrev) return null
 
         val cores = ArrayList<CoreState>(coreCount)
         for (i in 0 until coreCount) {

@@ -8,6 +8,7 @@ import com.mxrider.sysmon.core.LogStatus
 import com.mxrider.sysmon.core.PerfLogger
 import com.mxrider.sysmon.core.averageCurFreqKhz
 import java.io.File
+import java.io.RandomAccessFile
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -102,8 +103,31 @@ class DefaultPerfLogger(context: Context) : PerfLogger {
 
     private suspend fun ensureInitLocked() {
         if (initialized) return
-        state.value = withContext(Dispatchers.IO) { readStatus() }
+        state.value = withContext(Dispatchers.IO) {
+            repairTailNewline()
+            readStatus()
+        }
         initialized = true
+    }
+
+    /**
+     * A process death mid-append can leave a partial last line with no
+     * terminator; the next append would then concatenate onto it and corrupt
+     * two rows into one. Terminating the tail once at init keeps every later
+     * append row-aligned (the partial row itself stays, truncated — honest
+     * about what was actually written).
+     */
+    private fun repairTailNewline() {
+        try {
+            val f = file
+            if (!f.exists() || f.length() == 0L) return
+            RandomAccessFile(f, "rw").use { raf ->
+                raf.seek(raf.length() - 1)
+                if (raf.read() != '\n'.code) raf.write('\n'.code)
+            }
+        } catch (_: Exception) {
+            // readStatus() reports whatever is really on disk.
+        }
     }
 
     /** Streams the file once: size, data-row count, first row's timestamp. */

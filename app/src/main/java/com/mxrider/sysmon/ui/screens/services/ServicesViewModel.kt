@@ -56,8 +56,25 @@ class ServicesViewModel : ViewModel() {
                     emptyList<ServiceRow>()
                 }
             }
-            _state.update { it.copy(rows = rows, loading = false) }
+            // loading stays true until the recompute below publishes: clearing
+            // it here would flash "no matching services" for the frames while
+            // 2000+ rows are still being filtered off-thread.
+            _state.update { it.copy(rows = rows) }
             scheduleRecompute()
+            lastLoadedAt = System.currentTimeMillis()
+        }
+    }
+
+    private var lastLoadedAt = 0L
+
+    /**
+     * The VM is activity-scoped and the activity handles config changes
+     * itself, so without this on-visit recheck services of apps installed or
+     * removed after the first load would never appear or disappear.
+     */
+    fun refreshIfStale(maxAgeMs: Long = 60_000L) {
+        if (lastLoadedAt != 0L && System.currentTimeMillis() - lastLoadedAt > maxAgeMs) {
+            refresh()
         }
     }
 
@@ -93,7 +110,11 @@ class ServicesViewModel : ViewModel() {
                     current.hideSystem == snapshot.hideSystem &&
                     current.sortKey == snapshot.sortKey &&
                     current.ascending == snapshot.ascending
-                if (inputsUnchanged) current.copy(visibleRows = visible) else current
+                if (inputsUnchanged) {
+                    current.copy(visibleRows = visible, loading = false)
+                } else {
+                    current
+                }
             }
         }
     }
@@ -109,7 +130,10 @@ class ServicesViewModel : ViewModel() {
             }
         }
         val comparator = comparatorFor(state.sortKey) ?: return list
-        return list.sortedWith(if (state.ascending) comparator else comparator.reversed())
+        // Tiebreak AFTER the direction flip — a reversed embedded tiebreak
+        // would list equal-value groups Z→A.
+        val directed = if (state.ascending) comparator else comparator.reversed()
+        return list.sortedWith(directed.then(COMPARATOR_SERVICE))
     }
 
     companion object {
@@ -125,26 +149,25 @@ class ServicesViewModel : ViewModel() {
                 .thenBy { it.fqcn }
                 .thenBy { it.packageName }
 
+        // Pure primaries — computeVisible() appends the service-name tiebreak
+        // after the direction flip, so it must not be baked in here.
         val COMPARATOR_APP: Comparator<ServiceRow> =
             compareBy<ServiceRow, String>(String.CASE_INSENSITIVE_ORDER) { it.appLabel }
                 .thenBy { it.packageName }
-                .then(COMPARATOR_SERVICE)
 
         /** Ascending puts exported ("Yes") rows first. */
         val COMPARATOR_EXPORTED: Comparator<ServiceRow> =
-            compareByDescending<ServiceRow> { it.exported }.then(COMPARATOR_SERVICE)
+            compareByDescending { it.exported }
 
         val COMPARATOR_ENABLED: Comparator<ServiceRow> =
-            compareByDescending<ServiceRow> { it.enabled }.then(COMPARATOR_SERVICE)
+            compareByDescending { it.enabled }
 
         /** Empty (no declared FGS types) sorts below every real value. */
         val COMPARATOR_FGS: Comparator<ServiceRow> =
-            compareBy<ServiceRow, String>(String.CASE_INSENSITIVE_ORDER) { it.foregroundServiceTypes }
-                .then(COMPARATOR_SERVICE)
+            compareBy(String.CASE_INSENSITIVE_ORDER) { it.foregroundServiceTypes }
 
         val COMPARATOR_PERMISSION: Comparator<ServiceRow> =
-            compareBy<ServiceRow, String>(String.CASE_INSENSITIVE_ORDER) { it.permission ?: "" }
-                .then(COMPARATOR_SERVICE)
+            compareBy(String.CASE_INSENSITIVE_ORDER) { it.permission ?: "" }
 
         fun comparatorFor(key: String): Comparator<ServiceRow>? = when (key) {
             COL_SERVICE -> COMPARATOR_SERVICE

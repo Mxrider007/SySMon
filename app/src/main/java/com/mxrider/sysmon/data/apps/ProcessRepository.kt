@@ -75,9 +75,14 @@ class DefaultProcessRepository(
         for (row in usageRows) {
             seen += row.packageName
             val entry = entryByPkg[row.packageName]
+            // A total is only honest when BOTH transports are known: pre-Q the
+            // mobile side is unknowable (the repository returns null for it),
+            // and rendering Wi-Fi alone as "Network" would silently hide
+            // hundreds of MB of mobile data. Unknown -> dash, like every
+            // other column.
             val networkTodayBytes: Long? =
-                if (row.wifiBytes == null && row.mobileBytes == null) null
-                else (row.wifiBytes ?: 0L) + (row.mobileBytes ?: 0L)
+                if (row.wifiBytes == null || row.mobileBytes == null) null
+                else row.wifiBytes + row.mobileBytes
             val storageBytes: Long? = storageByPkg[row.packageName]
             rows += ProcessRow(
                 packageName = row.packageName,

@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Android
@@ -111,7 +112,14 @@ fun ProcessesScreen(modifier: Modifier = Modifier) {
                 width = 110.dp,
                 alignEnd = true,
                 sortable = true,
-            ) { row -> ValueCell(Format.duration(row.foregroundTimeTodayMs)) },
+                // UNKNOWN (no usage access) renders a dash like the other
+                // gated columns — "0:00" would be a fabricated measurement.
+            ) { row ->
+                ValueCell(
+                    if (row.status == ProcStatus.UNKNOWN) DASH
+                    else Format.duration(row.foregroundTimeTodayMs),
+                )
+            },
             TableColumn<ProcessRow>(
                 key = ProcessesViewModel.COL_NETWORK,
                 title = networkTitle,
@@ -140,7 +148,9 @@ fun ProcessesScreen(modifier: Modifier = Modifier) {
                 SearchBox(
                     query = state.query,
                     onQueryChange = vm::setQuery,
-                    modifier = Modifier.width(220.dp),
+                    // Flexible: on narrow panes the toolbar shares one row with
+                    // the button and a rigid 220dp would clip it.
+                    modifier = Modifier.weight(1f, fill = false).widthIn(max = 220.dp),
                     placeholder = stringResource(R.string.action_search),
                 )
                 FluentStandardButton(
@@ -156,7 +166,11 @@ fun ProcessesScreen(modifier: Modifier = Modifier) {
                 .padding(top = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            FluentToggle(checked = state.showSystem, onCheckedChange = vm::setShowSystem)
+            FluentToggle(
+                checked = state.showSystem,
+                onCheckedChange = vm::setShowSystem,
+                label = stringResource(R.string.processes_show_system),
+            )
             Spacer(Modifier.width(8.dp))
             Text(
                 text = stringResource(R.string.processes_show_system),

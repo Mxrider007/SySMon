@@ -56,6 +56,8 @@ import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -174,7 +176,10 @@ fun FluentStandardButton(
 
 /**
  * Win11 toggle switch: 40x20dp pill track. Off = outlined track with a 12dp
- * knob; on = accent track with a 14dp knob. Touch target is 40x32dp.
+ * knob; on = accent track with a 14dp knob. The layout box is 48x48dp — the
+ * accessibility minimum touch target — with the visual pill centered in it.
+ * [label] names the switch for screen readers (the visible caption is a
+ * separate text node TalkBack cannot associate on its own).
  */
 @Composable
 fun FluentToggle(
@@ -182,6 +187,7 @@ fun FluentToggle(
     onCheckedChange: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    label: String? = null,
 ) {
     val colors = FluentTheme.colors
     val trackShape = RoundedCornerShape(10.dp)
@@ -205,7 +211,7 @@ fun FluentToggle(
 
     Box(
         modifier = modifier
-            .size(width = 40.dp, height = 32.dp)
+            .size(48.dp)
             .toggleable(
                 value = checked,
                 interactionSource = remember { MutableInteractionSource() },
@@ -213,7 +219,8 @@ fun FluentToggle(
                 enabled = enabled,
                 role = Role.Switch,
                 onValueChange = onCheckedChange,
-            ),
+            )
+            .semantics { if (label != null) contentDescription = label },
         contentAlignment = Alignment.Center,
     ) {
         Box(
@@ -374,7 +381,12 @@ fun SearchBox(
             BasicTextField(
                 value = query,
                 onValueChange = onQueryChange,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    // The placeholder is a sibling node that vanishes once text
+                    // is typed; without this TalkBack announces a nameless
+                    // edit box.
+                    .semantics { contentDescription = placeholder },
                 textStyle = FluentTheme.typography.body.copy(color = colors.textPrimary),
                 singleLine = true,
                 cursorBrush = SolidColor(colors.accent),

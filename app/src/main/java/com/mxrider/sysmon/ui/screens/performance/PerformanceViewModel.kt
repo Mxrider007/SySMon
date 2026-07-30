@@ -203,7 +203,10 @@ class PerformanceViewModel : ViewModel() {
         // Fraction like CPU/memory: the MiniChartTile autoscale would otherwise
         // render 42% battery as a nearly-full sparkline (nice-ceiling of 50).
         batteryHistory.push((batch.battery.levelPercent / 100f).coerceIn(0f, 1f))
-        gpuHistory.push(0f)
+        // Android exposes no GPU load to third-party apps; NaN renders the
+        // sparkline blank ("no data"), where a pushed 0 would fabricate a
+        // measured flat 0 % — the exact thing the app promises never to do.
+        gpuHistory.push(Float.NaN)
 
         if (batch.storage != null) lastStorage = batch.storage
         val storage = lastStorage

@@ -35,6 +35,7 @@ import com.mxrider.sysmon.core.LogSample
 import com.mxrider.sysmon.core.SysMonSettings
 import com.mxrider.sysmon.core.TabDestination
 import com.mxrider.sysmon.core.averageCurFreqKhz
+import com.mxrider.sysmon.data.system.DefaultCpuMonitor
 import com.mxrider.sysmon.data.system.DefaultNetworkMonitor
 import java.util.Locale
 import kotlinx.coroutines.CoroutineScope
@@ -106,6 +107,14 @@ class CpuNotificationService : Service() {
     // The log loop runs on its own cadence, so it needs its own rate window
     // too — sharing either of the other instances would corrupt both.
     private val logNetMonitor by lazy { DefaultNetworkMonitor(this) }
+
+    // Same isolation for CPU: /proc/stat utilization is a delta against the
+    // previous read, so sharing Graph.cpu with the UI sampler would slice
+    // every caller's window into interleaved fragments (hard 0 % on
+    // sub-jiffy gaps). The freq-estimate path is stateless and immune, but
+    // PROC_STAT ROMs are real and explicitly supported.
+    private val cpuMonitor by lazy { DefaultCpuMonitor() }
+    private val logCpuMonitor by lazy { DefaultCpuMonitor() }
 
     private val screenReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -283,7 +292,7 @@ class CpuNotificationService : Service() {
 
     private suspend fun updateCpu(settings: SysMonSettings) {
         val snapshot = try {
-            Graph.cpu.sample()
+            cpuMonitor.sample()
         } catch (_: Exception) {
             null
         }
@@ -506,7 +515,7 @@ class CpuNotificationService : Service() {
     private suspend fun logOnce(): Boolean {
         val sample = LogSample(
             timeMillis = System.currentTimeMillis(),
-            cpu = runCatching { Graph.cpu.sample() }.getOrNull(),
+            cpu = runCatching { logCpuMonitor.sample() }.getOrNull(),
             memory = runCatching { Graph.memory.sample() }.getOrNull(),
             battery = runCatching { Graph.battery.sample() }.getOrNull(),
             network = runCatching { logNetMonitor.sample() }.getOrNull(),

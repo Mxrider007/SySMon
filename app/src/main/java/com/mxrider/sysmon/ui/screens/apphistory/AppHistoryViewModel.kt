@@ -7,10 +7,10 @@ import com.mxrider.sysmon.core.UsageRange
 import com.mxrider.sysmon.core.UsageRow
 import java.util.Calendar
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -47,8 +47,7 @@ class AppHistoryViewModel : ViewModel() {
 
     init {
         viewModelScope.launch {
-            // collectLatest cancels an in-flight load when the range changes.
-            _range.collectLatest { range -> loadNow(range) }
+            _range.collect { range -> requestLoad(range) }
         }
     }
 
@@ -59,15 +58,29 @@ class AppHistoryViewModel : ViewModel() {
     /**
      * Reloads the current range when the data is older than [maxAgeMs]; the
      * screen calls this on every visit so an app left in recents overnight
-     * doesn't present stale rows as "Today".
+     * doesn't present stale rows as "Today". An in-flight load counts as
+     * fresh — kicking a second one would only race it.
      */
     fun refreshIfStale(maxAgeMs: Long = 60_000L) {
+        if (loadJob?.isActive == true) return
         if (System.currentTimeMillis() - lastLoadedAt > maxAgeMs) {
-            viewModelScope.launch { loadNow(_range.value) }
+            requestLoad(_range.value)
         }
     }
 
     private var lastLoadedAt = 0L
+    private var loadJob: Job? = null
+
+    /**
+     * Single-flight loader: every reload path (range change, stale refresh,
+     * permission recheck) funnels through here, and a newer request cancels
+     * the in-flight one. Uncoordinated concurrent loads could finish out of
+     * order and leave the wrong range's rows under the dropdown.
+     */
+    private fun requestLoad(range: UsageRange) {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch { loadNow(range) }
+    }
 
     fun setSort(key: String, ascending: Boolean) {
         _state.update { recompute(it.copy(sortKey = key, ascending = ascending)) }
@@ -85,7 +98,7 @@ class AppHistoryViewModel : ViewModel() {
             }
             if (granted != _state.value.usageAccessGranted) {
                 _state.update { it.copy(usageAccessGranted = granted) }
-                if (granted) loadNow(_range.value)
+                if (granted) requestLoad(_range.value)
             }
         }
     }

@@ -68,6 +68,10 @@ fun DetailsScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val colors = FluentTheme.colors
 
+    // The VM outlives the tab (Crossfade + activity-scoped): re-check the
+    // inventory on each visit so installs/uninstalls eventually show up.
+    LaunchedEffect(Unit) { vm.refreshIfStale() }
+
     val selectedRow = remember(state.visibleRows, state.selectedPkg) {
         state.visibleRows.firstOrNull { it.packageName == state.selectedPkg }
     }

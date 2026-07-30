@@ -30,6 +30,9 @@ import androidx.compose.material.icons.outlined.QueryStats
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -67,19 +70,27 @@ fun OnboardingScreen(onDone: () -> Unit) {
     var granted by rememberSaveable { mutableStateOf(false) }
     val openFailedMessage = stringResource(R.string.onboarding_open_settings_failed)
 
+    // RESUMED-gated: the user typically leaves for system Settings from this
+    // step (or parks the app in recents), and an ungated loop would keep
+    // binder-polling AppOps every 1.5s for as long as the process lives.
+    // repeatOnLifecycle re-runs the check within 1.5s of returning, so the
+    // auto-advance still works.
+    val lifecycleOwner = LocalLifecycleOwner.current
     LaunchedEffect(step) {
         if (step == 2) {
-            while (true) {
-                val has = withContext(Dispatchers.IO) {
-                    runCatching { Graph.usageAccess.hasPermission() }.getOrDefault(false)
+            lifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+                while (true) {
+                    val has = withContext(Dispatchers.IO) {
+                        runCatching { Graph.usageAccess.hasPermission() }.getOrDefault(false)
+                    }
+                    if (has) {
+                        granted = true
+                        delay(800)
+                        step = 3
+                        break
+                    }
+                    delay(1_500)
                 }
-                if (has) {
-                    granted = true
-                    delay(800)
-                    step = 3
-                    break
-                }
-                delay(1_500)
             }
         }
     }

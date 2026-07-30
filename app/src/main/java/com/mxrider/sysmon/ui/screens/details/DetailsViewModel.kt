@@ -50,6 +50,20 @@ class DetailsViewModel : ViewModel() {
                 }
             }
             _state.update { recompute(it.copy(rows = rows, loading = false)) }
+            lastLoadedAt = System.currentTimeMillis()
+        }
+    }
+
+    private var lastLoadedAt = 0L
+
+    /**
+     * The VM is activity-scoped and the activity handles config changes
+     * itself, so without this on-visit recheck an app installed or removed
+     * after the first load would never appear or disappear from the table.
+     */
+    fun refreshIfStale(maxAgeMs: Long = 60_000L) {
+        if (lastLoadedAt != 0L && System.currentTimeMillis() - lastLoadedAt > maxAgeMs) {
+            refresh()
         }
     }
 
@@ -76,7 +90,10 @@ class DetailsViewModel : ViewModel() {
         }
         val comparator = comparatorFor(state.sortKey)
         if (comparator != null) {
-            list = list.sortedWith(if (state.ascending) comparator else comparator.reversed())
+            // Tiebreak AFTER the direction flip — a reversed embedded tiebreak
+            // would list equal-value groups Z→A.
+            val directed = if (state.ascending) comparator else comparator.reversed()
+            list = list.sortedWith(directed.then(COMPARATOR_APP))
         }
         // Drop the selection when its row is filtered/refreshed away so the
         // detail strip never shows an invisible row.
@@ -103,32 +120,33 @@ class DetailsViewModel : ViewModel() {
         val COMPARATOR_PACKAGE: Comparator<AppEntry> =
             compareBy { it.packageName }
 
+        // Pure primaries — recompute() appends the A→Z tiebreak after the
+        // direction flip, so it must not be baked in here.
+        /** versionCode, not versionName: lexicographic puts "10.0" before "9.0". */
         val COMPARATOR_VERSION: Comparator<AppEntry> =
-            compareBy<AppEntry, String>(String.CASE_INSENSITIVE_ORDER) { it.versionName ?: "" }
-                .then(COMPARATOR_APP)
+            compareBy { it.versionCode }
 
         val COMPARATOR_TARGET_SDK: Comparator<AppEntry> =
-            compareBy<AppEntry> { it.targetSdk }.then(COMPARATOR_APP)
+            compareBy { it.targetSdk }
 
         val COMPARATOR_MIN_SDK: Comparator<AppEntry> =
-            compareBy<AppEntry> { it.minSdk }.then(COMPARATOR_APP)
+            compareBy { it.minSdk }
 
         val COMPARATOR_SIZE: Comparator<AppEntry> =
-            compareBy<AppEntry> { it.apkSizeBytes }.then(COMPARATOR_APP)
+            compareBy { it.apkSizeBytes }
 
         val COMPARATOR_INSTALLED: Comparator<AppEntry> =
-            compareBy<AppEntry> { it.installTime }.then(COMPARATOR_APP)
+            compareBy { it.installTime }
 
         val COMPARATOR_UPDATED: Comparator<AppEntry> =
-            compareBy<AppEntry> { it.updateTime }.then(COMPARATOR_APP)
+            compareBy { it.updateTime }
 
         /** Nulls (sideloaded / unknown installer) sort below every real value. */
         val COMPARATOR_INSTALLER: Comparator<AppEntry> =
-            compareBy<AppEntry, String>(String.CASE_INSENSITIVE_ORDER) { it.installerPackage ?: "" }
-                .then(COMPARATOR_APP)
+            compareBy(String.CASE_INSENSITIVE_ORDER) { it.installerPackage ?: "" }
 
         val COMPARATOR_ENABLED: Comparator<AppEntry> =
-            compareByDescending<AppEntry> { it.enabled }.then(COMPARATOR_APP)
+            compareByDescending { it.enabled }
 
         fun comparatorFor(key: String): Comparator<AppEntry>? = when (key) {
             COL_APP -> COMPARATOR_APP

@@ -30,6 +30,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import com.mxrider.sysmon.core.ChartHistory
 import com.mxrider.sysmon.ui.theme.FluentTheme
+import kotlin.math.abs
 import kotlin.math.floor
 import kotlin.math.log10
 import kotlin.math.max
@@ -71,12 +72,16 @@ fun PerfChart(
         typography.caption.copy(color = colors.textPrimary)
     }
     val showDirectLabels = secondaryHistory != null
-    val primaryLabelLayout = remember(showDirectLabels, primaryLabel, captionSecondary) {
+    // textMeasurer is a key: density is in the activity's configChanges, so a
+    // runtime font/display-size change replaces the measurer without
+    // recreating the composition — cached layouts measured at the old density
+    // would keep rendering at the wrong size.
+    val primaryLabelLayout = remember(showDirectLabels, primaryLabel, captionSecondary, textMeasurer) {
         if (showDirectLabels && primaryLabel != null) {
             textMeasurer.measure(primaryLabel, captionSecondary)
         } else null
     }
-    val secondaryLabelLayout = remember(showDirectLabels, secondaryLabel, captionSecondary) {
+    val secondaryLabelLayout = remember(showDirectLabels, secondaryLabel, captionSecondary, textMeasurer) {
         if (showDirectLabels && secondaryLabel != null) {
             textMeasurer.measure(secondaryLabel, captionSecondary)
         } else null
@@ -130,10 +135,22 @@ fun PerfChart(
                                 // gesture before we claimed it: cede, exactly
                                 // like the old drag detector's cancel path.
                                 if (!dragging && change.isConsumed) break
-                                if (!dragging &&
-                                    (change.position - down.position).getDistance() > slop
-                                ) {
-                                    dragging = true
+                                if (!dragging) {
+                                    val delta = change.position - down.position
+                                    if (delta.getDistance() > slop) {
+                                        // Claim only horizontally-dominant
+                                        // drags (crosshair scrubbing). A
+                                        // vertical-dominant drag is the user
+                                        // scrolling the page — on the compact
+                                        // CPU panel the viewport is nearly all
+                                        // chart, so consuming those would make
+                                        // everything below unreachable.
+                                        if (abs(delta.x) >= abs(delta.y)) {
+                                            dragging = true
+                                        } else {
+                                            break
+                                        }
+                                    }
                                 }
                                 if (dragging) change.consume()
                                 touchX.floatValue = change.position.x
