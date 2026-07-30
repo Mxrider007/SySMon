@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget card: near-opaque dark rounded rect (a drawable, not
+     GlanceModifier.cornerRadius, so pre-S launchers get the corners too).
+     Always dark like the floating card - it sits on arbitrary wallpapers. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#F21A1B1E" />
+    <corners android:radius="16dp" />
+</shape>

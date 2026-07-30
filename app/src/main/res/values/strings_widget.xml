@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_label">System monitor</string>
+    <string name="widget_description">Live CPU, memory, network and battery, refreshed on tap and every half hour</string>
+    <!-- %1$s = a short locale time, e.g. "12:34". Honesty stamp: a widget
+         number is only as fresh as its last refresh, and this says when
+         that was instead of pretending to be live. -->
+    <string name="widget_updated">Updated %1$s</string>
+    <string name="widget_refresh">Refresh</string>
+</resources>

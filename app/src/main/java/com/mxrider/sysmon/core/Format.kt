@@ -32,6 +32,24 @@ object Format {
         }
     }
 
+    /**
+     * Rate as value plus one letter ("1.2M", "340K", "0") — bits like
+     * [bitsPerSec] but terse enough for the status-bar icons, the floating
+     * card and the widget rows, which is why the unit suffix is a single
+     * glyph.
+     */
+    fun compactBits(bytesPerSec: Double): String {
+        val bps = bytesPerSec * 8
+        fun value(v: Double): String =
+            String.format(Locale.US, if (v >= 10) "%.0f" else "%.1f", v)
+        return when {
+            bps >= 1_000_000_000 -> value(bps / 1_000_000_000) + "G"
+            bps >= 1_000_000 -> value(bps / 1_000_000) + "M"
+            bps >= 1_000 -> value(bps / 1_000) + "K"
+            else -> String.format(Locale.US, "%.0f", bps)
+        }
+    }
+
     /** 0f..1f → "47%". */
     fun percent(fraction: Float): String =
         "${(fraction.coerceIn(0f, 1f) * 100).toInt()}%"

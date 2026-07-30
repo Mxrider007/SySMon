@@ -953,22 +953,7 @@ class CpuNotificationService : Service() {
         return bitmap
     }
 
-    /**
-     * Rate for the tile and status icon: value plus one letter ("1.2M",
-     * "340K", "0"), bits like [Format.bitsPerSec] but too terse for anything
-     * except an icon — which is why it lives here and not in core.
-     */
-    private fun compactBits(bytesPerSec: Double): String {
-        val bps = bytesPerSec * 8
-        fun value(v: Double): String =
-            String.format(Locale.US, if (v >= 10) "%.0f" else "%.1f", v)
-        return when {
-            bps >= 1_000_000_000 -> value(bps / 1_000_000_000) + "G"
-            bps >= 1_000_000 -> value(bps / 1_000_000) + "M"
-            bps >= 1_000 -> value(bps / 1_000) + "K"
-            else -> String.format(Locale.US, "%.0f", bps)
-        }
-    }
+    private fun compactBits(bytesPerSec: Double): String = Format.compactBits(bytesPerSec)
 
     /**
      * "3.6 / 5.6 GB" — used and total sharing one unit so the title stays

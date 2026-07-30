@@ -60,6 +60,21 @@
             </intent-filter>
         </activity>
 
+        <!-- Home-screen widget (Glance). Samples on demand in-process; no
+             service, no extra permissions. exported=false: APPWIDGET_UPDATE
+             is a protected broadcast delivered by the system. -->
+        <receiver
+            android:name=".ui.widget.SysMonWidgetReceiver"
+            android:exported="false"
+            android:label="@string/widget_label">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/sysmon_widget_info" />
+        </receiver>
+
         <service
             android:name=".service.CpuNotificationService"
             android:exported="false"

@@ -21,6 +21,7 @@ A Windows 11 Task Manager–style system monitor for Android. Native Kotlin + Je
 - Per-process CPU/RAM of *other* apps is not available to third-party apps on modern Android. CPU utilization is measured from `/proc/stat` where readable, otherwise estimated from per-core frequency scaling and labeled as such.
 - The optional "CPU usage in notification" readout (foreground service, off by default) shows the same figure under the same rules — estimates stay marked with ~, and sampling pauses while the screen is off.
 - The optional floating mini-monitor (same service, off by default, needs "Display over other apps") shows live CPU/memory/network/battery in a draggable always-on-top card under the same honesty rules; if the special access is revoked, the toggle turns itself off rather than pretend.
+- The home-screen widget (Glance) samples at refresh time — ↻ tap or the platform's 30-minute cycle — and stamps every card with "Updated HH:mm" instead of passing a stale number off as live. CPU and network get a real one-second two-sample window per refresh, never a fabricated first-call zero.
 - "End task" uses `killBackgroundProcesses` (a no-op for other apps since API 34) and always offers the App-info deep link where the user can Force stop.
 - Live service state is not exposed; the Services screen shows declared services.
 
