@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Timeline screen (historical view of the performance log). The record
+         toggle and interval dropdown write the SAME settings as
+         Settings → Performance logging; interval labels are reused from
+         strings_settings.xml so the two dropdowns can never drift apart. -->
+
+    <!-- %1$s = interval label ("5 seconds"). -->
+    <string name="timeline_status_recording">Recording every %1$s</string>
+    <string name="timeline_status_off">Not recording</string>
+
+    <string name="timeline_record">Record history</string>
+    <string name="timeline_record_desc">Logs CPU, memory, battery and network to a private file on this device, even while the screen is off. Nothing ever leaves your phone.</string>
+    <string name="timeline_show_range">Show</string>
+    <string name="timeline_range_1h">Last hour</string>
+    <string name="timeline_range_6h">Last 6 hours</string>
+    <string name="timeline_range_24h">Last 24 hours</string>
+    <string name="timeline_range_7d">Last 7 days</string>
+    <string name="timeline_range_all">Everything</string>
+    <string name="timeline_settings_note">Same log as Settings → Performance logging — export or clear it there.</string>
+
+    <string name="timeline_empty_title">No history yet</string>
+    <string name="timeline_empty_body">Turn on Record history and come back later: SysMon will chart what your phone was doing — including while the screen was off.</string>
+    <string name="timeline_empty_recording">Recording — the first samples will appear within a minute.</string>
+
+    <string name="timeline_legend_screen_on">Shaded bands: screen on</string>
+    <!-- %1$d = number of rows aggregated into the visible window. -->
+    <plurals name="timeline_sample_count">
+        <item quantity="one">%1$s sample in view</item>
+        <item quantity="other">%1$s samples in view</item>
+    </plurals>
+
+    <string name="timeline_chart_cpu">CPU</string>
+    <string name="timeline_chart_memory">Memory used</string>
+    <string name="timeline_chart_battery">Battery level</string>
+    <string name="timeline_chart_power">Power draw</string>
+    <string name="timeline_chart_temp">Battery temperature</string>
+    <string name="timeline_chart_network">Network</string>
+    <string name="timeline_net_receive">Receive</string>
+    <string name="timeline_net_send">Send</string>
+
+    <!-- %1$s = chart name from timeline_chart_*. Press-and-drag reading for TalkBack. -->
+    <string name="timeline_cd_chart">%1$s history chart. Touch and drag horizontally to read recorded values.</string>
+
+    <string name="timeline_notif_denied">Recording needs a notification: Android requires a visible notification while SysMon\'s background service runs.</string>
+</resources>

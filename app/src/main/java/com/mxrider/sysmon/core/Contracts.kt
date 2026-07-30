@@ -99,6 +99,15 @@ interface PerfLogger {
     /** Writes the whole ring as one CSV to [uri]; false on any I/O failure. */
     suspend fun exportTo(uri: Uri): Boolean
 
+    /**
+     * Streams the ring's data rows oldest→newest (headers and blank lines
+     * stripped) into [block], under the same lock as [append] and rotation —
+     * a mid-read rotation could otherwise tear the sequence or feed a row
+     * twice. The sequence is single-use and only valid inside [block]. I/O
+     * failures propagate; callers degrade to an empty view, never crash.
+     */
+    suspend fun <T> readRows(block: (Sequence<String>) -> T): T
+
     companion object {
         /** Total cap across the ring: bounded private storage, and a visible number the Settings caption can promise. */
         const val MAX_LOG_BYTES = 50L * 1024 * 1024
@@ -147,7 +156,13 @@ enum class LogInterval(val intervalMs: Long) {
     SEC_1(1_000), SEC_5(5_000), SEC_30(30_000), MIN_5(300_000)
 }
 
-enum class TabDestination { PROCESSES, PERFORMANCE, APP_HISTORY, STARTUP, USERS, DETAILS, SERVICES, SETTINGS }
+/**
+ * TIMELINE is appended after SETTINGS rather than slotted next to PERFORMANCE:
+ * the start-page preference stores the constant's NAME, and `asEnum` falls
+ * back to the default on unknown names, so appending is the only order-safe
+ * direction. The rail defines its own display order.
+ */
+enum class TabDestination { PROCESSES, PERFORMANCE, APP_HISTORY, STARTUP, USERS, DETAILS, SERVICES, SETTINGS, TIMELINE }
 
 /**
  * Accent palette. `light`/`dark` are the chart/series colors validated for

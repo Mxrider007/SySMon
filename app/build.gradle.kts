@@ -39,6 +39,15 @@ android {
     }
 
     buildTypes {
+        debug {
+            // Installs ALONGSIDE production so run-as can inspect app-private
+            // files (perf log, CSV export) without touching the release
+            // install — run-as does not work on release builds. Safe since
+            // s14: the FileProvider authority derives from applicationId
+            // (landmines #32/#33), so the two variants no longer conflict.
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true

@@ -68,6 +68,7 @@
     <string name="settings_log_exported">Log exported</string>
     <string name="settings_log_export_failed">Couldn\'t export the log</string>
     <string name="settings_log_cleared">Log cleared</string>
+    <string name="settings_log_timeline_hint">Browse the recording as charts on the Timeline tab.</string>
 
     <!-- About -->
     <string name="settings_about_name_version">SysMon 1.0.0</string>

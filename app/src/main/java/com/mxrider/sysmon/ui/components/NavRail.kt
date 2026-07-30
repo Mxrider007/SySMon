@@ -29,6 +29,7 @@ import androidx.compose.material.icons.outlined.MiscellaneousServices
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.RocketLaunch
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Timeline
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
@@ -51,10 +52,16 @@ import com.mxrider.sysmon.core.TabDestination
 import com.mxrider.sysmon.ui.theme.FluentMetrics
 import com.mxrider.sysmon.ui.theme.FluentTheme
 
-/** Main destinations in Win11 Task Manager order; Settings is pinned at the bottom separately. */
+/**
+ * Main destinations in Win11 Task Manager order; Settings is pinned at the
+ * bottom separately. Timeline (SysMon's own page, no Win11 counterpart) sits
+ * right after Performance as its historical complement — display order here
+ * is independent of the enum's storage-safe append order.
+ */
 private val MainTabs = listOf(
     TabDestination.PROCESSES,
     TabDestination.PERFORMANCE,
+    TabDestination.TIMELINE,
     TabDestination.APP_HISTORY,
     TabDestination.STARTUP,
     TabDestination.USERS,
@@ -72,6 +79,7 @@ private fun labelRes(tab: TabDestination): Int = when (tab) {
     TabDestination.DETAILS -> R.string.nav_details
     TabDestination.SERVICES -> R.string.nav_services
     TabDestination.SETTINGS -> R.string.nav_settings
+    TabDestination.TIMELINE -> R.string.nav_timeline
 }
 
 private fun iconFor(tab: TabDestination): ImageVector = when (tab) {
@@ -83,6 +91,7 @@ private fun iconFor(tab: TabDestination): ImageVector = when (tab) {
     TabDestination.DETAILS -> Icons.AutoMirrored.Outlined.List
     TabDestination.SERVICES -> Icons.Outlined.MiscellaneousServices
     TabDestination.SETTINGS -> Icons.Outlined.Settings
+    TabDestination.TIMELINE -> Icons.Outlined.Timeline
 }
 
 /**

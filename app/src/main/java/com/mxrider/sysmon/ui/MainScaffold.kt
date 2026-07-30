@@ -37,6 +37,7 @@ import com.mxrider.sysmon.ui.screens.processes.ProcessesScreen
 import com.mxrider.sysmon.ui.screens.services.ServicesScreen
 import com.mxrider.sysmon.ui.screens.settings.SettingsScreen
 import com.mxrider.sysmon.ui.screens.startup.StartupScreen
+import com.mxrider.sysmon.ui.screens.timeline.TimelineScreen
 import com.mxrider.sysmon.service.CpuNotificationService
 import com.mxrider.sysmon.ui.screens.users.UsersScreen
 import com.mxrider.sysmon.ui.theme.FluentTheme
@@ -171,6 +172,7 @@ private fun MainScaffold(
                         TabDestination.DETAILS -> DetailsScreen()
                         TabDestination.SERVICES -> ServicesScreen()
                         TabDestination.SETTINGS -> SettingsScreen()
+                        TabDestination.TIMELINE -> TimelineScreen()
                     }
                 }
             }

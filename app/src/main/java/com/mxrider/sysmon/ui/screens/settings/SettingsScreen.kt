@@ -433,6 +433,12 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                     style = FluentTheme.typography.caption,
                     color = colors.textSecondary,
                 )
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = stringResource(R.string.settings_log_timeline_hint),
+                    style = FluentTheme.typography.caption,
+                    color = colors.textSecondary,
+                )
                 Spacer(Modifier.height(12.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FluentStandardButton(
@@ -721,4 +727,5 @@ private fun tabTitleRes(tab: TabDestination): Int = when (tab) {
     TabDestination.DETAILS -> R.string.nav_details
     TabDestination.SERVICES -> R.string.nav_services
     TabDestination.SETTINGS -> R.string.nav_settings
+    TabDestination.TIMELINE -> R.string.nav_timeline
 }

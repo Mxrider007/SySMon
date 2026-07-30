@@ -135,6 +135,32 @@ class DefaultPerfLogger(context: Context) : PerfLogger {
         }
     }
 
+    override suspend fun <T> readRows(block: (Sequence<String>) -> T): T = mutex.withLock {
+        ensureInitLocked()
+        withContext(Dispatchers.IO) {
+            val prev = previousFile.takeIf { it.exists() }
+            val active = activeFile.takeIf { it.exists() }
+            // Readers are opened via nested useLines (never a sequence builder:
+            // an abandoned builder suspends inside useLines and leaks the file
+            // handle until GC), so both close no matter how much of the
+            // sequence the block consumes.
+            when {
+                prev == null && active == null -> block(emptySequence())
+                prev == null -> active!!.bufferedReader().useLines { a -> block(dataRows(a)) }
+                active == null -> prev.bufferedReader().useLines { p -> block(dataRows(p)) }
+                else -> prev.bufferedReader().useLines { p ->
+                    active.bufferedReader().useLines { a ->
+                        block(dataRows(p) + dataRows(a))
+                    }
+                }
+            }
+        }
+    }
+
+    /** Strips the per-file header line and any blank lines, like [exportTo]. */
+    private fun dataRows(lines: Sequence<String>): Sequence<String> =
+        lines.drop(1).filter { it.isNotBlank() }
+
     /**
      * Seals the active file as the previous one (dropping the older half) and
      * re-reads disk truth — rotation is rare enough that a full rescan is
