@@ -39,7 +39,7 @@ To do its job as a monitor, SysMon reads the following information **on-device o
 
 - **App usage statistics** (screen time, app launch counts, per-app network and storage usage) — only if you grant the optional *Usage access* permission. The app explains this and asks for your consent before sending you to the system settings screen. You can decline; the rest of the app still works.
 - **Installed-app metadata** (app names, versions, sizes, install dates, declared services and boot receivers) from the Android package manager.
-- **Hardware and system counters**: CPU frequency, memory, network traffic totals, storage, battery, and GPU information exposed by Android.
+- **Hardware and system counters**: CPU frequency, memory, network traffic totals, storage, battery, temperature sensors and thermal status, and GPU information exposed by Android.
 
 Your only stored data — settings (theme, accent color, update speed, start page, notification and logging preferences) and the optional performance log described above — is kept locally on your device.
 

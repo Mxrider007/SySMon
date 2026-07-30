@@ -13,3 +13,8 @@ keystore.properties
 
 # Kotlin compiler session data
 .kotlin/
+
+# Console demo recordings: tens of MB each, uploaded to YouTube rather than
+# shipped, and re-recordable at any time. Keeping them out of
+# history stops the repo bloating with binaries nothing builds against.
+store/videos/
