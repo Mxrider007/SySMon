@@ -30,6 +30,10 @@ class DefaultThermalMonitor(context: Context) : ThermalMonitor {
     private var discovered: List<ZoneHandle>? = null
     private var access: ZoneAccess = ZoneAccess.ABSENT
 
+    /** Last headroom reading and when it was taken ([android.os.SystemClock.elapsedRealtime]). */
+    private var headroomCache: Float? = null
+    private var headroomReadAt: Long = Long.MIN_VALUE
+
     override suspend fun sample(): ThermalSnapshot {
         val zones = discovered ?: discover().also { discovered = it }
 
@@ -90,16 +94,26 @@ class DefaultThermalMonitor(context: Context) : ThermalMonitor {
      * Most devices return NaN here (the HAL hook is optional), and some throw.
      * Both mean "not reported" — the panel dashes it rather than guessing from
      * the sensor values, which would be a different measurement entirely.
+     *
+     * The platform also rate-limits this API: called more than about once per
+     * second it returns NaN, so at the HIGH update speed (500 ms ticks) a
+     * device that DOES report headroom would flicker value/dash at 2 Hz.
+     * Reads are therefore spaced >= 1 s apart and the last reading is reused
+     * in between — a <= 1 s-old forecast, not a fabricated one.
      */
     private fun readHeadroom(): Float? {
         if (Build.VERSION.SDK_INT < 30) return null
         val pm = powerManager ?: return null
-        return try {
+        val now = android.os.SystemClock.elapsedRealtime()
+        if (now - headroomReadAt < HEADROOM_MIN_INTERVAL_MS) return headroomCache
+        headroomReadAt = now
+        headroomCache = try {
             val value = pm.getThermalHeadroom(0)
             if (value.isNaN() || value <= 0f) null else value
         } catch (_: Exception) {
             null
         }
+        return headroomCache
     }
 
     private fun discover(): List<ZoneHandle> {
@@ -148,6 +162,9 @@ class DefaultThermalMonitor(context: Context) : ThermalMonitor {
         /** Plenty for any real device; keeps a pathological kernel from stalling a tick. */
         const val MAX_ZONES = 48
 
+        /** The platform returns NaN for headroom queries spaced closer than ~1 s. */
+        const val HEADROOM_MIN_INTERVAL_MS = 1_000L
+
         /** Physically sane band for a phone sensor, in °C. */
         const val MIN_C = 10.0
         const val MAX_C = 120.0
@@ -158,13 +175,18 @@ class DefaultThermalMonitor(context: Context) : ThermalMonitor {
          * deci°C (304) and `quiet_therm` in plain °C (23). Dividing everything
          * by 1000 — the common shortcut — would render "0.3 °C".
          *
-         * The four candidate scales map the sane band to disjoint raw ranges
-         * ([10,120], [100,1200], [1000,12000], [10000,120000]), so at most one
-         * can match and there is nothing to guess between. A value that fits
-         * none is a broken sensor and is reported as hidden, never displayed.
+         * The candidate scales map the sane band to raw ranges that are almost
+         * disjoint but overlap at the decade edges (raw 100–120 is a valid
+         * plain-°C reading AND a valid deci-°C one). For those ambiguous
+         * values the larger divisor wins: sysfs documents millidegrees as the
+         * standard unit, so the more standard interpretation is the better
+         * prior — and it is also the calmer one, which matters when the
+         * alternative is displaying a spurious near-shutdown temperature.
+         * A value fitting no scale is a broken sensor and is reported as
+         * hidden, never displayed.
          */
         fun plausibleCelsius(raw: Long): Double? {
-            for (scale in longArrayOf(1L, 10L, 100L, 1000L)) {
+            for (scale in longArrayOf(1000L, 100L, 10L, 1L)) {
                 val c = raw.toDouble() / scale
                 if (c in MIN_C..MAX_C) return c
             }
