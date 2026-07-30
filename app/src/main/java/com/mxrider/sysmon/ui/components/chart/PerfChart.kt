@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -23,10 +24,12 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.mxrider.sysmon.core.ChartHistory
 import com.mxrider.sysmon.ui.theme.FluentTheme
@@ -118,13 +121,19 @@ fun PerfChart(
     val ceilingCache = remember(textMeasurer, captionSecondary) { CeilingLabelCache() }
 
     Column(modifier = modifier) {
+        // Both label rows are pinned LTR: the Canvas plot does not mirror in
+        // RTL locales (raw coordinates; newest sample stays at the right), so
+        // a mirrored Row would caption the newest edge "60 seconds" and the
+        // oldest "0" — the exact cross-mapping TimelineChart fixed in s15.
         if (topLeftLabel != null || topRightLabel != null) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(topLeftLabel ?: "", style = typography.caption, color = colors.textSecondary)
-                Text(topRightLabel ?: "", style = typography.caption, color = colors.textSecondary)
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(topLeftLabel ?: "", style = typography.caption, color = colors.textSecondary)
+                    Text(topRightLabel ?: "", style = typography.caption, color = colors.textSecondary)
+                }
             }
         }
 
@@ -370,12 +379,14 @@ fun PerfChart(
         }
 
         if (bottomLeftLabel != null || bottomRightLabel != null) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(bottomLeftLabel ?: "", style = typography.caption, color = colors.textSecondary)
-                Text(bottomRightLabel ?: "", style = typography.caption, color = colors.textSecondary)
+            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(bottomLeftLabel ?: "", style = typography.caption, color = colors.textSecondary)
+                    Text(bottomRightLabel ?: "", style = typography.caption, color = colors.textSecondary)
+                }
             }
         }
     }

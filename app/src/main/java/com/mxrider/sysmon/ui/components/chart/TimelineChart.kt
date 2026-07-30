@@ -166,6 +166,7 @@ fun TimelineChart(
                 minAutoScale = minAutoScale,
                 width = w,
                 height = h,
+                lonePointTickPx = 2.dp.toPx(),
                 measurer = textMeasurer,
                 labelStyle = captionSecondary,
             )
@@ -406,6 +407,7 @@ private class TimelineGeometryCache {
     private var minAutoScale = 0f
     private var width = 0f
     private var height = 0f
+    private var lonePointTickPx = 0f
 
     var effectiveMax = 1f
         private set
@@ -431,6 +433,7 @@ private class TimelineGeometryCache {
         minAutoScale: Float,
         width: Float,
         height: Float,
+        lonePointTickPx: Float,
         measurer: TextMeasurer,
         labelStyle: TextStyle,
     ) {
@@ -444,7 +447,8 @@ private class TimelineGeometryCache {
             autoScale == this.autoScale &&
             minAutoScale == this.minAutoScale &&
             width == this.width &&
-            height == this.height
+            height == this.height &&
+            lonePointTickPx == this.lonePointTickPx
         ) {
             return
         }
@@ -459,6 +463,7 @@ private class TimelineGeometryCache {
         this.minAutoScale = minAutoScale
         this.width = width
         this.height = height
+        this.lonePointTickPx = lonePointTickPx
 
         var scale = if (autoScale) {
             var windowMax = 0f
@@ -499,16 +504,30 @@ private class TimelineGeometryCache {
         var started = false
         var prevX = 0f
         var prevT = Long.MIN_VALUE
+        var subpathPoints = 0
+        var subStartX = 0f
+        var subStartY = 0f
+
+        // A lone sample between gaps produces a subpath with no line segment
+        // and would render as nothing — recorded data must never be
+        // invisible, so it gets a short horizontal tick instead.
+        fun closeSubpath() {
+            fillPath?.lineTo(prevX, height)
+            fillPath?.close()
+            if (subpathPoints == 1 && lonePointTickPx > 0f) {
+                linePath.moveTo(subStartX - lonePointTickPx, subStartY)
+                linePath.lineTo(subStartX + lonePointTickPx, subStartY)
+            }
+            started = false
+            subpathPoints = 0
+        }
+
         for (i in 0 until n) {
             val v = values[i]
             val t = times[i]
             val isGap = started && gapThresholdMs > 0 && t - prevT > gapThresholdMs
             if (!v.isFinite() || isGap) {
-                if (started) {
-                    fillPath?.lineTo(prevX, height)
-                    fillPath?.close()
-                    started = false
-                }
+                if (started) closeSubpath()
                 if (!v.isFinite()) {
                     prevT = t
                     continue
@@ -521,17 +540,18 @@ private class TimelineGeometryCache {
                 fillPath?.moveTo(x, height)
                 fillPath?.lineTo(x, y)
                 started = true
+                subpathPoints = 1
+                subStartX = x
+                subStartY = y
             } else {
                 linePath.lineTo(x, y)
                 fillPath?.lineTo(x, y)
+                subpathPoints++
             }
             prevX = x
             prevT = t
         }
-        if (started && fillPath != null) {
-            fillPath.lineTo(prevX, height)
-            fillPath.close()
-        }
+        if (started) closeSubpath()
     }
 
     /**
