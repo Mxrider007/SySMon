@@ -200,6 +200,16 @@ data class SysMonSettings(
      */
     val logging: Boolean,
     val logInterval: LogInterval,
+    /**
+     * Always-on-top floating mini-monitor (same foreground service): live
+     * CPU, memory, network and battery in a small draggable card. Default
+     * OFF, needs the "Display over other apps" special access, and sampling
+     * pauses while the screen is off like the readouts.
+     */
+    val overlayEnabled: Boolean,
+    /** Last dragged overlay position in screen px; -1 = never moved (defaults apply). */
+    val overlayX: Int,
+    val overlayY: Int,
     val onboardingDone: Boolean,
 ) {
     companion object {
@@ -217,6 +227,9 @@ data class SysMonSettings(
             memoryNotification = false,
             logging = false,
             logInterval = LogInterval.SEC_5,
+            overlayEnabled = false,
+            overlayX = -1,
+            overlayY = -1,
             onboardingDone = false,
         )
     }
@@ -237,5 +250,7 @@ interface SettingsStore {
     suspend fun setMemoryNotification(value: Boolean)
     suspend fun setLogging(value: Boolean)
     suspend fun setLogInterval(value: LogInterval)
+    suspend fun setOverlayEnabled(value: Boolean)
+    suspend fun setOverlayPosition(x: Int, y: Int)
     suspend fun setOnboardingDone(value: Boolean)
 }

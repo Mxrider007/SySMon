@@ -327,6 +327,45 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                     label = stringResource(R.string.settings_notification_boxes),
                 )
             }
+            RowDivider()
+            SettingRow(
+                label = stringResource(R.string.settings_overlay),
+                description = stringResource(R.string.settings_overlay_desc),
+            ) {
+                val overlayPermissionMessage = stringResource(R.string.settings_overlay_permission)
+                FluentToggle(
+                    checked = settings.overlayEnabled,
+                    label = stringResource(R.string.settings_overlay),
+                    onCheckedChange = { checked ->
+                        when {
+                            !checked -> vm.setOverlayEnabled(false)
+                            android.provider.Settings.canDrawOverlays(context) ->
+                                vm.setOverlayEnabled(true)
+                            else -> {
+                                // "Display over other apps" has no result
+                                // callback; send the user there and let them
+                                // flip the toggle again on return.
+                                try {
+                                    context.startActivity(
+                                        Intent(
+                                            android.provider.Settings
+                                                .ACTION_MANAGE_OVERLAY_PERMISSION,
+                                            Uri.parse("package:${context.packageName}"),
+                                        ),
+                                    )
+                                } catch (_: Exception) {
+                                    // Fall through to the toast either way.
+                                }
+                                Toast.makeText(
+                                    context,
+                                    overlayPermissionMessage,
+                                    Toast.LENGTH_LONG,
+                                ).show()
+                            }
+                        }
+                    },
+                )
+            }
         }
         Spacer(Modifier.height(24.dp))
 

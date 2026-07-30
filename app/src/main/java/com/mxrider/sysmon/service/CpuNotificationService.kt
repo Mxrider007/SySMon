@@ -16,12 +16,19 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.PixelFormat
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
 import android.graphics.Typeface
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
+import android.provider.Settings
+import android.view.Gravity
+import android.view.MotionEvent
+import android.view.View
+import android.view.ViewConfiguration
+import android.view.WindowManager
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.IconCompat
@@ -29,20 +36,26 @@ import com.mxrider.sysmon.Graph
 import com.mxrider.sysmon.MainActivity
 import com.mxrider.sysmon.R
 import com.mxrider.sysmon.TabIntents
+import com.mxrider.sysmon.core.BatterySnapshot
+import com.mxrider.sysmon.core.CpuSnapshot
 import com.mxrider.sysmon.core.CpuSource
 import com.mxrider.sysmon.core.Format
 import com.mxrider.sysmon.core.LogSample
+import com.mxrider.sysmon.core.MemorySnapshot
+import com.mxrider.sysmon.core.NetworkSnapshot
 import com.mxrider.sysmon.core.SysMonSettings
 import com.mxrider.sysmon.core.TabDestination
 import com.mxrider.sysmon.core.averageCurFreqKhz
 import com.mxrider.sysmon.data.system.DefaultCpuMonitor
 import com.mxrider.sysmon.data.system.DefaultNetworkMonitor
 import java.util.Locale
+import kotlin.math.abs
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -56,7 +69,9 @@ import kotlinx.coroutines.sync.withLock
  * is away: the silent ongoing readout notifications — live CPU
  * ("CPU ~43% · 1.03 GHz"), network speed ("Net ↓ 2.1 Mbps · ↑ 340 Kbps"),
  * battery ("Battery 84% · -1.8 W") and memory ("Memory 63% · 3.6 / 5.6 GB")
- * — plus the on-device performance log (CSV rows of all of the above). Each
+ * — plus the draggable floating mini-monitor card (CPU/MEM/NET/BAT, needs
+ * "Display over other apps") and the on-device performance log (CSV rows of
+ * all of the above). Each
  * readout optionally carries a rendered usage tile as its large icon, and its
  * status-bar icon is the live value itself, repainted every tick (a white
  * box with the number punched out; the net readout stacks its two rates).
@@ -115,6 +130,12 @@ class CpuNotificationService : Service() {
     // PROC_STAT ROMs are real and explicitly supported.
     private val cpuMonitor by lazy { DefaultCpuMonitor() }
     private val logCpuMonitor by lazy { DefaultCpuMonitor() }
+
+    // Floating mini-monitor. Main-thread only (WindowManager contract); the
+    // update loop hands it immutable strings via a thread-safe setter.
+    private val windowManager by lazy { getSystemService(WindowManager::class.java) }
+    private var overlayView: OverlayMonitorView? = null
+    private var overlayParams: WindowManager.LayoutParams? = null
 
     private val screenReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
@@ -212,16 +233,18 @@ class CpuNotificationService : Service() {
         } catch (_: Exception) {
             // Some OEM teardown paths deliver onDestroy twice.
         }
+        detachOverlay() // onDestroy runs on the main thread
         scope.cancel()
         super.onDestroy()
     }
 
-    /** Reconciles anchor, visible notifications, and repaint guards. */
+    /** Reconciles anchor, visible notifications, overlay, and repaint guards. */
     private suspend fun applySettings(settings: SysMonSettings) = stateMutex.withLock {
         val previous = current
         current = settings
         if (!settings.cpuNotification && !settings.netNotification &&
-            !settings.batteryNotification && !settings.memoryNotification && !settings.logging
+            !settings.batteryNotification && !settings.memoryNotification &&
+            !settings.overlayEnabled && !settings.logging
         ) {
             stopCompletely()
             return@withLock
@@ -231,6 +254,9 @@ class CpuNotificationService : Service() {
             settings.netNotification -> NET_NOTIFICATION_ID
             settings.batteryNotification -> BAT_NOTIFICATION_ID
             settings.memoryNotification -> MEM_NOTIFICATION_ID
+            // The overlay is visible by definition, so its anchor (like
+            // LOG's) is a static last-resort notification, not a readout.
+            settings.overlayEnabled -> OVERLAY_NOTIFICATION_ID
             else -> LOG_NOTIFICATION_ID // logging is the only thing left on
         }
         if (wantedAnchor != anchorId) {
@@ -251,6 +277,8 @@ class CpuNotificationService : Service() {
         if (!settings.batteryNotification) manager?.cancel(BAT_NOTIFICATION_ID)
         if (!settings.memoryNotification) manager?.cancel(MEM_NOTIFICATION_ID)
         if (anchorId != LOG_NOTIFICATION_ID) manager?.cancel(LOG_NOTIFICATION_ID)
+        if (anchorId != OVERLAY_NOTIFICATION_ID) manager?.cancel(OVERLAY_NOTIFICATION_ID)
+        withContext(Dispatchers.Main) { syncOverlay(settings) }
         // Accent or box changes repaint the same title text; toggling a
         // readout back on must repost it even if its title never changed.
         val repaintAll = previous?.accent != settings.accent ||
@@ -270,32 +298,54 @@ class CpuNotificationService : Service() {
         update()
     }
 
-    private fun stopCompletely() {
+    private suspend fun stopCompletely() {
         val manager = getSystemService(NotificationManager::class.java)
         manager?.cancel(CPU_NOTIFICATION_ID)
         manager?.cancel(NET_NOTIFICATION_ID)
         manager?.cancel(BAT_NOTIFICATION_ID)
         manager?.cancel(MEM_NOTIFICATION_ID)
         manager?.cancel(LOG_NOTIFICATION_ID)
+        manager?.cancel(OVERLAY_NOTIFICATION_ID)
+        withContext(Dispatchers.Main) { detachOverlay() }
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
 
-    /** Callers must hold [stateMutex]. */
+    /**
+     * Callers must hold [stateMutex]. Each source is sampled at most ONCE per
+     * tick and the snapshot shared between its notification and the overlay —
+     * sampling twice would slice the stateful monitors' delta windows.
+     */
     private suspend fun update() {
         val settings = current ?: return
-        if (settings.cpuNotification) updateCpu(settings)
-        if (settings.netNotification) updateNet(settings)
-        if (settings.batteryNotification) updateBattery(settings)
-        if (settings.memoryNotification) updateMemory(settings)
+        // An external revoke of "Display over other apps" makes the system
+        // tear the window down without telling us — the toggle would keep
+        // claiming a monitor that no longer exists. Reconcile it here; the
+        // settings write re-runs applySettings, which detaches and re-anchors.
+        if (settings.overlayEnabled && !Settings.canDrawOverlays(this)) {
+            scope.launch { Graph.settings.setOverlayEnabled(false) }
+        }
+        val overlay = settings.overlayEnabled
+        val cpuSnap = if (settings.cpuNotification || overlay) {
+            runCatching { cpuMonitor.sample() }.getOrNull()
+        } else null
+        val netSnap = if (settings.netNotification || overlay) {
+            runCatching { netMonitor.sample() }.getOrNull()
+        } else null
+        val batSnap = if (settings.batteryNotification || overlay) {
+            runCatching { Graph.battery.sample() }.getOrNull()
+        } else null
+        val memSnap = if (settings.memoryNotification || overlay) {
+            runCatching { Graph.memory.sample() }.getOrNull()
+        } else null
+        if (settings.cpuNotification) updateCpu(settings, cpuSnap)
+        if (settings.netNotification) updateNet(settings, netSnap)
+        if (settings.batteryNotification) updateBattery(settings, batSnap)
+        if (settings.memoryNotification) updateMemory(settings, memSnap)
+        if (overlay) updateOverlay(settings, cpuSnap, memSnap, netSnap, batSnap)
     }
 
-    private suspend fun updateCpu(settings: SysMonSettings) {
-        val snapshot = try {
-            cpuMonitor.sample()
-        } catch (_: Exception) {
-            null
-        }
+    private fun updateCpu(settings: SysMonSettings, snapshot: CpuSnapshot?) {
         val title: String
         val text: String?
         var percent: String? = null
@@ -345,12 +395,7 @@ class CpuNotificationService : Service() {
         }
     }
 
-    private suspend fun updateNet(settings: SysMonSettings) {
-        val snapshot = try {
-            netMonitor.sample()
-        } catch (_: Exception) {
-            null
-        }
+    private fun updateNet(settings: SysMonSettings, snapshot: NetworkSnapshot?) {
         val title: String
         val text: String?
         // Compact down/up pair for the tile and the status-bar icon; null
@@ -399,12 +444,7 @@ class CpuNotificationService : Service() {
         }
     }
 
-    private suspend fun updateBattery(settings: SysMonSettings) {
-        val snapshot = try {
-            Graph.battery.sample()
-        } catch (_: Exception) {
-            null
-        }
+    private fun updateBattery(settings: SysMonSettings, snapshot: BatterySnapshot?) {
         val title: String
         val text: String?
         if (snapshot == null) {
@@ -461,12 +501,7 @@ class CpuNotificationService : Service() {
         }
     }
 
-    private suspend fun updateMemory(settings: SysMonSettings) {
-        val snapshot = try {
-            Graph.memory.sample()
-        } catch (_: Exception) {
-            null
-        }
+    private fun updateMemory(settings: SysMonSettings, snapshot: MemorySnapshot?) {
         val title: String
         val text: String?
         var percent: String? = null
@@ -508,6 +543,152 @@ class CpuNotificationService : Service() {
                     liveIcon = percent?.let { renderStatusValue(it.removeSuffix("%")) },
                 ),
             )
+        }
+    }
+
+    /**
+     * Pushes this tick's snapshots into the floating card. Same honesty rules
+     * as the notifications: ~ marks the frequency estimate, dash for anything
+     * unreadable; the battery temperature rides along because it is the
+     * overlay's most-requested metric and BatteryManager hands it over anyway.
+     */
+    private fun updateOverlay(
+        settings: SysMonSettings,
+        cpu: CpuSnapshot?,
+        mem: MemorySnapshot?,
+        net: NetworkSnapshot?,
+        bat: BatterySnapshot?,
+    ) {
+        val cpuText = cpu?.takeIf { it.source != CpuSource.UNAVAILABLE }?.let {
+            val prefix = if (it.source == CpuSource.FREQ_ESTIMATE) "~" else ""
+            prefix + Format.percent(it.utilization)
+        }
+        val memText = mem?.takeIf { it.totalBytes > 0 }?.let {
+            Format.percent((it.usedBytes.toFloat() / it.totalBytes).coerceIn(0f, 1f))
+        }
+        // Zero totals = TrafficStats unsupported, same rule as the readout.
+        val netText = net?.takeIf { it.totalRxBytes != 0L || it.totalTxBytes != 0L }?.let {
+            "↓${compactBits(it.rxBytesPerSec)} ↑${compactBits(it.txBytesPerSec)}"
+        }
+        val batText = bat?.let { b ->
+            buildString {
+                append("${b.levelPercent}%")
+                // Whole degrees: the card is too small for tenths.
+                b.temperatureC?.let { append(String.format(Locale.US, " · %.0f°C", it)) }
+            }
+        }
+        overlayView?.setData(
+            cpuText, memText, netText, batText,
+            settings.accent.controlLightArgb.toInt(),
+        )
+    }
+
+    /** Main thread only. Adds/removes the overlay window to match settings. */
+    private fun syncOverlay(settings: SysMonSettings) {
+        val allowed = Settings.canDrawOverlays(this)
+        if (settings.overlayEnabled && !allowed) {
+            // Special access revoked behind our back: flip the toggle so it
+            // tells the truth; the settings collector then re-reconciles.
+            scope.launch { Graph.settings.setOverlayEnabled(false) }
+        }
+        val wantShown = settings.overlayEnabled && allowed
+        if (wantShown && overlayView == null) {
+            attachOverlay(settings)
+        } else if (!wantShown) {
+            detachOverlay()
+        }
+    }
+
+    /** Main thread only. */
+    private fun attachOverlay(settings: SysMonSettings) {
+        val view = OverlayMonitorView(this)
+        val density = resources.displayMetrics.density
+        val params = WindowManager.LayoutParams(
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.WRAP_CONTENT,
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+            PixelFormat.TRANSLUCENT,
+        ).apply {
+            gravity = Gravity.TOP or Gravity.START
+            x = if (settings.overlayX >= 0) settings.overlayX else (16 * density).toInt()
+            y = if (settings.overlayY >= 0) settings.overlayY else (120 * density).toInt()
+        }
+        view.setOnTouchListener(OverlayDragListener(params, view))
+        try {
+            windowManager?.addView(view, params)
+            overlayView = view
+            overlayParams = params
+        } catch (_: Exception) {
+            // addView can refuse mid-revoke; the next reconcile retries.
+        }
+    }
+
+    /** Main thread only. */
+    private fun detachOverlay() {
+        overlayView?.let { view ->
+            try {
+                windowManager?.removeView(view)
+            } catch (_: Exception) {
+                // Already detached by a teardown race.
+            }
+        }
+        overlayView = null
+        overlayParams = null
+    }
+
+    /**
+     * Whole-card drag with the standard touch slop; the end position is
+     * persisted so the card comes back where the user left it. Positions are
+     * clamped to the display so a rotation can never strand it off-screen.
+     */
+    private inner class OverlayDragListener(
+        private val params: WindowManager.LayoutParams,
+        private val view: View,
+    ) : View.OnTouchListener {
+        private val slop = ViewConfiguration.get(this@CpuNotificationService).scaledTouchSlop
+        private var startX = 0
+        private var startY = 0
+        private var downRawX = 0f
+        private var downRawY = 0f
+        private var dragging = false
+
+        override fun onTouch(v: View, event: MotionEvent): Boolean {
+            when (event.actionMasked) {
+                MotionEvent.ACTION_DOWN -> {
+                    startX = params.x
+                    startY = params.y
+                    downRawX = event.rawX
+                    downRawY = event.rawY
+                    dragging = false
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    val dx = (event.rawX - downRawX).toInt()
+                    val dy = (event.rawY - downRawY).toInt()
+                    if (!dragging && (abs(dx) > slop || abs(dy) > slop)) dragging = true
+                    if (dragging) {
+                        val metrics = resources.displayMetrics
+                        params.x = (startX + dx)
+                            .coerceIn(0, (metrics.widthPixels - view.width).coerceAtLeast(0))
+                        params.y = (startY + dy)
+                            .coerceIn(0, (metrics.heightPixels - view.height).coerceAtLeast(0))
+                        try {
+                            windowManager?.updateViewLayout(view, params)
+                        } catch (_: Exception) {
+                            // View got detached mid-drag; nothing to move.
+                        }
+                    }
+                }
+                MotionEvent.ACTION_UP -> {
+                    if (dragging) {
+                        scope.launch { Graph.settings.setOverlayPosition(params.x, params.y) }
+                    } else {
+                        v.performClick()
+                    }
+                }
+            }
+            return true
         }
     }
 
@@ -583,6 +764,17 @@ class CpuNotificationService : Service() {
             R.drawable.ic_stat_log,
             getString(R.string.log_notif_title),
             getString(R.string.log_notif_text),
+            null,
+            destination = TabDestination.SETTINGS,
+        )
+
+        // Also static: the overlay itself is the live surface — this exists
+        // only because a foreground service must show SOME notification.
+        OVERLAY_NOTIFICATION_ID -> buildReadoutNotification(
+            OVERLAY_CHANNEL_ID,
+            R.drawable.ic_stat_cpu,
+            getString(R.string.overlay_notif_title),
+            getString(R.string.overlay_notif_text),
             null,
             destination = TabDestination.SETTINGS,
         )
@@ -845,6 +1037,16 @@ class CpuNotificationService : Service() {
                 setShowBadge(false)
             },
         )
+        manager.createNotificationChannel(
+            NotificationChannel(
+                OVERLAY_CHANNEL_ID,
+                getString(R.string.overlay_notif_channel_name),
+                NotificationManager.IMPORTANCE_LOW,
+            ).apply {
+                description = getString(R.string.overlay_notif_channel_desc)
+                setShowBadge(false)
+            },
+        )
     }
 
     companion object {
@@ -853,13 +1055,16 @@ class CpuNotificationService : Service() {
         private const val BAT_CHANNEL_ID = "battery_readout"
         private const val MEM_CHANNEL_ID = "memory_readout"
         private const val LOG_CHANNEL_ID = "logging_status"
-        // Anchor priority CPU > NET > BAT > MEM > LOG; MEM slots in above LOG
-        // (the anchor of last resort) so the earlier ids keep their meaning.
+        private const val OVERLAY_CHANNEL_ID = "overlay_status"
+        // Anchor priority CPU > NET > BAT > MEM > OVERLAY > LOG; new ids slot
+        // in above LOG (the anchor of last resort) so the earlier ids keep
+        // their meaning.
         private const val CPU_NOTIFICATION_ID = 1
         private const val NET_NOTIFICATION_ID = 2
         private const val BAT_NOTIFICATION_ID = 3
         private const val LOG_NOTIFICATION_ID = 4
         private const val MEM_NOTIFICATION_ID = 5
+        private const val OVERLAY_NOTIFICATION_ID = 6
         private const val UPDATE_INTERVAL_MS = 2_000L
         private const val BOX_SIZE_PX = 256
 

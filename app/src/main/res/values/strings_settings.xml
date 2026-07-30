@@ -40,6 +40,9 @@
     <string name="settings_mem_notification_desc">Silent, ongoing notification with the live memory readout — used, total and available. After a reboot it returns the next time you open SysMon.</string>
     <string name="settings_notification_boxes">Show usage boxes</string>
     <string name="settings_notification_boxes_desc">Adds a live usage tile to each readout notification</string>
+    <string name="settings_overlay">Floating monitor</string>
+    <string name="settings_overlay_desc">Small always-on-top card with live CPU, memory, network and battery — drag it anywhere, even over games. Uses a little battery while on. After a reboot it returns the next time you open SysMon.</string>
+    <string name="settings_overlay_permission">Allow “Display over other apps” for SysMon, then turn the toggle on again</string>
     <string name="settings_cpu_notification_denied">Notifications are turned off for SysMon. Allow them in system settings to use this.</string>
 
     <!-- Logging -->

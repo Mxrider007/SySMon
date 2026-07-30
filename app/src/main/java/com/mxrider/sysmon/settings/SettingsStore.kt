@@ -6,6 +6,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.mxrider.sysmon.core.AccentOption
@@ -37,6 +38,9 @@ private object Keys {
     val MEMORY_NOTIFICATION = booleanPreferencesKey("memory_notification")
     val LOGGING = booleanPreferencesKey("logging")
     val LOG_INTERVAL = stringPreferencesKey("log_interval")
+    val OVERLAY_ENABLED = booleanPreferencesKey("overlay_enabled")
+    val OVERLAY_X = intPreferencesKey("overlay_x")
+    val OVERLAY_Y = intPreferencesKey("overlay_y")
     val ONBOARDING_DONE = booleanPreferencesKey("onboarding_done")
 }
 
@@ -76,6 +80,9 @@ class DefaultSettingsStore(context: Context) : SettingsStore {
                     ?: defaults.memoryNotification,
                 logging = prefs[Keys.LOGGING] ?: defaults.logging,
                 logInterval = prefs[Keys.LOG_INTERVAL].asEnum(defaults.logInterval),
+                overlayEnabled = prefs[Keys.OVERLAY_ENABLED] ?: defaults.overlayEnabled,
+                overlayX = prefs[Keys.OVERLAY_X] ?: defaults.overlayX,
+                overlayY = prefs[Keys.OVERLAY_Y] ?: defaults.overlayY,
                 onboardingDone = prefs[Keys.ONBOARDING_DONE] ?: defaults.onboardingDone,
             )
         }
@@ -109,6 +116,20 @@ class DefaultSettingsStore(context: Context) : SettingsStore {
 
     override suspend fun setLogInterval(value: LogInterval) =
         setString(Keys.LOG_INTERVAL, value.name)
+
+    override suspend fun setOverlayEnabled(value: Boolean) =
+        setBoolean(Keys.OVERLAY_ENABLED, value)
+
+    override suspend fun setOverlayPosition(x: Int, y: Int) {
+        try {
+            dataStore.edit {
+                it[Keys.OVERLAY_X] = x
+                it[Keys.OVERLAY_Y] = y
+            }
+        } catch (_: IOException) {
+            // Best-effort persistence; never crash on storage failures.
+        }
+    }
 
     override suspend fun setOnboardingDone(value: Boolean) = setBoolean(Keys.ONBOARDING_DONE, value)
 

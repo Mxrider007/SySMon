@@ -43,4 +43,15 @@
     <string name="log_notif_channel_desc">Shown while performance logging runs with no readout notification visible.</string>
     <string name="log_notif_title">Logging performance</string>
     <string name="log_notif_text">CPU, memory, battery and network — tap to manage</string>
+
+    <string name="overlay_notif_channel_name">Floating monitor status</string>
+    <string name="overlay_notif_channel_desc">Shown while the floating monitor runs with no readout notification visible.</string>
+    <string name="overlay_notif_title">Floating monitor active</string>
+    <string name="overlay_notif_text">Drag the card to move it — tap here to manage</string>
+
+    <!-- Row labels drawn inside the floating monitor card. -->
+    <string name="overlay_label_cpu">CPU</string>
+    <string name="overlay_label_mem">MEM</string>
+    <string name="overlay_label_net">NET</string>
+    <string name="overlay_label_bat">BAT</string>
 </resources>

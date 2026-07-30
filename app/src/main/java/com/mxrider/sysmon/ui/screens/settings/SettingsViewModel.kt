@@ -81,6 +81,10 @@ class SettingsViewModel : ViewModel() {
         viewModelScope.launch { store.setLogging(value) }
     }
 
+    fun setOverlayEnabled(value: Boolean) {
+        viewModelScope.launch { store.setOverlayEnabled(value) }
+    }
+
     fun setLogInterval(value: LogInterval) {
         viewModelScope.launch { store.setLogInterval(value) }
     }

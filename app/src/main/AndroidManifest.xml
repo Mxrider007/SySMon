@@ -20,6 +20,11 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
 
+    <!-- The user-enabled floating mini-monitor ("Floating monitor" toggle,
+         default OFF). The special access is requested in-app the moment the
+         user flips the toggle, never before. -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
     <!-- Deliberately NO INTERNET permission: nothing ever leaves the device.
          Deliberately NO QUERY_ALL_PACKAGES: task managers are not on Play's
          permitted-use list and the declaration is a rejection/termination
@@ -62,7 +67,7 @@
             <!-- API 34+ / Play policy: state why no narrower FGS type fits. -->
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
-                android:value="User-enabled live CPU usage, memory, network speed and battery readouts shown as persistent silent notifications, plus user-enabled performance logging to a local CSV file" />
+                android:value="User-enabled live CPU usage, memory, network speed and battery readouts shown as persistent silent notifications, a user-enabled always-on-top floating mini-monitor card, plus user-enabled performance logging to a local CSV file" />
         </service>
     </application>
 </manifest>

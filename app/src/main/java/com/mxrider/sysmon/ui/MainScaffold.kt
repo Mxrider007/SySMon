@@ -106,10 +106,19 @@ private fun MainScaffold(
         settings.netNotification,
         settings.batteryNotification,
         settings.memoryNotification,
+        settings.overlayEnabled,
         settings.logging,
     ) {
+        // The overlay needs its own special access; if that was revoked
+        // behind our back, reconcile its toggle first (same honesty rule as
+        // the notification permission below).
+        if (settings.overlayEnabled && !android.provider.Settings.canDrawOverlays(context)) {
+            Graph.settings.setOverlayEnabled(false)
+            return@LaunchedEffect // the write re-runs this effect
+        }
         val anythingOn = settings.cpuNotification || settings.netNotification ||
-            settings.batteryNotification || settings.memoryNotification || settings.logging
+            settings.batteryNotification || settings.memoryNotification ||
+            settings.overlayEnabled || settings.logging
         if (anythingOn) {
             if (CpuNotificationService.canPostNotifications(context)) {
                 CpuNotificationService.start(context)
@@ -118,6 +127,7 @@ private fun MainScaffold(
                 if (settings.netNotification) Graph.settings.setNetNotification(false)
                 if (settings.batteryNotification) Graph.settings.setBatteryNotification(false)
                 if (settings.memoryNotification) Graph.settings.setMemoryNotification(false)
+                if (settings.overlayEnabled) Graph.settings.setOverlayEnabled(false)
                 if (settings.logging) Graph.settings.setLogging(false)
             }
         }
