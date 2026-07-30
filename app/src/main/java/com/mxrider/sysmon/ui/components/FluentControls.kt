@@ -170,6 +170,12 @@ fun FluentStandardButton(
             style = FluentTheme.typography.body,
             color = contentColor,
             maxLines = 1,
+            // Without these a squeezed button wraps at a space and the fixed
+            // 32dp height hides the second line, so the label silently loses
+            // words with no ellipsis to hint at it — the accessibility tree
+            // still reads the full string, so nothing looks wrong in a dump.
+            softWrap = false,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }

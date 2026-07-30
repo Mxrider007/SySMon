@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.mxrider.sysmon.data.apps.PackageEvents
 import com.mxrider.sysmon.Graph
 import com.mxrider.sysmon.core.StartupRow
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -47,8 +48,16 @@ class StartupViewModel : ViewModel() {
         }
     }
 
+    private var loadJob: Job? = null
+
+    /**
+     * Single-flight: a package-event burst (a Play Store batch update)
+     * would otherwise stack concurrent full startup list sweeps that nothing
+     * cancels. The newest request wins, as in AppHistoryViewModel.
+     */
     fun refresh() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             _state.update { it.copy(loading = true) }
             val rows = withContext(Dispatchers.IO) {
                 try {

@@ -21,10 +21,13 @@
     <string name="details_strip_uid">UID</string>
     <string name="details_strip_installer">Installer</string>
 
-    <string name="details_count_shown">Showing %1$d of %2$d apps</string>
+    <plurals name="details_count_shown">
+        <item quantity="one">Showing %1$d of %2$d app</item>
+        <item quantity="other">Showing %1$d of %2$d apps</item>
+    </plurals>
     <string name="details_empty_title">No matching apps</string>
     <string name="details_empty_body">Try a different search.</string>
-    <string name="details_export_csv">Export CSV…</string>
+    <string name="details_export_csv">Export CSV</string>
     <string name="details_export_chooser">Export app list</string>
     <string name="details_export_failed">Couldn\'t export the app list</string>
 </resources>

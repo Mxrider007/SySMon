@@ -46,7 +46,14 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // findByName returns null when keystore.properties is absent,
+            // which would silently produce an UNSIGNED release that only fails
+            // at Play upload. Fail at build time instead.
             signingConfig = signingConfigs.findByName("release")
+                ?: throw GradleException(
+                    "Release signing config missing - keystore.properties not found. " +
+                        "Restore it from your password manager before building a release.",
+                )
         }
     }
 
@@ -79,6 +86,11 @@ dependencies {
     implementation(libs.compose.icons.extended)
     implementation(libs.androidx.datastore.preferences)
     implementation(libs.androidx.glance.appwidget)
-    implementation(libs.compose.ui.tooling.preview)
+    // Explicit, only to lift Glance's transitive work-runtime 2.7.1 (and the
+    // room 2.2.5 it drags along) to a maintained version. WorkManager is not
+    // used directly anywhere in this app.
+    implementation(libs.androidx.work.runtime)
+    // debug-only: there are no @Preview functions in the release sources.
+    debugImplementation(libs.compose.ui.tooling.preview)
     debugImplementation(libs.compose.ui.tooling)
 }

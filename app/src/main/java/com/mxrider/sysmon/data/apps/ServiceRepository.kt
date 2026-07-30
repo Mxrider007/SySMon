@@ -73,7 +73,9 @@ class DefaultServiceRepository(context: Context) : ServiceRepository {
                 )
             }
         }
-        return rows
+        // Same guard as AppRepository: package+class is the table's row key,
+        // and a duplicate key is an unrecoverable Compose exception.
+        return rows.distinctBy { "${it.packageName}/${it.fqcn}" }
     }
 
     private fun foregroundServiceTypeNames(si: ServiceInfo): String {

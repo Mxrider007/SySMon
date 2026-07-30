@@ -2,6 +2,7 @@ package com.mxrider.sysmon.settings
 
 import android.content.Context
 import androidx.datastore.core.DataStore
+import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
@@ -17,12 +18,28 @@ import com.mxrider.sysmon.core.TabDestination
 import com.mxrider.sysmon.core.ThemeMode
 import com.mxrider.sysmon.core.UpdateSpeed
 import java.io.IOException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.flow.map
 
-/** Single Preferences-DataStore file backing all user settings. */
-private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
+/**
+ * Single Preferences-DataStore file backing all user settings.
+ *
+ * The corruption handler is load-bearing, not boilerplate. Without it DataStore
+ * installs a no-op handler that rethrows forever and never repairs the file, so
+ * a truncated or foreign `settings.preferences_pb` — which Android's auto-backup
+ * can restore onto a new device, since `backup_rules.xml` includes `datastore` —
+ * would leave the app permanently stuck: reads fail, the onboarding flag reads
+ * false, and the write that would clear it fails too. Replacing the unreadable
+ * file with empty preferences costs the user their settings once and heals
+ * everything else automatically.
+ */
+private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(
+    name = "settings",
+    corruptionHandler = ReplaceFileCorruptionHandler { emptyPreferences() },
+)
 
 private object Keys {
     val THEME_MODE = stringPreferencesKey("theme_mode")
@@ -51,41 +68,64 @@ private inline fun <reified T : Enum<T>> String?.asEnum(default: T): T =
 /**
  * DataStore-backed [SettingsStore]. Enum settings are stored by `.name` and
  * parsed defensively so a corrupt or stale value degrades to the default
- * instead of crashing. Read and write I/O failures are swallowed: reads emit
- * defaults, writes are best-effort.
+ * instead of crashing. Reads retry transient storage failures and fall back to
+ * defaults only as a last resort; writes are best-effort and never throw.
  */
 class DefaultSettingsStore(context: Context) : SettingsStore {
 
     private val dataStore = context.applicationContext.dataStore
 
+    /**
+     * Ordering here matters as much as the operators.
+     *
+     * `map` comes FIRST so a value stored under the wrong type — possible after
+     * a restore from a different build — is caught here instead of throwing
+     * ClassCastException downstream, where nothing would catch it.
+     *
+     * `retryWhen` handles transient storage failures by RESUBSCRIBING. `catch`
+     * cannot do that job: it emits once and then COMPLETES the flow, and a
+     * completed settings flow freezes the whole UI on whatever it last saw
+     * (theme, start page, and the service-reconciliation effect all read it).
+     * The trailing `catch` is therefore a last resort only, after the retries
+     * are spent.
+     */
     override val settings: Flow<SysMonSettings> = dataStore.data
-        .catch { error ->
-            if (error is IOException) emit(emptyPreferences()) else throw error
+        .map { prefs -> prefs.toSettings() }
+        .retryWhen { cause, attempt ->
+            if (cause is IOException && attempt < RETRY_ATTEMPTS) {
+                delay(RETRY_DELAY_MS * (attempt + 1))
+                true
+            } else {
+                false
+            }
         }
-        .map { prefs ->
-            val defaults = SysMonSettings.DEFAULT
-            SysMonSettings(
-                themeMode = prefs[Keys.THEME_MODE].asEnum(defaults.themeMode),
-                accent = prefs[Keys.ACCENT].asEnum(defaults.accent),
-                updateSpeed = prefs[Keys.UPDATE_SPEED].asEnum(defaults.updateSpeed),
-                startPage = prefs[Keys.START_PAGE].asEnum(defaults.startPage),
-                keepScreenOn = prefs[Keys.KEEP_SCREEN_ON] ?: defaults.keepScreenOn,
-                showSystemApps = prefs[Keys.SHOW_SYSTEM_APPS] ?: defaults.showSystemApps,
-                cpuNotification = prefs[Keys.CPU_NOTIFICATION] ?: defaults.cpuNotification,
-                notificationBoxes = prefs[Keys.NOTIFICATION_BOXES] ?: defaults.notificationBoxes,
-                netNotification = prefs[Keys.NET_NOTIFICATION] ?: defaults.netNotification,
-                batteryNotification = prefs[Keys.BATTERY_NOTIFICATION]
-                    ?: defaults.batteryNotification,
-                memoryNotification = prefs[Keys.MEMORY_NOTIFICATION]
-                    ?: defaults.memoryNotification,
-                logging = prefs[Keys.LOGGING] ?: defaults.logging,
-                logInterval = prefs[Keys.LOG_INTERVAL].asEnum(defaults.logInterval),
-                overlayEnabled = prefs[Keys.OVERLAY_ENABLED] ?: defaults.overlayEnabled,
-                overlayX = prefs[Keys.OVERLAY_X] ?: defaults.overlayX,
-                overlayY = prefs[Keys.OVERLAY_Y] ?: defaults.overlayY,
-                onboardingDone = prefs[Keys.ONBOARDING_DONE] ?: defaults.onboardingDone,
-            )
-        }
+        .catch { emit(SysMonSettings.DEFAULT) }
+
+    private fun Preferences.toSettings(): SysMonSettings {
+        val prefs = this
+        val defaults = SysMonSettings.DEFAULT
+        return SysMonSettings(
+            themeMode = prefs[Keys.THEME_MODE].asEnum(defaults.themeMode),
+            accent = prefs[Keys.ACCENT].asEnum(defaults.accent),
+            updateSpeed = prefs[Keys.UPDATE_SPEED].asEnum(defaults.updateSpeed),
+            startPage = prefs[Keys.START_PAGE].asEnum(defaults.startPage),
+            keepScreenOn = prefs[Keys.KEEP_SCREEN_ON] ?: defaults.keepScreenOn,
+            showSystemApps = prefs[Keys.SHOW_SYSTEM_APPS] ?: defaults.showSystemApps,
+            cpuNotification = prefs[Keys.CPU_NOTIFICATION] ?: defaults.cpuNotification,
+            notificationBoxes = prefs[Keys.NOTIFICATION_BOXES] ?: defaults.notificationBoxes,
+            netNotification = prefs[Keys.NET_NOTIFICATION] ?: defaults.netNotification,
+            batteryNotification = prefs[Keys.BATTERY_NOTIFICATION]
+                ?: defaults.batteryNotification,
+            memoryNotification = prefs[Keys.MEMORY_NOTIFICATION]
+                ?: defaults.memoryNotification,
+            logging = prefs[Keys.LOGGING] ?: defaults.logging,
+            logInterval = prefs[Keys.LOG_INTERVAL].asEnum(defaults.logInterval),
+            overlayEnabled = prefs[Keys.OVERLAY_ENABLED] ?: defaults.overlayEnabled,
+            overlayX = prefs[Keys.OVERLAY_X] ?: defaults.overlayX,
+            overlayY = prefs[Keys.OVERLAY_Y] ?: defaults.overlayY,
+            onboardingDone = prefs[Keys.ONBOARDING_DONE] ?: defaults.onboardingDone,
+        )
+    }
 
     override suspend fun setThemeMode(value: ThemeMode) = setString(Keys.THEME_MODE, value.name)
 
@@ -132,6 +172,12 @@ class DefaultSettingsStore(context: Context) : SettingsStore {
     }
 
     override suspend fun setOnboardingDone(value: Boolean) = setBoolean(Keys.ONBOARDING_DONE, value)
+
+    private companion object {
+        /** Storage hiccups are transient; a few spaced retries beat a dead flow. */
+        const val RETRY_ATTEMPTS = 3L
+        const val RETRY_DELAY_MS = 200L
+    }
 
     private suspend fun setString(key: Preferences.Key<String>, value: String) {
         try {

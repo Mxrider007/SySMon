@@ -3,7 +3,10 @@
     <!-- Processes screen -->
     <string name="processes_show_system">Show system processes</string>
     <string name="processes_count_shown">Showing %1$d of %2$d</string>
-    <string name="processes_footer">%1$d processes • Usage access %2$s</string>
+    <plurals name="processes_footer">
+        <item quantity="one">%1$d process • Usage access %2$s</item>
+        <item quantity="other">%1$d processes • Usage access %2$s</item>
+    </plurals>
     <string name="processes_access_yes">✓</string>
     <string name="processes_access_no">✗</string>
 

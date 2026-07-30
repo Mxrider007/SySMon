@@ -25,5 +25,8 @@
     <string name="apphistory_empty_title">No app activity</string>
     <string name="apphistory_empty_body">No apps recorded activity in the selected period.</string>
     <!-- %1$d apps, %2$s total screen time, %3$s Wi-Fi bytes, %4$s mobile bytes. -->
-    <string name="apphistory_totals">%1$d apps · %2$s screen time · %3$s Wi-Fi · %4$s mobile</string>
+    <plurals name="apphistory_totals">
+        <item quantity="one">%1$d app · %2$s screen time · %3$s Wi-Fi · %4$s mobile</item>
+        <item quantity="other">%1$d apps · %2$s screen time · %3$s Wi-Fi · %4$s mobile</item>
+    </plurals>
 </resources>

@@ -6,6 +6,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.glance.semantics.contentDescription
+import androidx.glance.semantics.semantics
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.ImageProvider
@@ -183,6 +185,9 @@ private fun WidgetContent(data: WidgetData) {
                 style = TextStyle(color = ColorProvider(Color(0xFF9BA0A6)), fontSize = 14.sp),
                 modifier = GlanceModifier
                     .padding(horizontal = 6.dp)
+                    // Without this TalkBack announces the bare glyph; the
+                    // string existed but had never been wired to anything.
+                    .semantics { contentDescription = context.getString(R.string.widget_refresh) }
                     .clickable(actionRunCallback<RefreshSysMonWidgetAction>()),
             )
         }

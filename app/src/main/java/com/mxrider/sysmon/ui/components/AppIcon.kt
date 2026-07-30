@@ -34,7 +34,13 @@ import kotlin.math.roundToInt
  * the new size; stale entries age out through the LRU.
  */
 object AppIconCache {
-    /** ~48 KB per 70 px ARGB icon; 256 entries ≈ 12 MB ceiling, LRU-bounded. */
+    /**
+     * Bounded by ENTRY COUNT, not bytes. At the 20 dp every call site uses,
+     * an icon is 70 px on this project's 560 dpi reference device — 70×70×4 ≈
+     * 19 KB — so 256 entries is roughly a 5 MB ceiling. Adding a materially
+     * larger `AppIcon` size later would raise that silently; switch to a
+     * byte-sized cache if one ever appears.
+     */
     private val cache = LruCache<String, ImageBitmap>(256)
 
     fun get(packageName: String, sizePx: Int): ImageBitmap? =

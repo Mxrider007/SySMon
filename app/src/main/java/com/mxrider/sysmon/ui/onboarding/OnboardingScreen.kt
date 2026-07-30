@@ -35,6 +35,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -66,7 +67,7 @@ import kotlinx.coroutines.withContext
 fun OnboardingScreen(onDone: () -> Unit) {
     val colors = FluentTheme.colors
     val context = LocalContext.current
-    var step by rememberSaveable { mutableStateOf(1) }
+    var step by rememberSaveable { mutableIntStateOf(1) }
     var granted by rememberSaveable { mutableStateOf(false) }
     val openFailedMessage = stringResource(R.string.onboarding_open_settings_failed)
 

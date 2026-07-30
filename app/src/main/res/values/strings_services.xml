@@ -3,7 +3,10 @@
     <!-- Services screen -->
     <string name="services_subtitle">Declared services of installed apps. Android does not expose live service state to third-party apps.</string>
     <string name="services_hide_system">Hide system apps</string>
-    <string name="services_count_shown">Showing %1$d of %2$d services</string>
+    <plurals name="services_count_shown">
+        <item quantity="one">Showing %1$d of %2$d service</item>
+        <item quantity="other">Showing %1$d of %2$d services</item>
+    </plurals>
 
     <!-- Table columns -->
     <string name="services_col_service">Service</string>

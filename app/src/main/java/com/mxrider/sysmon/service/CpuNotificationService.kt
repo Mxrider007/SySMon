@@ -613,8 +613,21 @@ class CpuNotificationService : Service() {
             PixelFormat.TRANSLUCENT,
         ).apply {
             gravity = Gravity.TOP or Gravity.START
-            x = if (settings.overlayX >= 0) settings.overlayX else (16 * density).toInt()
-            y = if (settings.overlayY >= 0) settings.overlayY else (120 * density).toInt()
+            // Clamped against the CURRENT display, not just while dragging: a
+            // position saved in landscape (or restored from a wider device)
+            // would otherwise place the card off-screen, where it cannot be
+            // dragged back and toggling it off and on re-reads the same
+            // coordinates. WRAP_CONTENT means the card is not measured yet, so
+            // the margin is its known design width/height.
+            val metrics = resources.displayMetrics
+            val cardW = (OverlayMonitorView.CARD_WIDTH_DP * density).toInt()
+            val cardH = (OverlayMonitorView.CARD_MAX_HEIGHT_DP * density).toInt()
+            val maxX = (metrics.widthPixels - cardW).coerceAtLeast(0)
+            val maxY = (metrics.heightPixels - cardH).coerceAtLeast(0)
+            x = (if (settings.overlayX >= 0) settings.overlayX else (16 * density).toInt())
+                .coerceIn(0, maxX)
+            y = (if (settings.overlayY >= 0) settings.overlayY else (120 * density).toInt())
+                .coerceIn(0, maxY)
         }
         view.setOnTouchListener(OverlayDragListener(params, view))
         try {
@@ -641,8 +654,10 @@ class CpuNotificationService : Service() {
 
     /**
      * Whole-card drag with the standard touch slop; the end position is
-     * persisted so the card comes back where the user left it. Positions are
-     * clamped to the display so a rotation can never strand it off-screen.
+     * persisted so the card comes back where the user left it. Drags are
+     * clamped to the display here, and [attachOverlay] re-clamps the stored
+     * position against the current display — the two together are what keep a
+     * rotation or a restore onto a narrower screen from stranding the card.
      */
     private inner class OverlayDragListener(
         private val params: WindowManager.LayoutParams,
@@ -720,16 +735,37 @@ class CpuNotificationService : Service() {
             // settings are reconciled to OFF at the next app open.
             return
         }
-        getSystemService(NotificationManager::class.java)
-            ?.notify(id, notification)
+        // notify() re-parcels the readout's usage-tile bitmap on every tick and
+        // rethrows binder failures (TransactionTooLargeException under system
+        // pressure). A dropped frame of a live readout is not worth a crash.
+        runCatching {
+            getSystemService(NotificationManager::class.java)?.notify(id, notification)
+        }
     }
 
+    /**
+     * Enters the foreground, tolerating the one case the app cannot prevent.
+     *
+     * [onStartCommand] returns START_STICKY, so the system may reap this
+     * service under memory pressure and restart it with a null intent while
+     * the app sits in the background. Under targetSdk 34+ that restart is
+     * denied and [startForeground] throws ForegroundServiceStartNotAllowedException
+     * — the app holds no exemption, since SYSTEM_ALERT_WINDOW is only granted
+     * when the user turned the overlay on. Crashing there would be a crash the
+     * user never caused and cannot avoid, so the service simply stops instead;
+     * the readouts return the next time the app is opened, exactly as they do
+     * after a reboot.
+     */
     private fun startInForeground(id: Int, notification: Notification) {
         anchorId = id
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            startForeground(id, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
-        } else {
-            startForeground(id, notification)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                startForeground(id, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+            } else {
+                startForeground(id, notification)
+            }
+        } catch (e: Exception) {
+            stopSelf()
         }
     }
 

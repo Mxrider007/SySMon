@@ -36,6 +36,17 @@ class DefaultDiagnostics(
     private val appContext = context.applicationContext
 
     /**
+     * Private sampler instances, for the same reason the monitoring service
+     * keeps its own (see CpuNotificationService): CPU and GPU load are both
+     * DELTA measurements over the window since that instance's last read.
+     * Sampling the shared [Graph] monitors here would consume the Performance
+     * screen's window, so pressing "Copy diagnostics" would silently distort
+     * the very readings the report exists to describe.
+     */
+    private val cpuProbe by lazy { DefaultCpuMonitor() }
+    private val gpuLoadProbe by lazy { DefaultGpuLoadMonitor() }
+
+    /**
      * Persist uncaught exceptions, then delegate to the previous handler so
      * the system crash dialog and Play-vitals reporting still happen.
      */
@@ -82,7 +93,7 @@ class DefaultDiagnostics(
      */
     private suspend fun samplerMatrix(): String = buildString {
         appendLine("Samplers:")
-        val cpu = runCatching { Graph.cpu.sample() }.getOrNull()
+        val cpu = runCatching { cpuProbe.sample() }.getOrNull()
         val online = cpu?.perCore?.count { it.online } ?: 0
         appendLine(
             "  CPU: ${cpu?.source?.name?.lowercase(Locale.US) ?: "unavailable"}" +
@@ -120,7 +131,7 @@ class DefaultDiagnostics(
                 " (${thermal?.zoneAccess?.name?.lowercase(Locale.US) ?: "unknown"}," +
                 " ${thermal?.hiddenZoneCount ?: 0} implausible)",
         )
-        val gpuLoad = runCatching { Graph.gpuLoad.sample() }.getOrNull()
+        val gpuLoad = runCatching { gpuLoadProbe.sample() }.getOrNull()
         appendLine(
             "  GPU load node: " + if (gpuLoad != null) "readable" else "not readable",
         )

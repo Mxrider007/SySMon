@@ -23,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -174,7 +175,10 @@ fun DetailsScreen(modifier: Modifier = Modifier) {
                 SearchBox(
                     query = state.query,
                     onQueryChange = vm::setQuery,
-                    modifier = Modifier.width(220.dp),
+                    // Narrower than the other screens' 220dp: this toolbar also
+                    // carries the export button, and on a 411dp phone the two
+                    // together would otherwise squeeze the button's label.
+                    modifier = Modifier.width(170.dp),
                     placeholder = stringResource(R.string.action_search),
                 )
                 Spacer(Modifier.width(8.dp))
@@ -202,7 +206,13 @@ fun DetailsScreen(modifier: Modifier = Modifier) {
         )
 
         Text(
-            text = stringResource(R.string.details_count_shown, state.visibleRows.size, state.rows.size),
+            // Quantity keys off the TOTAL, which is what the noun agrees with.
+            text = pluralStringResource(
+                R.plurals.details_count_shown,
+                state.rows.size,
+                state.visibleRows.size,
+                state.rows.size,
+            ),
             style = FluentTheme.typography.caption,
             color = colors.textSecondary,
             modifier = Modifier

@@ -21,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -156,8 +157,9 @@ fun AppHistoryScreen(modifier: Modifier = Modifier) {
         val totals = state.totals
         if (state.usageAccessGranted && totals != null) {
             Text(
-                text = stringResource(
-                    R.string.apphistory_totals,
+                text = pluralStringResource(
+                    R.plurals.apphistory_totals,
+                    totals.apps,
                     totals.apps,
                     Format.duration(totals.screenTimeMs),
                     totals.wifiBytes?.let { Format.bytes(it) } ?: DASH,

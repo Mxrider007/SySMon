@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import androidx.core.content.ContextCompat
 import java.util.concurrent.CopyOnWriteArrayList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -46,19 +47,28 @@ object PackageEvents {
             addAction(Intent.ACTION_PACKAGE_CHANGED)
             addDataScheme("package")
         }
-        context.applicationContext.registerReceiver(
-            object : BroadcastReceiver() {
-                override fun onReceive(context: Context, intent: Intent) {
-                    // REPLACED arrives as REMOVED+ADDED too; double bumps are
-                    // harmless (collectors conflate) and listeners are
-                    // idempotent.
-                    intent.data?.schemeSpecificPart?.let { pkg ->
-                        listeners.forEach { it(pkg) }
+        // Explicit export flag and a guard, matching CpuNotificationService's
+        // registration. All four actions are protected broadcasts, so the
+        // API-34 flag requirement does not bite today — but this runs inside
+        // Application.onCreate, where an unguarded throw is an unrecoverable
+        // launch crash that would also leave the rest of Graph uninitialised.
+        runCatching {
+            ContextCompat.registerReceiver(
+                context.applicationContext,
+                object : BroadcastReceiver() {
+                    override fun onReceive(context: Context, intent: Intent) {
+                        // REPLACED arrives as REMOVED+ADDED too; double bumps
+                        // are harmless (collectors conflate) and listeners are
+                        // idempotent.
+                        intent.data?.schemeSpecificPart?.let { pkg ->
+                            listeners.forEach { it(pkg) }
+                        }
+                        _generation.value += 1
                     }
-                    _generation.value += 1
-                }
-            },
-            filter,
-        )
+                },
+                filter,
+                ContextCompat.RECEIVER_NOT_EXPORTED,
+            )
+        }
     }
 }

@@ -59,6 +59,7 @@ internal class OverlayMonitorView(context: Context) : View(context) {
         textSize = dp(13f)
     }
     private val cardRect = RectF()
+    private val pillRect = RectF()
 
     init {
         contentDescription = context.getString(R.string.settings_overlay)
@@ -90,10 +91,11 @@ internal class OverlayMonitorView(context: Context) : View(context) {
 
         pillPaint.color = accentArgb
         val pillTop = h / 2f - dp(10f)
-        canvas.drawRoundRect(
-            RectF(dp(3f), pillTop, dp(6f), pillTop + dp(20f)),
-            dp(1.5f), dp(1.5f), pillPaint,
-        )
+        // Reused like cardRect above: this view redraws every 2 s for as long
+        // as the overlay is on, and allocating in onDraw is needless garbage
+        // in a window that can stay up for hours.
+        pillRect.set(dp(3f), pillTop, dp(6f), pillTop + dp(20f))
+        canvas.drawRoundRect(pillRect, dp(1.5f), dp(1.5f), pillPaint)
 
         val labelX = dp(14f)
         val valueRight = w - dp(12f)
@@ -115,10 +117,16 @@ internal class OverlayMonitorView(context: Context) : View(context) {
         return true
     }
 
-    private companion object {
+    companion object {
         const val CARD_WIDTH_DP = 148f
         const val ROW_H_DP = 22f
         const val PAD_V_DP = 8f
+
+        /**
+         * Full-height card (all four readout rows). The service needs this to
+         * clamp a restored position before the view has been measured.
+         */
+        const val CARD_MAX_HEIGHT_DP = PAD_V_DP * 2 + ROW_H_DP * 4
 
         /** Same never-fabricate placeholder as everywhere else. */
         const val DASH = "—"

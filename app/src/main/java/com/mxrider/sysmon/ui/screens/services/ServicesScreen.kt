@@ -16,6 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -140,8 +141,9 @@ fun ServicesScreen(modifier: Modifier = Modifier) {
             )
             Spacer(Modifier.weight(1f))
             Text(
-                text = stringResource(
-                    R.string.services_count_shown,
+                text = pluralStringResource(
+                    R.plurals.services_count_shown,
+                    state.rows.size,
                     state.visibleRows.size,
                     state.rows.size,
                 ),

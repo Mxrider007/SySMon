@@ -54,8 +54,16 @@ class ServicesViewModel : ViewModel() {
         }
     }
 
+    private var loadJob: Job? = null
+
+    /**
+     * Single-flight: a package-event burst (a Play Store batch update)
+     * would otherwise stack concurrent full service list sweeps that nothing
+     * cancels. The newest request wins, as in AppHistoryViewModel.
+     */
     fun refresh() {
-        viewModelScope.launch {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
             val rows = withContext(Dispatchers.IO) {
                 try {
                     repo.serviceRows()

@@ -25,5 +25,4 @@
     <string name="action_continue">Continue</string>
     <string name="label_loading">Loading…</string>
     <string name="label_unavailable">Not available</string>
-    <string name="label_requires_usage_access">Requires usage access</string>
 </resources>

@@ -78,7 +78,13 @@ class DefaultAppRepository(context: Context) : AppRepository {
         } catch (e: Exception) {
             emptyList()
         }
-        return infos.mapNotNull { toEntry(it) }
+        // distinctBy is a guard, not a nicety: package name is the row key for
+        // every table built from this list, and Compose's LazyColumn throws a
+        // hard IllegalArgumentException on a duplicate key rather than
+        // degrading. Stock Android does not return duplicates for one user,
+        // but an OEM package manager doing so would crash the default tab, and
+        // one line at the source removes the whole class of failure.
+        return infos.mapNotNull { toEntry(it) }.distinctBy { it.packageName }
     }
 
     private fun toEntry(ai: ApplicationInfo): AppEntry? {
