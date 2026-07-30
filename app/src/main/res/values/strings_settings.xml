@@ -18,6 +18,7 @@
     <string name="settings_accent_green">Green</string>
     <string name="settings_accent_orange">Orange</string>
     <string name="settings_accent_red">Red</string>
+    <string name="settings_accent_dynamic">Dynamic (system colors)</string>
 
     <!-- Behavior -->
     <string name="settings_update_speed">Update speed</string>
@@ -54,8 +55,11 @@
     <string name="settings_log_interval_30s">30 seconds</string>
     <string name="settings_log_interval_5m">5 minutes</string>
     <string name="settings_log_status_empty">Log file: empty</string>
-    <!-- %1$s = size ("1.2 MB"), %2$s = row count ("8,412"), %3$s = first-row date/time. -->
-    <string name="settings_log_status">Log file: %1$s · %2$s rows · since %3$s</string>
+    <!-- %1$s = size ("1.2 MB"), %2$s = formatted row count ("8,412"), %3$s = first-row date/time. -->
+    <plurals name="settings_log_status">
+        <item quantity="one">Log file: %1$s · %2$s row · since %3$s</item>
+        <item quantity="other">Log file: %1$s · %2$s rows · since %3$s</item>
+    </plurals>
     <string name="settings_log_export">Export log (CSV)…</string>
     <string name="settings_log_clear">Clear log</string>
     <string name="settings_log_clear_title">Clear the log?</string>

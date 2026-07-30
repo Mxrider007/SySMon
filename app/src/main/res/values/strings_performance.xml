@@ -144,10 +144,12 @@
     <string name="perf_thermal_note">Sensor names come from the kernel and vary by device; SysMon shows them as reported</string>
 
     <!-- GPU panel -->
+    <string name="perf_gpu_load">GPU load</string>
     <string name="perf_gpu_renderer">Renderer</string>
     <string name="perf_gpu_vendor">Vendor</string>
     <string name="perf_gpu_gl_version">OpenGL ES version</string>
     <string name="perf_gpu_note">Per-app GPU metrics are not exposed by Android</string>
+    <string name="perf_gpu_load_blocked_note">Total GPU load is not readable on this device — most Android builds block the vendor\'s counter for apps</string>
 
     <!-- Accessibility -->
     <string name="perf_cd_cpu">CPU utilization chart, currently %1$s</string>
@@ -157,4 +159,5 @@
     <string name="perf_cd_battery_temp">Battery temperature chart, currently %1$s</string>
     <string name="perf_cd_network">Network throughput chart, receiving %1$s, sending %2$s</string>
     <string name="perf_cd_thermal">Hottest sensor temperature chart, currently %1$s</string>
+    <string name="perf_cd_gpu_load">GPU load chart, currently %1$s</string>
 </resources>

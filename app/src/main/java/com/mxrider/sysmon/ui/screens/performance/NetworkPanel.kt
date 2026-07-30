@@ -50,6 +50,7 @@ internal fun NetworkPanel(
             primaryLabel = stringResource(R.string.perf_net_receive),
             secondaryLabel = stringResource(R.string.perf_net_send),
             valueFormatter = { Format.bitsPerSec(it.toDouble()) },
+            ceilingFormatter = { Format.bitsPerSec(it.toDouble()) },
             contentDescription = stringResource(
                 R.string.perf_cd_network,
                 net?.let { Format.bitsPerSec(it.rxBytesPerSec) } ?: DASH,

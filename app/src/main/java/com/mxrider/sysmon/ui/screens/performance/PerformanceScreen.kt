@@ -172,7 +172,7 @@ private fun PanelContent(panel: PerfPanel, state: PerfUiState, vm: PerformanceVi
         PerfPanel.STORAGE -> StoragePanel(state)
         PerfPanel.BATTERY -> BatteryPanel(state, vm.batteryPowerHistory, vm.batteryTempHistory)
         PerfPanel.THERMAL -> ThermalPanel(state, vm.thermalHistory)
-        PerfPanel.GPU -> GpuPanel(state)
+        PerfPanel.GPU -> GpuPanel(state, vm.gpuHistory)
     }
 }
 
@@ -301,7 +301,10 @@ private fun PerfTile(
         PerfPanel.GPU -> {
             MiniChartTile(
                 title = stringResource(R.string.perf_tile_gpu),
-                value = stringResource(R.string.perf_gpu_info_value),
+                // Live load where the vendor exposes it; "Info" (identity only)
+                // elsewhere — never a fabricated 0%.
+                value = state.gpuLoad?.let { Format.percent(it) }
+                    ?: stringResource(R.string.perf_gpu_info_value),
                 history = vm.gpuHistory,
                 windowPoints = state.windowPoints,
                 selected = selected,

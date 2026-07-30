@@ -7,6 +7,7 @@ import com.mxrider.sysmon.core.BatteryMonitor
 import com.mxrider.sysmon.core.CpuMonitor
 import com.mxrider.sysmon.core.DiagnosticsReporter
 import com.mxrider.sysmon.core.GpuInfoProvider
+import com.mxrider.sysmon.core.GpuLoadMonitor
 import com.mxrider.sysmon.core.MemoryMonitor
 import com.mxrider.sysmon.core.NetworkMonitor
 import com.mxrider.sysmon.core.PerfLogger
@@ -20,6 +21,7 @@ import com.mxrider.sysmon.core.ThermalMonitor
 import com.mxrider.sysmon.core.UsageAccess
 import com.mxrider.sysmon.core.UsageRepository
 import com.mxrider.sysmon.core.UserRepository
+import com.mxrider.sysmon.data.apps.PackageEvents
 import com.mxrider.sysmon.data.apps.DefaultAppRepository
 import com.mxrider.sysmon.data.apps.DefaultProcessRepository
 import com.mxrider.sysmon.data.apps.DefaultServiceRepository
@@ -33,10 +35,12 @@ import com.mxrider.sysmon.data.system.DefaultBatteryMonitor
 import com.mxrider.sysmon.data.system.DefaultCpuMonitor
 import com.mxrider.sysmon.data.system.DefaultDiagnostics
 import com.mxrider.sysmon.data.system.DefaultGpuInfoProvider
+import com.mxrider.sysmon.data.system.DefaultGpuLoadMonitor
 import com.mxrider.sysmon.data.system.DefaultMemoryMonitor
 import com.mxrider.sysmon.data.system.DefaultNetworkMonitor
 import com.mxrider.sysmon.data.system.DefaultStorageMonitor
 import com.mxrider.sysmon.data.system.DefaultThermalMonitor
+import com.mxrider.sysmon.ui.components.AppIconCache
 import com.mxrider.sysmon.settings.DefaultSettingsStore
 
 class SysMonApp : Application() {
@@ -63,6 +67,7 @@ object Graph {
     lateinit var storage: StorageMonitor; private set
     lateinit var thermal: ThermalMonitor; private set
     lateinit var gpu: GpuInfoProvider; private set
+    lateinit var gpuLoad: GpuLoadMonitor; private set
 
     lateinit var usageAccess: UsageAccess; private set
     lateinit var apps: AppRepository; private set
@@ -91,7 +96,12 @@ object Graph {
         storage = DefaultStorageMonitor(app)
         thermal = DefaultThermalMonitor(app)
         gpu = DefaultGpuInfoProvider()
+        gpuLoad = DefaultGpuLoadMonitor()
 
+        // Composition-root wiring: package churn evicts stale icon bitmaps.
+        // The data-layer event source must not know the UI cache exists.
+        PackageEvents.addListener(AppIconCache::evict)
+        PackageEvents.register(app)
         apps = DefaultAppRepository(app)
         usage = DefaultUsageRepository(app)
         processes = DefaultProcessRepository(app, apps, usage, usageAccess)

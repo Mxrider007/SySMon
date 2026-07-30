@@ -2,8 +2,10 @@ package com.mxrider.sysmon.ui.screens.services
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mxrider.sysmon.data.apps.PackageEvents
 import com.mxrider.sysmon.Graph
 import com.mxrider.sysmon.core.ServiceRow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
@@ -45,6 +47,11 @@ class ServicesViewModel : ViewModel() {
 
     init {
         refresh()
+        // Package churn reloads immediately; the 60-second staleness
+        // window stays as the fallback.
+        viewModelScope.launch {
+            PackageEvents.generation.drop(1).collect { refresh() }
+        }
     }
 
     fun refresh() {

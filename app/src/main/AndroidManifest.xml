@@ -75,6 +75,18 @@
                 android:resource="@xml/sysmon_widget_info" />
         </receiver>
 
+        <!-- Share-sheet CSV exports (Details table). Never exported; receivers
+             get one-shot read grants on a single cache file, nothing else. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
         <service
             android:name=".service.CpuNotificationService"
             android:exported="false"

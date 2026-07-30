@@ -1,5 +1,6 @@
 package com.mxrider.sysmon.ui.theme
 
+import android.os.Build
 import android.app.Activity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,6 +17,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -224,10 +226,40 @@ fun FluentTheme(
         ThemeMode.LIGHT -> false
         ThemeMode.DARK -> true
     }
+    // Material You: swap only the two accent inputs for wallpaper-derived
+    // tones and let the validated Fluent builders derive everything else.
+    // Tone choices mirror the fixed palette's contrast pattern — light mode
+    // pairs a dark accent with white foregrounds (accent1_600), dark mode a
+    // pale control fill with black text (accent1_200) and a mid-light chart
+    // accent (accent1_300). Below API 31 the DYNAMIC entry's baked-in BLUE
+    // constants apply via the fallback branch.
+    val dynamic = accent == AccentOption.DYNAMIC && Build.VERSION.SDK_INT >= 31
     val colors = if (dark) {
-        fluentDarkColors(Color(accent.darkArgb), Color(accent.controlDarkArgb))
+        fluentDarkColors(
+            accent = if (dynamic) {
+                colorResource(android.R.color.system_accent1_300)
+            } else {
+                Color(accent.darkArgb)
+            },
+            accentControl = if (dynamic) {
+                colorResource(android.R.color.system_accent1_200)
+            } else {
+                Color(accent.controlDarkArgb)
+            },
+        )
     } else {
-        fluentLightColors(Color(accent.lightArgb), Color(accent.controlLightArgb))
+        fluentLightColors(
+            accent = if (dynamic) {
+                colorResource(android.R.color.system_accent1_600)
+            } else {
+                Color(accent.lightArgb)
+            },
+            accentControl = if (dynamic) {
+                colorResource(android.R.color.system_accent1_600)
+            } else {
+                Color(accent.controlLightArgb)
+            },
+        )
     }
     val typography = fluentTypography()
 

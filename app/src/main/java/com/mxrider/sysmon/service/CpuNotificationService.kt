@@ -36,6 +36,7 @@ import com.mxrider.sysmon.Graph
 import com.mxrider.sysmon.MainActivity
 import com.mxrider.sysmon.R
 import com.mxrider.sysmon.TabIntents
+import com.mxrider.sysmon.core.resolvedControlLightArgb
 import com.mxrider.sysmon.core.BatterySnapshot
 import com.mxrider.sysmon.core.CpuSnapshot
 import com.mxrider.sysmon.core.CpuSource
@@ -371,7 +372,7 @@ class CpuNotificationService : Service() {
             lastCpuTitle = title
             val box = if (settings.notificationBoxes && percent != null && snapshot != null) {
                 renderTile(
-                    accentArgb = settings.accent.controlLightArgb,
+                    accentArgb = settings.accent.resolvedControlLightArgb(this),
                     lines = listOf(percent),
                     bars = snapshot.perCore.map { if (it.online) it.utilization else 0f },
                 )
@@ -424,7 +425,7 @@ class CpuNotificationService : Service() {
             lastNetTitle = title
             val box = if (settings.notificationBoxes && rates != null) {
                 renderTile(
-                    accentArgb = settings.accent.controlLightArgb,
+                    accentArgb = settings.accent.resolvedControlLightArgb(this),
                     lines = listOf("↓ ${rates.first}", "↑ ${rates.second}"),
                 )
             } else {
@@ -480,7 +481,7 @@ class CpuNotificationService : Service() {
             lastBatKey = key
             val box = if (settings.notificationBoxes && snapshot != null) {
                 renderTile(
-                    accentArgb = settings.accent.controlLightArgb,
+                    accentArgb = settings.accent.resolvedControlLightArgb(this),
                     lines = listOf("${snapshot.levelPercent}%"),
                     fill = snapshot.levelPercent / 100f,
                 )
@@ -525,7 +526,7 @@ class CpuNotificationService : Service() {
             lastMemTitle = title
             val box = if (settings.notificationBoxes && percent != null) {
                 renderTile(
-                    accentArgb = settings.accent.controlLightArgb,
+                    accentArgb = settings.accent.resolvedControlLightArgb(this),
                     lines = listOf(percent),
                     fill = usedFraction,
                 )
@@ -579,7 +580,7 @@ class CpuNotificationService : Service() {
         }
         overlayView?.setData(
             cpuText, memText, netText, batText,
-            settings.accent.controlLightArgb.toInt(),
+            settings.accent.resolvedControlLightArgb(this).toInt(),
         )
     }
 

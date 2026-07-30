@@ -31,10 +31,13 @@ import kotlinx.coroutines.channels.SendChannel
 internal object TabIntents {
     const val EXTRA_OPEN_TAB = "com.mxrider.sysmon.extra.OPEN_TAB"
 
+    fun parse(intent: Intent?): TabDestination? {
+        val name = intent?.getStringExtra(EXTRA_OPEN_TAB) ?: return null
+        return runCatching { TabDestination.valueOf(name) }.getOrNull()
+    }
+
     fun offer(intent: Intent?, into: SendChannel<TabDestination>) {
-        val name = intent?.getStringExtra(EXTRA_OPEN_TAB) ?: return
-        val tab = runCatching { TabDestination.valueOf(name) }.getOrNull() ?: return
-        into.trySend(tab)
+        parse(intent)?.let(into::trySend)
     }
 }
 
@@ -44,12 +47,15 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        // Route the extra only on a genuinely fresh launch: after process
-        // death the system re-delivers the original intent, and the restored
-        // tab (rememberSaveable) must win over a stale notification extra.
-        if (savedInstanceState == null) TabIntents.offer(intent, tabRequests)
+        // The launch intent's tab seeds the FIRST composition instead of going
+        // through the channel: a channel request lands one frame after the
+        // scaffold composes the start page, so every cold notification tap
+        // flashed the wrong screen before jumping. Fresh launches only — after
+        // process death the system re-delivers the original intent, and the
+        // restored tab (rememberSaveable) must win over the stale extra.
+        val initialTab = if (savedInstanceState == null) TabIntents.parse(intent) else null
         setContent {
-            SysMonRoot(tabRequests)
+            SysMonRoot(tabRequests, initialTab)
         }
     }
 

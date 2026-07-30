@@ -53,6 +53,7 @@ internal fun BatteryPanel(
                 .height(200.dp),
             autoScale = true,
             minAutoScale = 1f, // watts, not bytes: 1 W floor keeps idle honest
+            ceilingFormatter = { Format.watts(it.toDouble()) },
             topLeftLabel = stringResource(R.string.perf_axis_power),
             bottomLeftLabel = stringResource(R.string.perf_axis_60s),
             bottomRightLabel = stringResource(R.string.perf_axis_0),

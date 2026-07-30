@@ -23,8 +23,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.mxrider.sysmon.ui.theme.FluentTheme
+import kotlin.math.roundToInt
 
 /** Segments smaller than this are skipped (invisible slivers). */
 private const val MIN_VISIBLE_FRACTION = 0.001f
@@ -55,13 +58,23 @@ fun CompositionBar(
         1f - visible.fold(0f) { acc, segment -> acc + segment.fraction }
     }
 
+    // The legend below reads each label, but the PROPORTIONS live only in the
+    // painted widths — summarize them so TalkBack users get what sighted users
+    // see at a glance.
+    val summary = remember(visible) {
+        visible.joinToString { segment ->
+            "${segment.label} — ${(segment.fraction * 100).roundToInt()}%"
+        }
+    }
+
     Column(modifier = modifier) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(24.dp)
                 .clip(RoundedCornerShape(2.dp))
-                .background(colors.layer),
+                .background(colors.layer)
+                .semantics { contentDescription = summary },
         ) {
             visible.forEachIndexed { index, segment ->
                 if (index > 0) Spacer(Modifier.width(2.dp))

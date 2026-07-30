@@ -24,10 +24,23 @@ import kotlinx.coroutines.withContext
  */
 class AppHistoryViewModel : ViewModel() {
 
+    /**
+     * Column sums over every row in the range. Byte totals are null when NO
+     * row carried a value (no usage access): summing nothing but dashes into
+     * a confident "0 B" would fabricate a measurement.
+     */
+    data class Totals(
+        val apps: Int,
+        val screenTimeMs: Long,
+        val wifiBytes: Long?,
+        val mobileBytes: Long?,
+    )
+
     data class UiState(
         val rows: List<UsageRow> = emptyList(),
         /** [rows] under the active sort. */
         val visibleRows: List<UsageRow> = emptyList(),
+        val totals: Totals? = null,
         val sortKey: String = COL_SCREEN_TIME,
         val ascending: Boolean = false,
         val usageAccessGranted: Boolean = true,
@@ -130,9 +143,25 @@ class AppHistoryViewModel : ViewModel() {
      * direction, then a stable A→Z app tiebreak regardless of direction.
      */
     private fun recompute(state: UiState): UiState {
-        val primary = comparatorFor(state.sortKey) ?: return state.copy(visibleRows = state.rows)
+        val totals = if (state.rows.isEmpty()) {
+            null
+        } else {
+            Totals(
+                apps = state.rows.size,
+                screenTimeMs = state.rows.sumOf { it.screenTimeMs },
+                wifiBytes = state.rows.mapNotNull { it.wifiBytes }
+                    .takeIf { it.isNotEmpty() }?.sum(),
+                mobileBytes = state.rows.mapNotNull { it.mobileBytes }
+                    .takeIf { it.isNotEmpty() }?.sum(),
+            )
+        }
+        val primary = comparatorFor(state.sortKey)
+            ?: return state.copy(visibleRows = state.rows, totals = totals)
         val directed = if (state.ascending) primary else primary.reversed()
-        return state.copy(visibleRows = state.rows.sortedWith(directed.then(COMPARATOR_APP)))
+        return state.copy(
+            visibleRows = state.rows.sortedWith(directed.then(COMPARATOR_APP)),
+            totals = totals,
+        )
     }
 
     companion object {

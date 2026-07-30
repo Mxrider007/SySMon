@@ -44,7 +44,11 @@ import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.launch
 
 @Composable
-fun SysMonRoot(tabRequests: ReceiveChannel<TabDestination>) {
+fun SysMonRoot(
+    tabRequests: ReceiveChannel<TabDestination>,
+    /** Launch-intent tab (cold notification tap); null = the settings start page. */
+    initialTab: TabDestination? = null,
+) {
     // Nullable until DataStore's first disk read lands: seeding with DEFAULT
     // would flash the onboarding screen at every cold start for users who
     // already finished it (and seed `tab` from the wrong start page).
@@ -71,7 +75,7 @@ fun SysMonRoot(tabRequests: ReceiveChannel<TabDestination>) {
                 onDone = { scope.launch { Graph.settings.setOnboardingDone(true) } },
             )
         } else {
-            MainScaffold(loaded, tabRequests)
+            MainScaffold(loaded, tabRequests, initialTab)
         }
     }
 }
@@ -80,8 +84,12 @@ fun SysMonRoot(tabRequests: ReceiveChannel<TabDestination>) {
 private fun MainScaffold(
     settings: SysMonSettings,
     tabRequests: ReceiveChannel<TabDestination>,
+    initialTab: TabDestination?,
 ) {
-    var tab by rememberSaveable { mutableStateOf(settings.startPage) }
+    // The launch intent wins the FIRST composition (no start-page flash on a
+    // cold notification tap); the saved tab wins any restore — rememberSaveable
+    // skips its initializer when restoring, which is exactly that rule.
+    var tab by rememberSaveable { mutableStateOf(initialTab ?: settings.startPage) }
     var railExpanded by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
 

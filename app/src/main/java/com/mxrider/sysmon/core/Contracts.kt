@@ -38,6 +38,14 @@ interface GpuInfoProvider {
     suspend fun get(): GpuInfo
 }
 
+/**
+ * Total GPU utilization where the vendor exposes it (Adreno's kgsl nodes are
+ * world-readable on some devices, SELinux-blocked on others — including the
+ * project's own test phone). Null means "not readable here" and renders as a
+ * dash/blank, never as a fabricated 0%.
+ */
+interface GpuLoadMonitor : Sampler<Float?>
+
 /* ---------------------------- Apps & processes ---------------------------- */
 
 interface AppRepository {
@@ -159,6 +167,14 @@ enum class AccentOption(
     GREEN(0xFF107C10, 0xFF44B034, 0xFF107C10, 0xFF6CCB5F),
     ORANGE(0xFFCC500C, 0xFFE47004, 0xFFCA5010, 0xFFFF9349),
     RED(0xFFC42C1C, 0xFFF85450, 0xFFC42B1C, 0xFFFF6B61),
+
+    /**
+     * Material You: colors resolve at draw time from the system's wallpaper
+     * palette (API 31+); consumers that can't reach resources fall back to
+     * these BLUE constants. Hidden from the picker below API 31. Stored by
+     * name, so appending this constant cannot shift existing preferences.
+     */
+    DYNAMIC(0xFF106CBC, 0xFF28A0DC, 0xFF0F6CBD, 0xFF4CC2FF),
 }
 
 data class SysMonSettings(

@@ -2,8 +2,10 @@ package com.mxrider.sysmon.ui.screens.startup
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.mxrider.sysmon.data.apps.PackageEvents
 import com.mxrider.sysmon.Graph
 import com.mxrider.sysmon.core.StartupRow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -38,6 +40,11 @@ class StartupViewModel : ViewModel() {
 
     init {
         refresh()
+        // Package churn reloads immediately; the 60-second staleness
+        // window stays as the fallback.
+        viewModelScope.launch {
+            PackageEvents.generation.drop(1).collect { refresh() }
+        }
     }
 
     fun refresh() {

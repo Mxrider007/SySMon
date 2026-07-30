@@ -1,6 +1,5 @@
 package com.mxrider.sysmon.ui.screens.apphistory
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,26 +10,20 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Android
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.QueryStats
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -41,6 +34,7 @@ import com.mxrider.sysmon.R
 import com.mxrider.sysmon.core.Format
 import com.mxrider.sysmon.core.UsageRange
 import com.mxrider.sysmon.core.UsageRow
+import com.mxrider.sysmon.ui.components.AppIcon
 import com.mxrider.sysmon.ui.components.DataTable
 import com.mxrider.sysmon.ui.components.EmptyState
 import com.mxrider.sysmon.ui.components.FluentDropDown
@@ -50,9 +44,7 @@ import com.mxrider.sysmon.ui.theme.FluentMetrics
 import com.mxrider.sysmon.ui.theme.FluentTheme
 import java.text.DateFormat
 import java.util.Date
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
 
 /** Placeholder for values that need usage access ([Format.bytes] convention). */
 private const val DASH = "—"
@@ -159,6 +151,26 @@ fun AppHistoryScreen(modifier: Modifier = Modifier) {
             },
         )
 
+        // Totals line, Details-style: the per-row table never answers "how much
+        // in total?", which is half of why anyone opens a usage page.
+        val totals = state.totals
+        if (state.usageAccessGranted && totals != null) {
+            Text(
+                text = stringResource(
+                    R.string.apphistory_totals,
+                    totals.apps,
+                    Format.duration(totals.screenTimeMs),
+                    totals.wifiBytes?.let { Format.bytes(it) } ?: DASH,
+                    totals.mobileBytes?.let { Format.bytes(it) } ?: DASH,
+                ),
+                style = FluentTheme.typography.caption,
+                color = colors.textSecondary,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp),
+            )
+        }
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -238,8 +250,9 @@ private fun UsageAccessGate(onRecheck: () -> Unit, modifier: Modifier = Modifier
 @Composable
 private fun AppCell(row: UsageRow) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        HistoryAppIcon(
+        AppIcon(
             packageName = row.packageName,
+            size = 20.dp,
             contentDescription = null,
             modifier = Modifier.size(20.dp),
         )
@@ -273,43 +286,3 @@ private fun ValueCell(text: String) {
     )
 }
 
-/**
- * App icon loaded off the main thread from PackageManager (no image-loading
- * library in this project). Falls back to a tinted generic icon while loading
- * or when the package has no icon.
- */
-@Composable
-private fun HistoryAppIcon(
-    packageName: String,
-    contentDescription: String?,
-    modifier: Modifier = Modifier,
-) {
-    val context = LocalContext.current
-    val icon = remember(packageName) { mutableStateOf<ImageBitmap?>(null) }
-    LaunchedEffect(packageName) {
-        icon.value = withContext(Dispatchers.IO) {
-            try {
-                context.packageManager.getApplicationIcon(packageName)
-                    .toBitmap(40, 40)
-                    .asImageBitmap()
-            } catch (e: Exception) {
-                null
-            }
-        }
-    }
-    val bitmap = icon.value
-    if (bitmap != null) {
-        Image(
-            bitmap = bitmap,
-            contentDescription = contentDescription,
-            modifier = modifier,
-        )
-    } else {
-        Icon(
-            imageVector = Icons.Outlined.Android,
-            contentDescription = contentDescription,
-            tint = FluentTheme.colors.textTertiary,
-            modifier = modifier,
-        )
-    }
-}

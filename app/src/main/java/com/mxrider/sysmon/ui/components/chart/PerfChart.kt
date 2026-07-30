@@ -65,6 +65,13 @@ fun PerfChart(
     primaryLabel: String? = null,
     secondaryLabel: String? = null,
     valueFormatter: (Float) -> String = { it.toString() },
+    /**
+     * When set, the current chart ceiling is drawn inside the plot's top-right
+     * corner. Auto-scaled charts otherwise hide their y-axis entirely, leaving
+     * the line's height meaningless — the reader can't tell a 100 Kbit/s blip
+     * from a 100 Mbit/s one.
+     */
+    ceilingFormatter: ((Float) -> String)? = null,
     contentDescription: String? = null,
 ) {
     val colors = FluentTheme.colors
@@ -104,6 +111,11 @@ fun PerfChart(
     val geometry = remember(history, secondaryHistory) { ChartGeometryCache() }
     // X position of an active press/drag inside the plot; NaN = no touch.
     val touchX = remember { mutableFloatStateOf(Float.NaN) }
+    // Measured ceiling text, re-laid-out only when the formatted value changes
+    // (the draw phase runs per frame during crosshair drags). Keyed like the
+    // direct-label layouts: a density or theme change replaces the cache so a
+    // stale-styled layout can't outlive its style.
+    val ceilingCache = remember(textMeasurer, captionSecondary) { CeilingLabelCache() }
 
     Column(modifier = modifier) {
         if (topLeftLabel != null || topRightLabel != null) {
@@ -246,6 +258,18 @@ fun PerfChart(
                 style = Stroke(width = hairline),
             )
 
+            // Current ceiling, top-right inside the plot.
+            if (ceilingFormatter != null) {
+                val layout = ceilingCache.layoutFor(
+                    ceilingFormatter(effectiveMax), textMeasurer, captionSecondary,
+                )
+                val inset = 6.dp.toPx()
+                drawText(
+                    layout,
+                    topLeft = Offset(max(0f, w - layout.size.width - inset), inset),
+                )
+            }
+
             // Direct series labels (identity by line style + text, never color alone).
             if (primaryLabelLayout != null || secondaryLabelLayout != null) {
                 val swatchLen = 12.dp.toPx()
@@ -299,7 +323,23 @@ fun PerfChart(
                     drawLine(colors.textTertiary, Offset(px, 0f), Offset(px, h), hairline)
                     drawCircle(colors.accent, radius = 3.dp.toPx(), center = Offset(px, py))
 
-                    val tooltipLayout = textMeasurer.measure(valueFormatter(v), tooltipStyle)
+                    // Two-series charts scrub both values at once; a
+                    // single-value tooltip on the network chart would leave
+                    // the dashed Send line unreadable by touch.
+                    val secondaryAt = secondaryValues?.getOrNull(idx)?.takeIf { it.isFinite() }
+                    if (secondaryAt != null) {
+                        val sy = h * (1f - (secondaryAt / effectiveMax).coerceIn(0f, 1f))
+                        drawCircle(colors.accent, radius = 3.dp.toPx(), center = Offset(px, sy))
+                    }
+                    val tooltipText = if (secondaryAt != null) {
+                        val first = primaryLabel?.let { "$it: " }.orEmpty() + valueFormatter(v)
+                        val second =
+                            secondaryLabel?.let { "$it: " }.orEmpty() + valueFormatter(secondaryAt)
+                        "$first\n$second"
+                    } else {
+                        valueFormatter(v)
+                    }
+                    val tooltipLayout = textMeasurer.measure(tooltipText, tooltipStyle)
                     val pad = 8.dp.toPx()
                     val gap = 12.dp.toPx()
                     val boxW = tooltipLayout.size.width + pad * 2f
@@ -337,6 +377,28 @@ fun PerfChart(
                 Text(bottomLeftLabel ?: "", style = typography.caption, color = colors.textSecondary)
                 Text(bottomRightLabel ?: "", style = typography.caption, color = colors.textSecondary)
             }
+        }
+    }
+}
+
+/**
+ * Caches the measured ceiling label between frames; the formatted text only
+ * changes when the auto-scale ceiling actually moves.
+ */
+private class CeilingLabelCache {
+    private var text: String? = null
+    private var layout: androidx.compose.ui.text.TextLayoutResult? = null
+
+    fun layoutFor(
+        text: String,
+        measurer: androidx.compose.ui.text.TextMeasurer,
+        style: androidx.compose.ui.text.TextStyle,
+    ): androidx.compose.ui.text.TextLayoutResult {
+        val cached = layout
+        if (cached != null && text == this.text) return cached
+        return measurer.measure(text, style).also {
+            this.text = text
+            layout = it
         }
     }
 }

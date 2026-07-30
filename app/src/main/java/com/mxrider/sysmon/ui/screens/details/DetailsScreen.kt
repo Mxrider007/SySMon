@@ -1,6 +1,6 @@
 package com.mxrider.sysmon.ui.screens.details
 
-import androidx.compose.foundation.Image
+import android.widget.Toast
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,31 +13,26 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Android
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mxrider.sysmon.Graph
 import com.mxrider.sysmon.R
 import com.mxrider.sysmon.core.AppEntry
 import com.mxrider.sysmon.core.Format
+import com.mxrider.sysmon.ui.components.AppIcon
 import com.mxrider.sysmon.ui.components.DataTable
 import com.mxrider.sysmon.ui.components.EmptyState
 import com.mxrider.sysmon.ui.components.FluentCard
@@ -48,10 +43,9 @@ import com.mxrider.sysmon.ui.components.TableColumn
 import com.mxrider.sysmon.ui.components.TitleBar
 import com.mxrider.sysmon.ui.theme.FluentMetrics
 import com.mxrider.sysmon.ui.theme.FluentTheme
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.text.DateFormat
 import java.util.Date
+import kotlinx.coroutines.launch
 
 /** Placeholder for missing values ([Format.bytes] convention). */
 private const val DASH = "—"
@@ -172,6 +166,8 @@ fun DetailsScreen(modifier: Modifier = Modifier) {
             .fillMaxSize()
             .padding(FluentMetrics.pagePadding),
     ) {
+        val scope = rememberCoroutineScope()
+        val exportFailed = stringResource(R.string.details_export_failed)
         TitleBar(
             title = stringResource(R.string.nav_details),
             actions = {
@@ -180,6 +176,27 @@ fun DetailsScreen(modifier: Modifier = Modifier) {
                     onQueryChange = vm::setQuery,
                     modifier = Modifier.width(220.dp),
                     placeholder = stringResource(R.string.action_search),
+                )
+                Spacer(Modifier.width(8.dp))
+                FluentStandardButton(
+                    text = stringResource(R.string.details_export_csv),
+                    onClick = {
+                        // Exports what the table currently shows — filter and
+                        // sort included — so the file always matches the screen.
+                        val rows = state.visibleRows
+                        scope.launch {
+                            val chooser = DetailsCsv.buildShareIntent(context, rows)
+                            if (chooser != null) {
+                                try {
+                                    context.startActivity(chooser)
+                                } catch (e: Exception) {
+                                    Toast.makeText(context, exportFailed, Toast.LENGTH_SHORT).show()
+                                }
+                            } else {
+                                Toast.makeText(context, exportFailed, Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    },
                 )
             },
         )
@@ -285,8 +302,10 @@ private fun DetailStrip(row: AppEntry, onAppInfo: () -> Unit) {
 @Composable
 private fun AppCell(row: AppEntry) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        DetailsAppIcon(
+        AppIcon(
             packageName = row.packageName,
+            size = 20.dp,
+            contentDescription = null,
             modifier = Modifier.size(20.dp),
         )
         Spacer(Modifier.width(8.dp))
@@ -325,42 +344,3 @@ private fun CaptionCell(text: String) {
 private fun formatDate(format: DateFormat, epochMillis: Long): String =
     if (epochMillis <= 0) DASH else format.format(Date(epochMillis))
 
-/**
- * App icon loaded off the main thread from PackageManager (no image-loading
- * library in this project). Falls back to a tinted generic icon while loading
- * or when the package has no icon.
- */
-@Composable
-private fun DetailsAppIcon(
-    packageName: String,
-    modifier: Modifier = Modifier,
-) {
-    val context = LocalContext.current
-    val icon = remember(packageName) { mutableStateOf<ImageBitmap?>(null) }
-    LaunchedEffect(packageName) {
-        icon.value = withContext(Dispatchers.IO) {
-            try {
-                context.packageManager.getApplicationIcon(packageName)
-                    .toBitmap(40, 40)
-                    .asImageBitmap()
-            } catch (e: Exception) {
-                null
-            }
-        }
-    }
-    val bitmap = icon.value
-    if (bitmap != null) {
-        Image(
-            bitmap = bitmap,
-            contentDescription = null,
-            modifier = modifier,
-        )
-    } else {
-        Icon(
-            imageVector = Icons.Outlined.Android,
-            contentDescription = null,
-            tint = FluentTheme.colors.textTertiary,
-            modifier = modifier,
-        )
-    }
-}

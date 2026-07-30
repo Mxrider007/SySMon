@@ -1,6 +1,5 @@
 package com.mxrider.sysmon.ui.screens.processes
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -22,22 +21,19 @@ import androidx.compose.material.icons.outlined.QueryStats
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -48,6 +44,7 @@ import com.mxrider.sysmon.R
 import com.mxrider.sysmon.core.Format
 import com.mxrider.sysmon.core.ProcStatus
 import com.mxrider.sysmon.core.ProcessRow
+import com.mxrider.sysmon.ui.components.AppIcon
 import com.mxrider.sysmon.ui.components.DataTable
 import com.mxrider.sysmon.ui.components.EmptyState
 import com.mxrider.sysmon.ui.components.FluentButton
@@ -59,9 +56,7 @@ import com.mxrider.sysmon.ui.components.TableColumn
 import com.mxrider.sysmon.ui.components.TitleBar
 import com.mxrider.sysmon.ui.theme.FluentMetrics
 import com.mxrider.sysmon.ui.theme.FluentTheme
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
 
 /** Placeholder for values that need usage access ([Format.bytes] convention). */
 private const val DASH = "—"
@@ -395,8 +390,9 @@ private fun InfoMessageBar(info: ProcessesViewModel.InfoMessage) {
 @Composable
 private fun AppCell(row: ProcessRow) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        ProcessAppIcon(
+        AppIcon(
             packageName = row.packageName,
+            size = 20.dp,
             contentDescription = null,
             modifier = Modifier.size(20.dp),
         )
@@ -448,43 +444,3 @@ private fun ValueCell(text: String) {
     )
 }
 
-/**
- * App icon loaded off the main thread from PackageManager (no image-loading
- * library in this project). Falls back to a tinted generic icon while loading
- * or when the package has no icon.
- */
-@Composable
-internal fun ProcessAppIcon(
-    packageName: String,
-    contentDescription: String?,
-    modifier: Modifier = Modifier,
-) {
-    val context = LocalContext.current
-    val icon = remember(packageName) { mutableStateOf<ImageBitmap?>(null) }
-    LaunchedEffect(packageName) {
-        icon.value = withContext(Dispatchers.IO) {
-            try {
-                context.packageManager.getApplicationIcon(packageName)
-                    .toBitmap(40, 40)
-                    .asImageBitmap()
-            } catch (e: Exception) {
-                null
-            }
-        }
-    }
-    val bitmap = icon.value
-    if (bitmap != null) {
-        Image(
-            bitmap = bitmap,
-            contentDescription = contentDescription,
-            modifier = modifier,
-        )
-    } else {
-        Icon(
-            imageVector = Icons.Outlined.Android,
-            contentDescription = contentDescription,
-            tint = FluentTheme.colors.textTertiary,
-            modifier = modifier,
-        )
-    }
-}

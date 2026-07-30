@@ -120,6 +120,10 @@ class DefaultDiagnostics(
                 " (${thermal?.zoneAccess?.name?.lowercase(Locale.US) ?: "unknown"}," +
                 " ${thermal?.hiddenZoneCount ?: 0} implausible)",
         )
+        val gpuLoad = runCatching { Graph.gpuLoad.sample() }.getOrNull()
+        appendLine(
+            "  GPU load node: " + if (gpuLoad != null) "readable" else "not readable",
+        )
         appendLine(
             "  Overlay permission: " +
                 if (Settings.canDrawOverlays(appContext)) "granted" else "not granted",

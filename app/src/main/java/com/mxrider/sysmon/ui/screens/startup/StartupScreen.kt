@@ -1,6 +1,5 @@
 package com.mxrider.sysmon.ui.screens.startup
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,29 +13,24 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Android
 import androidx.compose.material.icons.outlined.RocketLaunch
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.mxrider.sysmon.Graph
 import com.mxrider.sysmon.R
 import com.mxrider.sysmon.core.StartupImpact
 import com.mxrider.sysmon.core.StartupRow
+import com.mxrider.sysmon.ui.components.AppIcon
 import com.mxrider.sysmon.ui.components.DataTable
 import com.mxrider.sysmon.ui.components.EmptyState
 import com.mxrider.sysmon.ui.components.FluentStandardButton
@@ -44,8 +38,6 @@ import com.mxrider.sysmon.ui.components.TableColumn
 import com.mxrider.sysmon.ui.components.TitleBar
 import com.mxrider.sysmon.ui.theme.FluentMetrics
 import com.mxrider.sysmon.ui.theme.FluentTheme
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 /**
  * Win11 Task Manager "Startup apps" page: sortable table of apps that
@@ -184,8 +176,9 @@ fun StartupScreen(modifier: Modifier = Modifier) {
 @Composable
 private fun AppCell(row: StartupRow) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        StartupAppIcon(
+        AppIcon(
             packageName = row.packageName,
+            size = 20.dp,
             contentDescription = null,
             modifier = Modifier.size(20.dp),
         )
@@ -265,43 +258,3 @@ private fun ImpactCell(impact: StartupImpact) {
     )
 }
 
-/**
- * App icon loaded off the main thread from PackageManager (no image-loading
- * library in this project). Falls back to a tinted generic icon while loading
- * or when the package has no icon.
- */
-@Composable
-private fun StartupAppIcon(
-    packageName: String,
-    contentDescription: String?,
-    modifier: Modifier = Modifier,
-) {
-    val context = LocalContext.current
-    val icon = remember(packageName) { mutableStateOf<ImageBitmap?>(null) }
-    LaunchedEffect(packageName) {
-        icon.value = withContext(Dispatchers.IO) {
-            try {
-                context.packageManager.getApplicationIcon(packageName)
-                    .toBitmap(40, 40)
-                    .asImageBitmap()
-            } catch (e: Exception) {
-                null
-            }
-        }
-    }
-    val bitmap = icon.value
-    if (bitmap != null) {
-        Image(
-            bitmap = bitmap,
-            contentDescription = contentDescription,
-            modifier = modifier,
-        )
-    } else {
-        Icon(
-            imageVector = Icons.Outlined.Android,
-            contentDescription = contentDescription,
-            tint = FluentTheme.colors.textTertiary,
-            modifier = modifier,
-        )
-    }
-}

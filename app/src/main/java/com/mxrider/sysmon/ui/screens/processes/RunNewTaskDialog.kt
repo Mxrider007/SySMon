@@ -15,13 +15,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import com.mxrider.sysmon.Graph
 import com.mxrider.sysmon.R
 import com.mxrider.sysmon.core.AppEntry
+import com.mxrider.sysmon.ui.components.AppIcon
 import com.mxrider.sysmon.ui.components.FluentDialog
 import com.mxrider.sysmon.ui.components.SearchBox
 import com.mxrider.sysmon.ui.theme.FluentMetrics
@@ -159,8 +160,9 @@ private fun LaunchableAppRow(app: AppEntry, onClick: () -> Unit) {
             .padding(horizontal = 4.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        ProcessAppIcon(
+        AppIcon(
             packageName = app.packageName,
+            size = 20.dp,
             contentDescription = null,
             modifier = Modifier.size(20.dp),
         )

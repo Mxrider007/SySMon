@@ -45,6 +45,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -176,7 +178,13 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                 )
                 Spacer(Modifier.height(8.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    AccentOption.entries.forEach { option ->
+                    // DYNAMIC resolves from the wallpaper palette; below API 31
+                    // there is no palette to resolve, so the swatch is hidden
+                    // rather than shown as a lying blue circle.
+                    val options = AccentOption.entries.filter {
+                        it != AccentOption.DYNAMIC || Build.VERSION.SDK_INT >= 31
+                    }
+                    options.forEach { option ->
                         AccentSwatch(
                             option = option,
                             selected = option == settings.accent,
@@ -410,8 +418,11 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                 val statusText = if (logStatus.rowCount == 0L) {
                     stringResource(R.string.settings_log_status_empty)
                 } else {
-                    stringResource(
-                        R.string.settings_log_status,
+                    pluralStringResource(
+                        R.plurals.settings_log_status,
+                        // Quantity selection only; the formatted string below
+                        // carries the real (possibly >MAX_INT-formatted) count.
+                        logStatus.rowCount.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
                         Format.bytes(logStatus.sizeBytes),
                         String.format(Locale.US, "%,d", logStatus.rowCount),
                         logStatus.startedAt?.let { dateTimeFormat.format(Date(it)) } ?: "—",
@@ -660,10 +671,17 @@ private fun AccentSwatch(
             .semantics { contentDescription = name },
         contentAlignment = Alignment.Center,
     ) {
+        // DYNAMIC previews the actual wallpaper tone it would apply; the
+        // other swatches keep their light control constants.
+        val fill = if (option == AccentOption.DYNAMIC && Build.VERSION.SDK_INT >= 31) {
+            colorResource(android.R.color.system_accent1_600)
+        } else {
+            Color(option.controlLightArgb)
+        }
         Box(
             modifier = Modifier
                 .size(28.dp)
-                .background(Color(option.controlLightArgb), CircleShape),
+                .background(fill, CircleShape),
             contentAlignment = Alignment.Center,
         ) {
             if (selected) {
@@ -690,6 +708,7 @@ private fun accentName(option: AccentOption): String = stringResource(
         AccentOption.GREEN -> R.string.settings_accent_green
         AccentOption.ORANGE -> R.string.settings_accent_orange
         AccentOption.RED -> R.string.settings_accent_red
+        AccentOption.DYNAMIC -> R.string.settings_accent_dynamic
     },
 )
 

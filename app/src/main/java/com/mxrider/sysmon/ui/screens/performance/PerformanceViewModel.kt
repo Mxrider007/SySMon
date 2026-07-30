@@ -41,6 +41,8 @@ data class PerfUiState(
     val storage: StorageSnapshot? = null,
     val thermal: ThermalSnapshot? = null,
     val gpu: GpuInfo? = null,
+    /** Total GPU busy fraction; null wherever the vendor blocks the node. */
+    val gpuLoad: Float? = null,
     /** Samples visible in each chart = 60 s / update interval, min 15. */
     val windowPoints: Int = (60_000L / UpdateSpeed.NORMAL.intervalMs).toInt(),
     val intervalMs: Long = UpdateSpeed.NORMAL.intervalMs,
@@ -64,7 +66,7 @@ class PerformanceViewModel : ViewModel() {
     /** Hottest zone per tick; NaN whenever no sensor is readable. */
     val thermalHistory = ChartHistory(HISTORY_CAPACITY)
 
-    /** Info-only tile: a flat zero series — no per-app GPU data exists on Android. */
+    /** Total GPU load where the vendor node is readable; NaN (blank) elsewhere. */
     val gpuHistory = ChartHistory(HISTORY_CAPACITY)
 
     /** Created after the first CPU sample reveals the core count; max 16 tracked. */
@@ -182,6 +184,7 @@ class PerformanceViewModel : ViewModel() {
                     battery = Graph.battery.sample(),
                     storage = if (sampleStorage) Graph.storage.sample() else null,
                     thermal = Graph.thermal.sample(),
+                    gpuLoad = Graph.gpuLoad.sample(),
                 )
             }
         } catch (_: Exception) {
@@ -220,10 +223,10 @@ class PerformanceViewModel : ViewModel() {
             batch.battery.powerWatts?.let { kotlin.math.abs(it).toFloat() } ?: Float.NaN,
         )
         batteryTempHistory.push(batch.battery.temperatureC?.toFloat() ?: Float.NaN)
-        // Android exposes no GPU load to third-party apps; NaN renders the
-        // sparkline blank ("no data"), where a pushed 0 would fabricate a
-        // measured flat 0 % — the exact thing the app promises never to do.
-        gpuHistory.push(Float.NaN)
+        // NaN renders the sparkline blank ("no data") wherever the vendor
+        // blocks its load node, where a pushed 0 would fabricate a measured
+        // flat 0 % — the exact thing the app promises never to do.
+        gpuHistory.push(batch.gpuLoad ?: Float.NaN)
 
         if (batch.storage != null) lastStorage = batch.storage
         val storage = lastStorage
@@ -242,6 +245,7 @@ class PerformanceViewModel : ViewModel() {
                 battery = batch.battery,
                 storage = storage,
                 thermal = batch.thermal,
+                gpuLoad = batch.gpuLoad,
                 coreHistoryCount = coreHistories.size,
             )
         }
@@ -266,4 +270,5 @@ private data class TickBatch(
     val battery: BatterySnapshot,
     val storage: StorageSnapshot?,
     val thermal: ThermalSnapshot,
+    val gpuLoad: Float?,
 )
