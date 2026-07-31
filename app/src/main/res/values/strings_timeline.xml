@@ -30,7 +30,7 @@
         <item quantity="other">%1$s samples in view</item>
     </plurals>
 
-    <string name="timeline_chart_cpu">CPU</string>
+    <string name="timeline_chart_cpu" translatable="false">CPU</string>
     <string name="timeline_chart_memory">Memory used</string>
     <string name="timeline_chart_battery">Battery level</string>
     <string name="timeline_chart_power">Power draw</string>

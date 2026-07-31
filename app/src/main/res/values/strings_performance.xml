@@ -4,26 +4,26 @@
     <string name="perf_title">Performance</string>
 
     <!-- Sidebar tiles -->
-    <string name="perf_tile_cpu">CPU</string>
+    <string name="perf_tile_cpu" translatable="false">CPU</string>
     <string name="perf_tile_memory">Memory</string>
     <string name="perf_tile_network">Network</string>
     <string name="perf_tile_storage">Storage</string>
     <string name="perf_tile_battery">Battery</string>
-    <string name="perf_tile_gpu">GPU</string>
+    <string name="perf_tile_gpu" translatable="false">GPU</string>
     <string name="perf_gpu_info_value">Info</string>
-    <string name="perf_mem_tile_value">%1$s / %2$s (%3$s)</string>
+    <string name="perf_mem_tile_value" translatable="false">%1$s / %2$s (%3$s)</string>
     <string name="perf_net_rx_short">R: %1$s</string>
     <string name="perf_net_tx_short">S: %1$s</string>
     <string name="perf_storage_used_fmt">%1$s used</string>
 
     <!-- Chart axis labels -->
     <string name="perf_axis_utilization" formatted="false">% Utilization</string>
-    <string name="perf_axis_100" formatted="false">100%</string>
+    <string name="perf_axis_100" translatable="false" formatted="false">100%</string>
     <string name="perf_axis_power">Power draw</string>
     <string name="perf_axis_temperature">Temperature</string>
-    <string name="perf_axis_50c">50 °C</string>
+    <string name="perf_axis_50c" translatable="false">50 °C</string>
     <string name="perf_axis_60s">60 seconds</string>
-    <string name="perf_axis_0">0</string>
+    <string name="perf_axis_0" translatable="false">0</string>
     <string name="perf_axis_memory_usage">Memory usage</string>
     <string name="perf_axis_throughput">Throughput</string>
 
@@ -32,7 +32,7 @@
     <string name="perf_stat_speed">Speed</string>
     <string name="perf_stat_uptime">Up time</string>
     <string name="perf_stat_source">Source</string>
-    <string name="perf_source_proc_stat">/proc/stat</string>
+    <string name="perf_source_proc_stat" translatable="false">/proc/stat</string>
     <string name="perf_source_freq_estimate">Estimated from frequency</string>
     <string name="perf_source_unavailable">Unavailable</string>
     <string name="perf_cpu_estimated_note">Estimated from core frequencies — Android restricts exact per-process CPU stats</string>
@@ -49,7 +49,7 @@
     <string name="perf_spec_cores">Cores</string>
     <string name="perf_spec_min_speed">Minimum speed</string>
     <string name="perf_spec_max_speed">Maximum speed</string>
-    <string name="perf_spec_abi">ABI</string>
+    <string name="perf_spec_abi" translatable="false">ABI</string>
     <string name="perf_spec_64bit">64-bit</string>
     <string name="perf_yes">Yes</string>
     <string name="perf_no">No</string>
@@ -63,7 +63,7 @@
     <string name="perf_mem_seg_in_use">In use (%1$s)</string>
     <string name="perf_mem_seg_cached">Cached (%1$s)</string>
     <string name="perf_mem_low_warning">The system is running low on memory</string>
-    <string name="perf_ratio">%1$s / %2$s</string>
+    <string name="perf_ratio" translatable="false">%1$s / %2$s</string>
 
     <!-- Network panel -->
     <string name="perf_net_receive">Receive</string>
@@ -74,10 +74,10 @@
     <string name="perf_net_ipv6">IPv6 address</string>
     <string name="perf_net_total_rx">Total received since boot</string>
     <string name="perf_net_total_tx">Total sent since boot</string>
-    <string name="perf_transport_wifi">Wi-Fi</string>
+    <string name="perf_transport_wifi" translatable="false">Wi-Fi</string>
     <string name="perf_transport_cellular">Cellular</string>
-    <string name="perf_transport_ethernet">Ethernet</string>
-    <string name="perf_transport_vpn">VPN</string>
+    <string name="perf_transport_ethernet" translatable="false">Ethernet</string>
+    <string name="perf_transport_vpn" translatable="false">VPN</string>
     <string name="perf_transport_none">No connection</string>
     <string name="perf_transport_other">Other</string>
 
@@ -107,7 +107,7 @@
 
     <!-- Thermal panel -->
     <string name="perf_tile_thermal">Thermal</string>
-    <string name="perf_axis_100c">100 °C</string>
+    <string name="perf_axis_100c" translatable="false">100 °C</string>
     <string name="perf_thermal_status">Throttling status</string>
     <string name="perf_thermal_headroom">Headroom</string>
     <string name="perf_thermal_hottest">Hottest sensor</string>

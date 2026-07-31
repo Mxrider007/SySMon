@@ -71,7 +71,7 @@
     <string name="settings_log_timeline_hint">Browse the recording as charts on the Timeline tab.</string>
 
     <!-- About -->
-    <string name="settings_about_name_version">SysMon 1.0.0</string>
+    <string name="settings_about_name_version" translatable="false">SysMon 1.0.0</string>
     <string name="settings_about_privacy">No ads • No tracking • No internet permission</string>
     <string name="settings_about_font">Typeface: Selawik (SIL OFL 1.1) by Microsoft</string>
     <string name="settings_about_fluent">Fluent-inspired design. Not affiliated with Microsoft.</string>

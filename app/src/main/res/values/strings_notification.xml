@@ -4,9 +4,9 @@
     <string name="cpu_notif_channel_name">CPU usage readout</string>
     <string name="cpu_notif_channel_desc">Ongoing CPU readout. Shown only while enabled in SysMon settings.</string>
     <!-- %1$s = "43%" or "~43%" (~ marks the frequency estimate) or "—". -->
-    <string name="cpu_notif_title">CPU %1$s</string>
+    <string name="cpu_notif_title" translatable="false">CPU %1$s</string>
     <!-- %1$s as above; %2$s = average core frequency, e.g. "1.03 GHz". -->
-    <string name="cpu_notif_title_freq">CPU %1$s · %2$s</string>
+    <string name="cpu_notif_title_freq" translatable="false">CPU %1$s · %2$s</string>
     <string name="cpu_notif_text">Tap to open Performance</string>
     <string name="cpu_notif_text_estimate">Estimated from core frequencies — tap for details</string>
     <string name="cpu_notif_unavailable">CPU utilization isn\'t readable on this device</string>
@@ -50,8 +50,8 @@
     <string name="overlay_notif_text">Drag the card to move it — tap here to manage</string>
 
     <!-- Row labels drawn inside the floating monitor card. -->
-    <string name="overlay_label_cpu">CPU</string>
-    <string name="overlay_label_mem">MEM</string>
-    <string name="overlay_label_net">NET</string>
-    <string name="overlay_label_bat">BAT</string>
+    <string name="overlay_label_cpu" translatable="false">CPU</string>
+    <string name="overlay_label_mem" translatable="false">MEM</string>
+    <string name="overlay_label_net" translatable="false">NET</string>
+    <string name="overlay_label_bat" translatable="false">BAT</string>
 </resources>

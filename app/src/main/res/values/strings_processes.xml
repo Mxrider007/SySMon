@@ -7,8 +7,8 @@
         <item quantity="one">%1$d process • Usage access %2$s</item>
         <item quantity="other">%1$d processes • Usage access %2$s</item>
     </plurals>
-    <string name="processes_access_yes">✓</string>
-    <string name="processes_access_no">✗</string>
+    <string name="processes_access_yes" translatable="false">✓</string>
+    <string name="processes_access_no" translatable="false">✗</string>
 
     <!-- Table columns -->
     <string name="processes_col_app">Name</string>

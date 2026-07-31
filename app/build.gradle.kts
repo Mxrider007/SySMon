@@ -38,6 +38,14 @@ android {
         }
     }
 
+    androidResources {
+        // Package only the app's own locales; without this, library resources
+        // (Compose, Glance) ship dozens of locales the app has no strings
+        // for, and the system language picker would offer them anyway.
+        // Keep in sync with res/xml/locales_config.xml.
+        localeFilters += listOf("en", "de", "es", "fr", "it", "ja", "ko", "pl", "pt-rBR")
+    }
+
     buildTypes {
         debug {
             // Installs ALONGSIDE production so run-as can inspect app-private

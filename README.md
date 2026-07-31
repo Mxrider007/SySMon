@@ -4,6 +4,8 @@ A Windows 11 Task Manager–style system monitor for Android. Native Kotlin + Je
 
 **Private by design: the app requests no `INTERNET` permission.** Nothing ever leaves the device — a key selling point for a paid utility.
 
+Localized (UI + Play listing) in English, German, French, Spanish, Brazilian Portuguese, Italian, Polish, Japanese and Korean; the Android 13+ per-app language picker is wired via `localeConfig`. Translations live in `app/src/main/res/values-<locale>/strings.xml` (one consolidated file per locale) and `store/listings/`; audit the listings with `store/tools/check_listings.py` after any copy change.
+
 ## Screens (Win11 Task Manager → Android mapping)
 
 | Win11 tab | SysMon screen | Data source |

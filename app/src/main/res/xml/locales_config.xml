@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Locales offered in the Android 13+ per-app language picker.
+     Keep in sync with localeFilters in app/build.gradle.kts. -->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="en" />
+    <locale android:name="de" />
+    <locale android:name="es" />
+    <locale android:name="fr" />
+    <locale android:name="it" />
+    <locale android:name="ja" />
+    <locale android:name="ko" />
+    <locale android:name="pl" />
+    <locale android:name="pt-BR" />
+</locale-config>

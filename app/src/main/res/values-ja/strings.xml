@@ -1,0 +1,442 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Japanese (Wave 2, s15). Corrections from native speakers are welcome.
+     Sections mirror the base files. Japanese has no plural distinction:
+     plurals carry "other" only. -->
+<resources>
+    <!-- strings.xml -->
+    <string name="nav_processes">プロセス</string>
+    <string name="nav_performance">パフォーマンス</string>
+    <string name="nav_app_history">アプリ履歴</string>
+    <string name="nav_startup">スタートアップ</string>
+    <string name="nav_users">ユーザー</string>
+    <string name="nav_details">詳細</string>
+    <string name="nav_services">サービス</string>
+    <string name="nav_settings">設定</string>
+    <string name="nav_timeline">タイムライン</string>
+    <string name="nav_menu">ナビゲーションメニュー</string>
+    <string name="action_search">検索</string>
+    <string name="action_refresh">更新</string>
+    <string name="action_end_task">タスクの終了</string>
+    <string name="action_run_new_task">新しいタスク</string>
+    <string name="action_app_info">アプリ情報</string>
+    <string name="action_open_app_info">アプリ情報を開く</string>
+    <string name="action_cancel">キャンセル</string>
+    <string name="action_ok">OK</string>
+    <string name="action_continue">続行</string>
+    <string name="label_loading">読み込み中…</string>
+    <string name="label_unavailable">利用不可</string>
+
+    <!-- strings_components.xml -->
+    <string name="components_sorted_ascending">昇順で並べ替え</string>
+    <string name="components_sorted_descending">降順で並べ替え</string>
+
+    <!-- strings_widget.xml -->
+    <string name="widget_label">システムモニター</string>
+    <string name="widget_description">CPU・メモリ・ネットワーク・電池をライブ表示 — タップと30分ごとに更新</string>
+    <string name="widget_updated">更新 %1$s</string>
+    <string name="widget_refresh">更新</string>
+
+    <!-- strings_users.xml -->
+    <string name="users_user_fallback">ユーザー %1$d</string>
+    <string name="users_user_unknown">不明なユーザー</string>
+    <string name="users_badge_current">現在</string>
+    <string name="users_badge_system">システム</string>
+    <string name="users_badge_work">仕事用プロファイル</string>
+    <string name="users_footer">Androidはユーザーやプロファイルについて限られた情報しかアプリに共有しません。他のユーザーの名前やアクティビティは非表示で、ここには現在のユーザーに紐づくプロファイルのみが表示されます。</string>
+    <string name="users_empty_title">ユーザーが報告されていません</string>
+    <string name="users_empty_body">この端末でAndroidはユーザープロファイルを報告しませんでした。</string>
+
+    <!-- strings_services.xml -->
+    <string name="services_subtitle">インストール済みアプリが宣言するサービス。Androidはサービスのライブ状態をサードパーティアプリに公開しません。</string>
+    <string name="services_hide_system">システムアプリを隠す</string>
+    <plurals name="services_count_shown">
+        <item quantity="other">%2$d件中%1$d件のサービスを表示</item>
+    </plurals>
+    <string name="services_col_service">サービス</string>
+    <string name="services_col_app">アプリ</string>
+    <string name="services_col_exported">エクスポート</string>
+    <string name="services_col_enabled">有効</string>
+    <string name="services_col_fgs">FGS種別</string>
+    <string name="services_col_permission">権限</string>
+    <string name="services_yes">はい</string>
+    <string name="services_no">いいえ</string>
+    <string name="services_empty_title">一致するサービスがありません</string>
+    <string name="services_empty_body">別の検索を試すか、「システムアプリを隠す」をオフにしてください。</string>
+
+    <!-- strings_startup.xml -->
+    <string name="startup_subtitle">端末の起動時に実行するよう登録されたアプリ。Androidはブート後に自動で起動します。止めるにはアプリ情報を開いてアプリを無効化してください。</string>
+    <string name="startup_col_app">名前</string>
+    <string name="startup_col_status">状態</string>
+    <string name="startup_col_receivers">ブートレシーバー</string>
+    <string name="startup_col_impact">起動への影響</string>
+    <string name="startup_status_enabled">有効</string>
+    <string name="startup_status_disabled">無効</string>
+    <string name="startup_impact_low">低</string>
+    <string name="startup_impact_medium">中</string>
+    <string name="startup_impact_high">高</string>
+    <plurals name="startup_receivers_count">
+        <item quantity="other">レシーバー %1$d件</item>
+    </plurals>
+    <plurals name="startup_count">
+        <item quantity="other">スタートアップアプリ %1$d件</item>
+    </plurals>
+    <string name="startup_empty_title">スタートアップアプリなし</string>
+    <string name="startup_empty_body">ブートレシーバーを宣言するアプリがないか、この端末では一覧を読めませんでした。</string>
+
+    <!-- strings_apphistory.xml -->
+    <string name="apphistory_subtitle">%1$s以降のリソース使用状況(アクティビティのあるアプリ)</string>
+    <string name="apphistory_range_today">今日</string>
+    <string name="apphistory_range_7_days">7日間</string>
+    <string name="apphistory_range_30_days">30日間</string>
+    <string name="apphistory_col_app">名前</string>
+    <string name="apphistory_col_screen_time">画面時間</string>
+    <string name="apphistory_col_launches">起動回数</string>
+    <string name="apphistory_col_wifi">Wi-Fiデータ</string>
+    <string name="apphistory_col_mobile">モバイルデータ</string>
+    <string name="apphistory_col_last_used">最終使用</string>
+    <string name="apphistory_gate_title">使用状況へのアクセスが必要</string>
+    <string name="apphistory_gate_body">アプリ履歴はAndroidの使用状況統計から作られます。アクセスを許可すると、アプリごとの画面時間・起動回数・データ使用量が見られます。SysMonにインターネットアクセスはなく、データが端末外に出ることはありません。</string>
+    <string name="apphistory_gate_action">アクセスを許可</string>
+    <string name="apphistory_empty_title">アプリのアクティビティなし</string>
+    <string name="apphistory_empty_body">選択した期間にアクティビティを記録したアプリはありません。</string>
+    <plurals name="apphistory_totals">
+        <item quantity="other">%1$d個のアプリ · 画面 %2$s · Wi-Fi %3$s · モバイル %4$s</item>
+    </plurals>
+
+    <!-- strings_details.xml -->
+    <string name="details_col_app">名前</string>
+    <string name="details_col_package">パッケージ</string>
+    <string name="details_col_version">バージョン</string>
+    <string name="details_col_target_sdk">ターゲットSDK</string>
+    <string name="details_col_min_sdk">最小SDK</string>
+    <string name="details_col_size">サイズ</string>
+    <string name="details_col_installed">インストール</string>
+    <string name="details_col_updated">更新</string>
+    <string name="details_col_installer">インストール元</string>
+    <string name="details_col_enabled">有効</string>
+    <string name="details_enabled_yes">はい</string>
+    <string name="details_enabled_no">いいえ</string>
+    <string name="details_strip_package">パッケージ</string>
+    <string name="details_strip_version">バージョン</string>
+    <string name="details_strip_uid">UID</string>
+    <string name="details_strip_installer">インストール元</string>
+    <plurals name="details_count_shown">
+        <item quantity="other">%2$d件中%1$d件のアプリを表示</item>
+    </plurals>
+    <string name="details_empty_title">一致するアプリがありません</string>
+    <string name="details_empty_body">別の検索を試してください。</string>
+    <string name="details_export_csv">CSVエクスポート</string>
+    <string name="details_export_chooser">アプリ一覧をエクスポート</string>
+    <string name="details_export_failed">アプリ一覧をエクスポートできませんでした</string>
+
+    <!-- strings_onboarding.xml -->
+    <string name="onboarding_welcome_title">SysMonへようこそ</string>
+    <string name="onboarding_bullet_graphs">CPU・メモリ・ネットワーク・ストレージ・電池のライブグラフ</string>
+    <string name="onboarding_bullet_processes">プロセスとアプリごとの使用履歴</string>
+    <string name="onboarding_bullet_startup">スタートアップアプリ、サービス、アプリ詳細</string>
+    <string name="onboarding_bullet_private">設計段階からプライベート — インターネット権限なし</string>
+    <string name="onboarding_usage_title">使用状況へのアクセス</string>
+    <string name="onboarding_usage_body_why">SysMonはAndroidの使用状況アクセス権限を使って、プロセスとアプリ履歴の画面にアプリごとの画面時間、ネットワークとストレージの使用量を表示します。</string>
+    <string name="onboarding_usage_body_private">SysMonにインターネット権限はありません — このデータが端末外に出ることはありません。</string>
+    <string name="onboarding_usage_body_optional">許可は任意で、いつでもシステム設定で取り消せます。</string>
+    <string name="onboarding_grant_usage">アクセスを許可</string>
+    <string name="onboarding_skip">今はスキップ</string>
+    <string name="onboarding_usage_granted">アクセスが許可されました</string>
+    <string name="onboarding_open_settings_failed">使用状況アクセスの設定を開けませんでした</string>
+    <string name="onboarding_done_title">準備完了</string>
+    <string name="onboarding_done_body_granted">アクセスは有効です — 画面時間とアプリごとのデータが利用できます。</string>
+    <string name="onboarding_done_body_skipped">アクセスはいつでも設定から許可できます。</string>
+    <string name="onboarding_done_summary">テーマ、アクセントカラー、更新速度はいつでも設定で変えられます。</string>
+    <string name="onboarding_get_started">はじめる</string>
+    <string name="onboarding_step_of">ステップ %1$d / 3</string>
+
+    <!-- strings_performance.xml -->
+    <string name="perf_title">パフォーマンス</string>
+    <string name="perf_tile_memory">メモリ</string>
+    <string name="perf_tile_network">ネットワーク</string>
+    <string name="perf_tile_storage">ストレージ</string>
+    <string name="perf_tile_battery">電池</string>
+    <string name="perf_gpu_info_value">情報</string>
+    <string name="perf_net_rx_short">受: %1$s</string>
+    <string name="perf_net_tx_short">送: %1$s</string>
+    <string name="perf_storage_used_fmt">%1$s 使用中</string>
+    <string name="perf_axis_utilization" formatted="false">使用率 %</string>
+    <string name="perf_axis_power">消費電力</string>
+    <string name="perf_axis_temperature">温度</string>
+    <string name="perf_axis_60s">60秒</string>
+    <string name="perf_axis_memory_usage">メモリ使用量</string>
+    <string name="perf_axis_throughput">スループット</string>
+    <string name="perf_stat_utilization">使用率</string>
+    <string name="perf_stat_speed">クロック</string>
+    <string name="perf_stat_uptime">稼働時間</string>
+    <string name="perf_stat_source">ソース</string>
+    <string name="perf_source_freq_estimate">周波数から推定</string>
+    <string name="perf_source_unavailable">利用不可</string>
+    <string name="perf_cpu_estimated_note">コア周波数からの推定 — Androidは正確なCPU統計を制限しています</string>
+    <string name="perf_cpu_estimate_why">なぜ推定値なの?</string>
+    <string name="perf_cpu_estimate_why_title">CPU使用率が推定値である理由</string>
+    <string name="perf_cpu_estimate_why_body">Android 8以降、システムはアプリによるグローバルCPU統計(/proc/stat)の読み取りをブロックしており、Playのどのアプリもシステム全体の正確なCPU使用率を測れません。\n\nそこでSysMonは各コアのライブクロックから負荷を推定します。最大周波数付近のコアはビジー、最小付近はアイドルとみなします。実際の負荷の傾向をよく追いますが、あくまで近似です — 短いスパイクを見逃したり、軽いバックグラウンド処理を過大・過小に見積もることがあります。\n\n「ソース」欄はこの端末で使われている方式を示します。測定できない値は、数字をでっち上げる代わりに「—」を表示します。</string>
+    <string name="perf_cpu_unavailable_title">CPU統計を利用できません</string>
+    <string name="perf_cpu_unavailable_body">この端末はCPU使用率もコア周波数もアプリに公開していません。</string>
+    <string name="perf_logical_processors">論理プロセッサ</string>
+    <string name="perf_core_n">コア %1$d</string>
+    <string name="perf_specs">仕様</string>
+    <string name="perf_spec_soc">SoC</string>
+    <string name="perf_spec_hardware">ハードウェア</string>
+    <string name="perf_spec_cores">コア数</string>
+    <string name="perf_spec_min_speed">最小クロック</string>
+    <string name="perf_spec_max_speed">最大クロック</string>
+    <string name="perf_spec_64bit">64ビット</string>
+    <string name="perf_yes">はい</string>
+    <string name="perf_no">いいえ</string>
+    <string name="perf_mem_in_use">使用中</string>
+    <string name="perf_mem_available">利用可能</string>
+    <string name="perf_mem_cached">キャッシュ</string>
+    <string name="perf_mem_swap">スワップ</string>
+    <string name="perf_mem_total">合計</string>
+    <string name="perf_mem_seg_in_use">使用中 (%1$s)</string>
+    <string name="perf_mem_seg_cached">キャッシュ (%1$s)</string>
+    <string name="perf_mem_low_warning">システムのメモリが不足しています</string>
+    <string name="perf_net_receive">受信</string>
+    <string name="perf_net_send">送信</string>
+    <string name="perf_net_connection_type">接続の種類</string>
+    <string name="perf_net_name">ネットワーク名</string>
+    <string name="perf_net_ipv4">IPv4アドレス</string>
+    <string name="perf_net_ipv6">IPv6アドレス</string>
+    <string name="perf_net_total_rx">起動後の受信合計</string>
+    <string name="perf_net_total_tx">起動後の送信合計</string>
+    <string name="perf_transport_cellular">モバイル</string>
+    <string name="perf_transport_none">接続なし</string>
+    <string name="perf_transport_other">その他</string>
+    <string name="perf_storage_used">使用中</string>
+    <string name="perf_storage_free">空き</string>
+    <string name="perf_storage_total">合計</string>
+    <string name="perf_storage_removable">リムーバブル</string>
+    <string name="perf_storage_seg_used">使用中 (%1$s)</string>
+    <string name="perf_storage_empty_title">ストレージボリュームなし</string>
+    <string name="perf_storage_empty_body">この端末でAndroidはストレージボリュームを報告しませんでした。</string>
+    <string name="perf_battery_level">残量</string>
+    <string name="perf_battery_status">状態</string>
+    <string name="perf_battery_power">電力</string>
+    <string name="perf_battery_current">電流</string>
+    <string name="perf_battery_voltage">電圧</string>
+    <string name="perf_battery_temperature">温度</string>
+    <string name="perf_battery_health">状態(健全性)</string>
+    <string name="perf_battery_technology">種類</string>
+    <string name="perf_battery_cycles">充電サイクル</string>
+    <string name="perf_battery_capacity">容量(推定)</string>
+    <string name="perf_battery_capacity_of_design">設計値 %2$s mAh の約%1$d%%</string>
+    <string name="perf_battery_capacity_basis">電池残量計による推定</string>
+    <string name="perf_tile_thermal">温度</string>
+    <string name="perf_thermal_status">スロットリング状態</string>
+    <string name="perf_thermal_headroom">余裕度</string>
+    <string name="perf_thermal_hottest">最高温センサー</string>
+    <string name="perf_thermal_sensors">センサー数</string>
+    <string name="perf_thermal_status_none">なし</string>
+    <string name="perf_thermal_status_light">軽度</string>
+    <string name="perf_thermal_status_moderate">中程度</string>
+    <string name="perf_thermal_status_severe">重度</string>
+    <string name="perf_thermal_status_critical">危険</string>
+    <string name="perf_thermal_status_emergency">緊急</string>
+    <string name="perf_thermal_status_shutdown">まもなくシャットダウン</string>
+    <string name="perf_thermal_status_unknown">報告なし</string>
+    <string name="perf_thermal_status_explain_none">現在、システムはサーマルスロットリングを報告していません</string>
+    <string name="perf_thermal_status_explain_light">軽いスロットリングが始まっています — 通常は気づきません</string>
+    <string name="perf_thermal_status_explain_moderate">放熱のためスロットリング中 — 持続性能が低下しています</string>
+    <string name="perf_thermal_status_explain_severe">ハードウェア保護のため強くスロットリングしています</string>
+    <string name="perf_thermal_status_explain_critical">端末が非常に熱く、可能な限りスロットリングしています</string>
+    <string name="perf_thermal_status_explain_emergency">端末が過熱しています — Androidが冷却のため機能を停止することがあります</string>
+    <string name="perf_thermal_status_explain_shutdown">端末は自己保護のためまもなくシャットダウンします</string>
+    <string name="perf_thermal_status_explain_unknown">このAndroidバージョンは温度状態を報告しません(Android 10以降は報告します)</string>
+    <string name="perf_thermal_headroom_note">1.00はスロットリング目前を意味します</string>
+    <string name="perf_thermal_headroom_absent">この端末は余裕度の予測を報告しません</string>
+    <plurals name="perf_thermal_hidden_note">
+        <item quantity="other">%1$d個のセンサーを非表示: 報告された値が妥当な温度ではありません</item>
+    </plurals>
+    <string name="perf_thermal_blocked_title">センサー別温度: 端末ポリシーによりブロック</string>
+    <string name="perf_thermal_blocked_body">この端末のセキュリティポリシーにより、アプリはカーネルの温度センサーを直接読めません。上のスロットリング状態はOS自身によるもので引き続き機能します。電池ページの電池温度も影響を受けません。</string>
+    <string name="perf_thermal_absent_title">センサー別温度: この端末にはありません</string>
+    <string name="perf_thermal_absent_body">この端末のカーネルはサーマルゾーンを公開していません。上のスロットリング状態はOS自身によるもので引き続き機能します。</string>
+    <string name="perf_thermal_implausible_title">センサー別温度: 使える読み値なし</string>
+    <string name="perf_thermal_implausible_body">この端末の温度センサーは読み取れますが、妥当な温度と言える値をどれも報告しなかったため、SysMonは数字をでっち上げる代わりに何も表示しません。上のスロットリング状態はOS自身によるもので引き続き機能します。</string>
+    <string name="perf_thermal_note">センサー名はカーネル由来で端末ごとに異なります。SysMonは報告どおりに表示します</string>
+    <string name="perf_gpu_load">GPU負荷</string>
+    <string name="perf_gpu_renderer">レンダラー</string>
+    <string name="perf_gpu_vendor">ベンダー</string>
+    <string name="perf_gpu_gl_version">OpenGL ESバージョン</string>
+    <string name="perf_gpu_note">Androidはアプリ別のGPU指標を公開していません</string>
+    <string name="perf_gpu_load_blocked_note">この端末ではGPU全体の負荷を読めません — ほとんどのAndroidビルドはベンダーのカウンターをアプリに対してブロックしています</string>
+    <string name="perf_cd_cpu">CPU使用率グラフ、現在 %1$s</string>
+    <string name="perf_cd_core">コア%1$dの使用率グラフ、現在 %2$s</string>
+    <string name="perf_cd_memory">メモリ使用量グラフ、現在 %1$s</string>
+    <string name="perf_cd_battery_power">電池消費電力グラフ、現在 %1$s</string>
+    <string name="perf_cd_battery_temp">電池温度グラフ、現在 %1$s</string>
+    <string name="perf_cd_network">ネットワークスループットグラフ、受信 %1$s、送信 %2$s</string>
+    <string name="perf_cd_thermal">最高温センサーのグラフ、現在 %1$s</string>
+    <string name="perf_cd_gpu_load">GPU負荷グラフ、現在 %1$s</string>
+
+    <!-- strings_processes.xml -->
+    <string name="processes_show_system">システムプロセスを表示</string>
+    <string name="processes_count_shown">%2$d件中%1$d件を表示</string>
+    <plurals name="processes_footer">
+        <item quantity="other">%1$d個のプロセス • 使用状況アクセス %2$s</item>
+    </plurals>
+    <string name="processes_col_app">名前</string>
+    <string name="processes_col_status">状態</string>
+    <string name="processes_col_screen_time">画面時間</string>
+    <string name="processes_col_network">ネットワーク</string>
+    <string name="processes_col_storage">ストレージ</string>
+    <string name="processes_status_running">実行中</string>
+    <string name="processes_status_recent">最近</string>
+    <string name="processes_status_cached">キャッシュ</string>
+    <string name="processes_status_not_running">停止中</string>
+    <string name="processes_gate_title">使用状況へのアクセスが必要</string>
+    <string name="processes_gate_body">アクセスを許可すると、このページでアプリごとの画面時間、ネットワーク、ストレージが見られます。SysMonにインターネットアクセスはなく、データが端末外に出ることはありません。</string>
+    <string name="processes_gate_action">アクセスを許可</string>
+    <string name="processes_gate_notice">アクセスがない場合、インストール済みアプリの一覧のみが表示され、アクティビティ列は空のままです。</string>
+    <string name="processes_empty_title">一致するプロセスがありません</string>
+    <string name="processes_empty_body">別の検索を試すか、「システムプロセスを表示」をオンにしてください。</string>
+    <string name="processes_end_task_title">%1$s を終了しますか?</string>
+    <string name="processes_end_task_body">SysMonはAndroidにこのアプリのバックグラウンドプロセスの停止を依頼します。Androidは依頼を無視したりアプリを再起動したりすることがあり、アプリが画面に表示している内容には影響しません。確実に止めるには、アプリ情報を開いて「強制停止」を使ってください。</string>
+    <string name="processes_end_task_body_limited">Android 14以降、システムは他アプリのバックグラウンドプロセス停止の依頼を無視するため、ここで「タスクの終了」は機能しません。アプリを本当に止めるのはアプリ情報画面の「強制停止」です。</string>
+    <string name="processes_kill_requested">%1$s のバックグラウンド停止を依頼しました</string>
+    <string name="processes_kill_unsupported">Androidは %1$s の終了を許可しませんでした。アプリ情報 → 強制停止を使ってください。</string>
+    <string name="processes_run_new_task_body">アプリをタップして開きます。</string>
+    <string name="processes_run_new_task_empty">一致するアプリがありません</string>
+
+    <!-- strings_notification.xml -->
+    <string name="cpu_notif_channel_name">CPU表示</string>
+    <string name="cpu_notif_channel_desc">継続的なCPU表示。SysMonの設定で有効な間だけ表示されます。</string>
+    <string name="cpu_notif_text">タップしてパフォーマンスを開く</string>
+    <string name="cpu_notif_text_estimate">コア周波数からの推定 — タップして詳細</string>
+    <string name="cpu_notif_unavailable">この端末ではCPU使用率を読めません</string>
+    <string name="net_notif_channel_name">ネットワーク表示</string>
+    <string name="net_notif_channel_desc">継続的なネットワーク速度表示。SysMonの設定で有効な間だけ表示されます。</string>
+    <string name="net_notif_title">ネット ↓ %1$s · ↑ %2$s</string>
+    <string name="net_notif_text_on">%1$s — タップしてパフォーマンスを開く</string>
+    <string name="net_notif_unavailable">この端末ではネットワークカウンターを読めません</string>
+    <string name="bat_notif_channel_name">電池表示</string>
+    <string name="bat_notif_channel_desc">継続的な電池表示。SysMonの設定で有効な間だけ表示されます。</string>
+    <string name="bat_notif_title">電池 %1$s</string>
+    <string name="bat_notif_title_power">電池 %1$s · %2$s</string>
+    <string name="bat_notif_text_on">%1$s — タップしてパフォーマンスを開く</string>
+    <string name="bat_notif_unavailable">この端末では電池の状態を読めません</string>
+    <string name="mem_notif_channel_name">メモリ表示</string>
+    <string name="mem_notif_channel_desc">継続的なメモリ表示。SysMonの設定で有効な間だけ表示されます。</string>
+    <string name="mem_notif_title">メモリ %1$s</string>
+    <string name="mem_notif_title_used">メモリ %1$s · %2$s</string>
+    <string name="mem_notif_text_on">利用可能 %1$s — タップしてパフォーマンスを開く</string>
+    <string name="mem_notif_unavailable">この端末ではメモリの状態を読めません</string>
+    <string name="log_notif_channel_name">ログ状態</string>
+    <string name="log_notif_channel_desc">表示中の読み取りがない状態でパフォーマンスログが動作している間に表示されます。</string>
+    <string name="log_notif_title">パフォーマンスを記録中</string>
+    <string name="log_notif_text">CPU・メモリ・電池・ネットワーク — タップして管理</string>
+    <string name="overlay_notif_channel_name">フローティングモニター状態</string>
+    <string name="overlay_notif_channel_desc">表示中の読み取りがない状態でフローティングモニターが動作している間に表示されます。</string>
+    <string name="overlay_notif_title">フローティングモニター動作中</string>
+    <string name="overlay_notif_text">カードをドラッグで移動 — ここをタップして管理</string>
+
+    <!-- strings_settings.xml -->
+    <string name="settings_section_appearance">外観</string>
+    <string name="settings_section_behavior">動作</string>
+    <string name="settings_section_logging">ログ</string>
+    <string name="settings_section_about">情報</string>
+    <string name="settings_theme">テーマ</string>
+    <string name="settings_theme_system">システム既定</string>
+    <string name="settings_theme_light">ライト</string>
+    <string name="settings_theme_dark">ダーク</string>
+    <string name="settings_accent">アクセントカラー</string>
+    <string name="settings_accent_blue">ブルー</string>
+    <string name="settings_accent_purple">パープル</string>
+    <string name="settings_accent_teal">ティール</string>
+    <string name="settings_accent_green">グリーン</string>
+    <string name="settings_accent_orange">オレンジ</string>
+    <string name="settings_accent_red">レッド</string>
+    <string name="settings_accent_dynamic">ダイナミック(システムの色)</string>
+    <string name="settings_update_speed">更新速度</string>
+    <string name="settings_speed_high">高(0.5秒)</string>
+    <string name="settings_speed_normal">標準(1秒)</string>
+    <string name="settings_speed_low">低(4秒)</string>
+    <string name="settings_speed_paused">一時停止</string>
+    <string name="settings_start_page">既定の開始ページ</string>
+    <string name="settings_keep_screen_on">画面を消灯しない</string>
+    <string name="settings_keep_screen_on_desc">SysMonを開いている間、画面の消灯を防ぎます</string>
+    <string name="settings_show_system_apps">システムアプリを既定で表示</string>
+    <string name="settings_show_system_apps_desc">プロセスとアプリの一覧にシステムアプリを含めます</string>
+    <string name="settings_cpu_notification">通知にCPU使用率</string>
+    <string name="settings_cpu_notification_desc">ライブCPU表示付きの無音・常設通知(~は推定の印)。オンの間は少し電池を使います。再起動後は次にSysMonを開いたときに戻ります。</string>
+    <string name="settings_net_notification">通知にネットワーク速度</string>
+    <string name="settings_net_notification_desc">ライブのダウンロード/アップロード速度付きの無音・常設通知。端末内のカウンターのみを読みます — SysMonにインターネットアクセスはありません。</string>
+    <string name="settings_bat_notification">通知に電池</string>
+    <string name="settings_bat_notification_desc">ライブ電池表示付きの無音・常設通知 — 残量・消費電力・温度。再起動後は次にSysMonを開いたときに戻ります。</string>
+    <string name="settings_mem_notification">通知にメモリ</string>
+    <string name="settings_mem_notification_desc">ライブメモリ表示付きの無音・常設通知 — 使用中・合計・利用可能。再起動後は次にSysMonを開いたときに戻ります。</string>
+    <string name="settings_notification_boxes">使用状況タイルを表示</string>
+    <string name="settings_notification_boxes_desc">各読み取り通知にライブ使用状況タイルを追加します</string>
+    <string name="settings_overlay">フローティングモニター</string>
+    <string name="settings_overlay_desc">CPU・メモリ・ネットワーク・電池をライブ表示する常に最前面の小さなカード — ゲーム中でもどこへでもドラッグできます。オンの間は少し電池を使います。再起動後は次にSysMonを開いたときに戻ります。</string>
+    <string name="settings_overlay_permission">SysMonに「他のアプリの上に表示」を許可してから、もう一度スイッチをオンにしてください</string>
+    <string name="settings_cpu_notification_denied">SysMonの通知がオフになっています。これを使うにはシステム設定で許可してください。</string>
+    <string name="settings_logging">パフォーマンスログ</string>
+    <string name="settings_logging_desc">CPU・メモリ・電池・ネットワークをこの端末のCSVファイルに記録します(ローリング、最大50 MB — 最も古いサンプルから消えます)。アプリを閉じ画面を消していても記録し、少し電池を使います。再起動後は次にSysMonを開いたときに再開します。データが端末外に出ることはありません。</string>
+    <string name="settings_log_interval">記録間隔</string>
+    <string name="settings_log_interval_1s">1秒</string>
+    <string name="settings_log_interval_5s">5秒</string>
+    <string name="settings_log_interval_30s">30秒</string>
+    <string name="settings_log_interval_5m">5分</string>
+    <string name="settings_log_status_empty">ログファイル: 空</string>
+    <plurals name="settings_log_status">
+        <item quantity="other">ログファイル: %1$s · %2$s行 · %3$s以降</item>
+    </plurals>
+    <string name="settings_log_export">ログをエクスポート(CSV)…</string>
+    <string name="settings_log_clear">ログを消去</string>
+    <string name="settings_log_clear_title">ログを消去しますか?</string>
+    <string name="settings_log_clear_body">記録済みのサンプルをすべてこの端末から完全に削除します。</string>
+    <string name="settings_log_clear_confirm">消去</string>
+    <string name="settings_log_exported">ログをエクスポートしました</string>
+    <string name="settings_log_export_failed">ログをエクスポートできませんでした</string>
+    <string name="settings_log_cleared">ログを消去しました</string>
+    <string name="settings_log_timeline_hint">記録はタイムラインタブでグラフとして見られます。</string>
+    <string name="settings_about_privacy">広告なし • トラッキングなし • インターネット権限なし</string>
+    <string name="settings_about_font">書体: Selawik (SIL OFL 1.1) by Microsoft</string>
+    <string name="settings_about_fluent">Fluentに着想を得たデザイン。Microsoftとは無関係です。</string>
+    <string name="settings_about_usage_revoke">使用状況アクセスはいつでもシステム設定で取り消せます</string>
+    <string name="settings_about_exodus">トラッカー0を自分で確認 — Exodus Privacyの端末内アプリでSysMonを監査</string>
+    <string name="settings_open_link_failed">ブラウザを開けませんでした</string>
+    <string name="settings_usage_access_settings">使用状況アクセスの設定</string>
+    <string name="settings_open_settings_failed">システム設定を開けませんでした</string>
+    <string name="settings_diagnostics_desc">バグ報告: 「診断情報をコピー」(端末モデル、Androidとアプリのバージョン、使用状況アクセスの状態、直近のクラッシュログ — 個人情報なし)をメールに貼り付けてください</string>
+    <string name="settings_about_support">サポート: mxrider008@gmail.com</string>
+    <string name="settings_copy_diagnostics">診断情報をコピー</string>
+    <string name="settings_diagnostics_copied">診断情報をコピーしました — メールに貼り付けてください</string>
+    <string name="settings_no_email_app">メールアプリを開けませんでした</string>
+
+    <!-- strings_timeline.xml -->
+    <string name="timeline_status_recording">%1$sごとに記録中</string>
+    <string name="timeline_status_off">記録していません</string>
+    <string name="timeline_record">履歴を記録</string>
+    <string name="timeline_record_desc">CPU・メモリ・電池・ネットワークをこの端末内のプライベートなファイルに記録します。画面が消えていても記録します。データが電話の外に出ることはありません。</string>
+    <string name="timeline_show_range">表示</string>
+    <string name="timeline_range_1h">過去1時間</string>
+    <string name="timeline_range_6h">過去6時間</string>
+    <string name="timeline_range_24h">過去24時間</string>
+    <string name="timeline_range_7d">過去7日間</string>
+    <string name="timeline_range_all">すべて</string>
+    <string name="timeline_settings_note">設定 → パフォーマンスログと同じログです — エクスポートや消去はそちらで。</string>
+    <string name="timeline_empty_title">まだ履歴がありません</string>
+    <string name="timeline_empty_body">「履歴を記録」をオンにして、あとで戻ってきてください。SysMonが電話の動きをグラフにします — 画面が消えている間も含めて。</string>
+    <string name="timeline_empty_recording">記録中 — 最初のサンプルは1分以内に表示されます。</string>
+    <string name="timeline_legend_screen_on">網掛けの帯: 画面オン</string>
+    <plurals name="timeline_sample_count">
+        <item quantity="other">%1$s件のサンプルを表示中</item>
+    </plurals>
+    <string name="timeline_chart_memory">使用メモリ</string>
+    <string name="timeline_chart_battery">電池残量</string>
+    <string name="timeline_chart_power">消費電力</string>
+    <string name="timeline_chart_temp">電池温度</string>
+    <string name="timeline_chart_network">ネットワーク</string>
+    <string name="timeline_net_receive">受信</string>
+    <string name="timeline_net_send">送信</string>
+    <string name="timeline_cd_chart">%1$sの履歴グラフ。横にドラッグすると記録値を読めます。</string>
+    <string name="timeline_notif_denied">記録には通知が必要です: SysMonのバックグラウンドサービスの動作中、Androidは見える通知を要求します。</string>
+</resources>
