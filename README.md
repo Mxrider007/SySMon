@@ -2,9 +2,11 @@
 
 A Windows 11 Task Manager–style system monitor for Android. Native Kotlin + Jetpack Compose, styled after the Fluent design language (Mica-style surfaces, Selawik typeface, accent-tinted live charts).
 
-**Private by design: the app requests no `INTERNET` permission.** Nothing ever leaves the device — a key selling point for a paid utility.
+**Private by design: the app requests no `INTERNET` permission.** Nothing ever leaves the device.
 
-Localized (UI + Play listing) in English, German, French, Spanish, Brazilian Portuguese, Italian, Polish, Japanese and Korean; the Android 13+ per-app language picker is wired via `localeConfig`. Translations live in `app/src/main/res/values-<locale>/strings.xml` (one consolidated file per locale) and `store/listings/`; audit the listings with `store/tools/check_listings.py` after any copy change.
+**Two editions, one codebase (s16):** the main app is **free and complete** (`com.mxrider.sysmon`, gradle flavor `free`); **SysMon Supporter** (`com.mxrider.sysmon.supporter`, flavor `supporter`) is a feature-identical paid donation edition — a tip jar for people who want to fund development, which a no-INTERNET app cannot accept any other way. The only differences are the launcher label, an About-card edition line, and the package name; both install side by side.
+
+Localized (UI + Play listing) in English, German, French, Spanish, Brazilian Portuguese, Italian, Polish, Japanese and Korean; the Android 13+ per-app language picker is wired via `localeConfig`. Translations live in `app/src/main/res/values-<locale>/strings.xml` (one consolidated file per locale) and `store/listings/` + `store/listings-supporter/`; audit ALL listings with `store/tools/check_listings.py` after any copy change.
 
 ## Screens (Win11 Task Manager → Android mapping)
 

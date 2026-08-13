@@ -19,13 +19,13 @@ Do not move or rename the page after submission; Google re-checks the link.
 
 # SysMon Privacy Policy
 
-**Effective date: July 4, 2026**
+**Effective date: August 13, 2026** *(this update adds the Supporter edition package; the data practices are unchanged since July 4, 2026)*
 
-SysMon (package name `com.mxrider.sysmon`) is a system monitor for Android, sold as a one-time purchase. This policy is short because the app's data practices are short: **SysMon collects nothing, transmits nothing, and shares nothing. All data it displays stays on your device.**
+SysMon is a system monitor for Android, available in two editions with identical features and identical data practices: the free app (package name `com.mxrider.sysmon`) and the paid **SysMon Supporter** edition (package name `com.mxrider.sysmon.supporter`), which exists so users who want to can fund development. This policy covers both packages; everything below applies equally to each. It is short because the app's data practices are short: **SysMon collects nothing, transmits nothing, and shares nothing. All data it displays stays on your device.**
 
 ## The app cannot send data anywhere — and you can verify it
 
-SysMon does not request the Android `INTERNET` permission. Without it, the operating system itself prevents the app from making any network connection. This is not just a promise — you can verify it independently by auditing the installed app on your own device with [Exodus Privacy's εxodus app](https://exodus-privacy.eu.org/), or by inspecting the APK's permission list with any package inspector. (Exodus's website only publishes reports for free apps, so a paid app like SysMon is verified on-device rather than via a web report.)
+SysMon does not request the Android `INTERNET` permission. Without it, the operating system itself prevents the app from making any network connection. This is not just a promise — you can verify it independently by auditing the installed app on your own device with [Exodus Privacy's εxodus app](https://exodus-privacy.eu.org/), or by inspecting the APK's permission list with any package inspector. (Exodus's website only publishes reports for free apps it has crawled, so the on-device audit is the check that works for both editions from day one — the paid Supporter edition in particular will never have a web report.)
 
 There are no ads, no analytics, no crash-reporting services, no trackers, and no third-party SDKs of any kind. There are no accounts, sign-ins, or user profiles.
 
