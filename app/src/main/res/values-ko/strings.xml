@@ -407,6 +407,8 @@
     <string name="settings_open_settings_failed">시스템 설정을 열 수 없습니다</string>
     <string name="settings_diagnostics_desc">버그 신고: 진단 정보 복사(기기 모델, Android와 앱 버전, 사용 정보 접근 상태, 최근 충돌 로그 — 개인 정보 없음) 후 이메일에 붙여넣으세요</string>
     <string name="settings_about_support">지원: mxrider008@gmail.com</string>
+    <string name="settings_about_supporter_thanks">서포터 에디션 — SysMon 개발을 지원해 주셔서 감사합니다</string>
+    <string name="settings_about_get_supporter">SysMon이 마음에 드시나요? 서포터 에디션은 같은 앱을 후원 가격으로 제공합니다</string>
     <string name="settings_copy_diagnostics">진단 정보 복사</string>
     <string name="settings_diagnostics_copied">진단 정보를 복사했습니다 — 이메일에 붙여넣으세요</string>
     <string name="settings_no_email_app">이메일 앱을 열 수 없습니다</string>

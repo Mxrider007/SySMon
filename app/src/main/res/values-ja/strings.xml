@@ -407,6 +407,8 @@
     <string name="settings_open_settings_failed">システム設定を開けませんでした</string>
     <string name="settings_diagnostics_desc">バグ報告: 「診断情報をコピー」(端末モデル、Androidとアプリのバージョン、使用状況アクセスの状態、直近のクラッシュログ — 個人情報なし)をメールに貼り付けてください</string>
     <string name="settings_about_support">サポート: mxrider008@gmail.com</string>
+    <string name="settings_about_supporter_thanks">サポーター版 — SysMonの開発を支援いただきありがとうございます</string>
+    <string name="settings_about_get_supporter">SysMonが気に入りましたか？サポーター版は、同じアプリを寄付価格にしたものです</string>
     <string name="settings_copy_diagnostics">診断情報をコピー</string>
     <string name="settings_diagnostics_copied">診断情報をコピーしました — メールに貼り付けてください</string>
     <string name="settings_no_email_app">メールアプリを開けませんでした</string>

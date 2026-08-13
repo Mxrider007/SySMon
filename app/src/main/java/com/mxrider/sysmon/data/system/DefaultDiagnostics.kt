@@ -183,7 +183,9 @@ class DefaultDiagnostics(
             @Suppress("DEPRECATION")
             info.versionCode.toLong()
         }
-        "${info.versionName} ($code)"
+        // Package name identifies the edition (free vs .supporter) in
+        // support emails; the version alone is identical across both.
+        "${info.versionName} ($code) · ${appContext.packageName}"
     } catch (e: Exception) {
         "unknown"
     }

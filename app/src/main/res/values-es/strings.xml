@@ -422,6 +422,8 @@
     <string name="settings_open_settings_failed">No se pudieron abrir los ajustes del sistema</string>
     <string name="settings_diagnostics_desc">Informes de errores: Copiar diagnóstico (modelo, versión de Android y de la app, estado del acceso de uso, último registro de fallo — nada personal) y pégalo en un correo</string>
     <string name="settings_about_support">Soporte: mxrider008@gmail.com</string>
+    <string name="settings_about_supporter_thanks">Edición Supporter: gracias por apoyar el desarrollo de SysMon</string>
+    <string name="settings_about_get_supporter">¿Te gusta SysMon? La edición Supporter es la misma app a precio de donación</string>
     <string name="settings_copy_diagnostics">Copiar diagnóstico</string>
     <string name="settings_diagnostics_copied">Diagnóstico copiado — pégalo en tu correo</string>
     <string name="settings_no_email_app">No se pudo abrir una app de correo</string>

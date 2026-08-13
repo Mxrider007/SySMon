@@ -422,6 +422,8 @@
     <string name="settings_open_settings_failed">Impossible d’ouvrir les paramètres système</string>
     <string name="settings_diagnostics_desc">Signaler un bug : « Copier le diagnostic » (modèle, versions Android et appli, état de l’accès d’utilisation, dernier journal de plantage — rien de personnel), puis collez-le dans un e-mail</string>
     <string name="settings_about_support">Assistance : mxrider008@gmail.com</string>
+    <string name="settings_about_supporter_thanks">Édition Supporter — merci de soutenir le développement de SysMon</string>
+    <string name="settings_about_get_supporter">SysMon vous plaît ? L’édition Supporter est la même appli au prix d’un don</string>
     <string name="settings_copy_diagnostics">Copier le diagnostic</string>
     <string name="settings_diagnostics_copied">Diagnostic copié — collez-le dans votre e-mail</string>
     <string name="settings_no_email_app">Impossible d’ouvrir une appli d’e-mail</string>

@@ -431,6 +431,8 @@
     <string name="settings_open_settings_failed">Nie udało się otworzyć ustawień systemu</string>
     <string name="settings_diagnostics_desc">Zgłaszanie błędów: Skopiuj diagnostykę (model, wersje Androida i aplikacji, stan dostępu, ostatni log awarii — nic osobistego), potem wklej ją do e-maila</string>
     <string name="settings_about_support">Pomoc: mxrider008@gmail.com</string>
+    <string name="settings_about_supporter_thanks">Edycja Supporter — dziękujemy za wspieranie rozwoju aplikacji SysMon</string>
+    <string name="settings_about_get_supporter">Podoba Ci się SysMon? Edycja Supporter to ta sama aplikacja w cenie darowizny</string>
     <string name="settings_copy_diagnostics">Skopiuj diagnostykę</string>
     <string name="settings_diagnostics_copied">Diagnostyka skopiowana — wklej ją do e-maila</string>
     <string name="settings_no_email_app">Nie udało się otworzyć aplikacji e-mail</string>

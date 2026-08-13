@@ -422,6 +422,8 @@
     <string name="settings_open_settings_failed">Impossibile aprire le impostazioni di sistema</string>
     <string name="settings_diagnostics_desc">Segnalazione bug: Copia diagnostica (modello, versioni di Android e dell’app, stato dell’accesso, ultimo log di crash — nulla di personale), poi incollala in un’email</string>
     <string name="settings_about_support">Assistenza: mxrider008@gmail.com</string>
+    <string name="settings_about_supporter_thanks">Edizione Supporter — grazie per sostenere lo sviluppo di SysMon</string>
+    <string name="settings_about_get_supporter">Ti piace SysMon? L’edizione Supporter è la stessa app al prezzo di una donazione</string>
     <string name="settings_copy_diagnostics">Copia diagnostica</string>
     <string name="settings_diagnostics_copied">Diagnostica copiata — incollala nella tua email</string>
     <string name="settings_no_email_app">Impossibile aprire un’app email</string>

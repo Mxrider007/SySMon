@@ -45,6 +45,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.booleanResource
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -79,14 +80,25 @@ import kotlinx.coroutines.launch
 
 /**
  * Exodus Privacy home (opens in the browser). Their εxodus Android app audits
- * INSTALLED apps on-device — the correct verification path for a paid app;
- * exodus's web reports only crawl free Play apps, so a package-report URL
- * would 404 forever for SysMon.
+ * INSTALLED apps on-device — the verification path that works for BOTH
+ * editions from day one. Exodus's web reports only crawl free Play apps, so
+ * a package-report URL would 404 for the paid Supporter edition and for the
+ * free package until their crawler first sees it; the home page never does.
  */
 private const val EXODUS_URL = "https://exodus-privacy.eu.org/en/"
 
 /** Support address; also shown verbatim in [R.string.settings_about_support]. */
 private const val SUPPORT_MAILTO = "mailto:mxrider008@gmail.com?subject=SysMon%20support"
+
+/**
+ * The paid donation edition's Play listing (always the release package name,
+ * never the current build's — a debug build must not link to a ".debug"
+ * listing that doesn't exist). market:// opens the Play app; the https URL
+ * is the fallback for devices without Play, via the browser.
+ */
+private const val SUPPORTER_MARKET_URI = "market://details?id=com.mxrider.sysmon.supporter"
+private const val SUPPORTER_WEB_URL =
+    "https://play.google.com/store/apps/details?id=com.mxrider.sysmon.supporter"
 
 /** Win11-style settings list: grouped FluentCards of label + control rows. */
 @Composable
@@ -508,6 +520,32 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                     }
                 },
             )
+            // Edition line: the paid Supporter edition is feature-identical
+            // (nothing in the app is locked), so the free build advertises it
+            // exactly once, here — and the supporter build says thanks.
+            if (booleanResource(R.bool.is_supporter_edition)) {
+                AboutCaption(stringResource(R.string.settings_about_supporter_thanks))
+            } else {
+                AboutLink(
+                    text = stringResource(R.string.settings_about_get_supporter),
+                    onClick = {
+                        try {
+                            context.startActivity(
+                                Intent(Intent.ACTION_VIEW, Uri.parse(SUPPORTER_MARKET_URI)),
+                            )
+                        } catch (_: Exception) {
+                            try {
+                                context.startActivity(
+                                    Intent(Intent.ACTION_VIEW, Uri.parse(SUPPORTER_WEB_URL)),
+                                )
+                            } catch (_: Exception) {
+                                Toast.makeText(context, openLinkFailedMessage, Toast.LENGTH_SHORT)
+                                    .show()
+                            }
+                        }
+                    },
+                )
+            }
             Spacer(Modifier.height(12.dp))
             FluentStandardButton(
                 text = stringResource(R.string.settings_usage_access_settings),

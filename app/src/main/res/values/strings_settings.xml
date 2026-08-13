@@ -84,6 +84,12 @@
     <!-- Support / diagnostics -->
     <string name="settings_diagnostics_desc">Bug reports: Copy diagnostics (device model, Android and app version, usage-access state, last crash log — nothing personal), then paste into an email</string>
     <string name="settings_about_support">Support: mxrider008@gmail.com</string>
+    <!-- Edition line (s16): exactly one of these renders, gated on
+         R.bool.is_supporter_edition. The link opens the Play listing —
+         user-initiated, leaves via the Play/browser app, same pattern as
+         the Exodus link. -->
+    <string name="settings_about_supporter_thanks">Supporter edition — thank you for supporting SysMon\'s development</string>
+    <string name="settings_about_get_supporter">Enjoying SysMon? The Supporter edition is the same app at a donation price</string>
     <string name="settings_copy_diagnostics">Copy diagnostics</string>
     <string name="settings_diagnostics_copied">Diagnostics copied — paste into your email</string>
     <string name="settings_no_email_app">Couldn\'t open an email app</string>

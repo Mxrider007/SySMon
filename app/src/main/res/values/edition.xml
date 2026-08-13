@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- false in the free build; app/src/supporter overrides it to true. Gates
+     the About card's edition line: the thank-you caption (supporter) vs the
+     get-the-Supporter-edition Play link (free). Kept out of strings*.xml so
+     check_translations.py never sees it. -->
+<resources>
+    <bool name="is_supporter_edition">false</bool>
+</resources>

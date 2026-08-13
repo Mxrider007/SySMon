@@ -415,6 +415,8 @@
     <string name="settings_open_settings_failed">Systemeinstellungen konnten nicht geöffnet werden</string>
     <string name="settings_diagnostics_desc">Fehlerberichte: „Diagnose kopieren“ (Gerätemodell, Android- und App-Version, Nutzungszugriff-Status, letztes Absturzprotokoll — nichts Persönliches), dann in eine E-Mail einfügen</string>
     <string name="settings_about_support">Support: mxrider008@gmail.com</string>
+    <string name="settings_about_supporter_thanks">Supporter-Edition — danke für die Unterstützung der SysMon-Entwicklung</string>
+    <string name="settings_about_get_supporter">Zur Unterstützung der Entwicklung: die Supporter-Edition, dieselbe App zum Spendenpreis</string>
     <string name="settings_copy_diagnostics">Diagnose kopieren</string>
     <string name="settings_diagnostics_copied">Diagnose kopiert — füge sie in deine E-Mail ein</string>
     <string name="settings_no_email_app">Es konnte keine E-Mail-App geöffnet werden</string>

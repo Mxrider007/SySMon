@@ -46,6 +46,27 @@ android {
         localeFilters += listOf("en", "de", "es", "fr", "it", "ja", "ko", "pl", "pt-rBR")
     }
 
+    // Two Play listings, one codebase (s16): "free" is the main app and keeps
+    // the original applicationId — it inherits every artifact and Console
+    // answer prepared before the free/supporter split. "supporter" is the
+    // feature-identical paid donation edition; it differs ONLY in package
+    // name, launcher label and the About card's edition line (gated on
+    // R.bool.is_supporter_edition). Feature gating is deliberately absent —
+    // the free app is complete, and with no INTERNET permission Play Billing
+    // can never exist here, so a second paid listing is the only possible
+    // donation mechanism. Both editions install side by side (FileProvider
+    // authority already derives from ${applicationId}).
+    flavorDimensions += "edition"
+    productFlavors {
+        create("free") {
+            dimension = "edition"
+        }
+        create("supporter") {
+            dimension = "edition"
+            applicationIdSuffix = ".supporter"
+        }
+    }
+
     buildTypes {
         debug {
             // Installs ALONGSIDE production so run-as can inspect app-private

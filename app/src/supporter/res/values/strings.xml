@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Supporter-edition overrides. Both are translatable="false", matching the
+     base declarations — they are brand strings, kept identical across all
+     locales like the base "SysMon". Version-bump note: the versionName is
+     hardcoded here AND in the base settings_about_name_version, so a bump
+     now touches three places (build.gradle.kts + both strings). -->
+<resources>
+    <string name="app_name" translatable="false">SysMon Supporter</string>
+    <string name="settings_about_name_version" translatable="false">SysMon Supporter 1.0.0</string>
+</resources>
