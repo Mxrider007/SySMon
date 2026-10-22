@@ -84,7 +84,7 @@
     <!-- Support / diagnostics -->
     <string name="settings_diagnostics_desc">Bug reports: Copy diagnostics (device model, Android and app version, usage-access state, last crash log — nothing personal), then paste into an email</string>
     <string name="settings_about_support">Support: mxrider008@gmail.com</string>
-    <!-- Edition line (s16): exactly one of these renders, gated on
+    <!-- Edition line: exactly one of these renders, gated on
          R.bool.is_supporter_edition. The link opens the Play listing —
          user-initiated, leaves via the Play/browser app, same pattern as
          the Exodus link. -->

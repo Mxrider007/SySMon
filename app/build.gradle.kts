@@ -7,13 +7,20 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
-// Upload-key credentials live outside VCS (see PLAY_STORE.md §3). When the
-// file is absent the release build still configures — it just comes out
-// unsigned, so debug work on other machines is never blocked.
+// Release-signing credentials live outside VCS (see README, "Release
+// signing"): a keystore.properties file at the repo root, or SYSMON_*
+// environment variables (CI). Without either, everything still configures and
+// debug builds work on any machine; only packaging a release is refused (see
+// checkReleaseSigning below).
 val keystoreProperties = Properties().apply {
     val propsFile = rootProject.file("keystore.properties")
     if (propsFile.exists()) propsFile.inputStream().use { load(it) }
 }
+
+fun signingValue(key: String, env: String): String? =
+    keystoreProperties.getProperty(key) ?: providers.environmentVariable(env).orNull
+
+val releaseStoreFile = signingValue("storeFile", "SYSMON_KEYSTORE_FILE")
 
 android {
     namespace = "com.mxrider.sysmon"
@@ -28,12 +35,12 @@ android {
     }
 
     signingConfigs {
-        if (keystoreProperties.isNotEmpty()) {
+        if (releaseStoreFile != null) {
             create("release") {
-                storeFile = file(keystoreProperties.getProperty("storeFile"))
-                storePassword = keystoreProperties.getProperty("storePassword")
-                keyAlias = keystoreProperties.getProperty("keyAlias")
-                keyPassword = keystoreProperties.getProperty("keyPassword")
+                storeFile = file(releaseStoreFile)
+                storePassword = signingValue("storePassword", "SYSMON_KEYSTORE_PASSWORD")
+                keyAlias = signingValue("keyAlias", "SYSMON_KEY_ALIAS")
+                keyPassword = signingValue("keyPassword", "SYSMON_KEY_PASSWORD")
             }
         }
     }
@@ -46,9 +53,8 @@ android {
         localeFilters += listOf("en", "de", "es", "fr", "it", "ja", "ko", "pl", "pt-rBR")
     }
 
-    // Two Play listings, one codebase (s16): "free" is the main app and keeps
-    // the original applicationId — it inherits every artifact and Console
-    // answer prepared before the free/supporter split. "supporter" is the
+    // Two Play listings, one codebase: "free" is the main app and keeps the
+    // original applicationId. "supporter" is the
     // feature-identical paid donation edition; it differs ONLY in package
     // name, launcher label and the About card's edition line (gated on
     // R.bool.is_supporter_edition). Feature gating is deliberately absent —
@@ -71,9 +77,9 @@ android {
         debug {
             // Installs ALONGSIDE production so run-as can inspect app-private
             // files (perf log, CSV export) without touching the release
-            // install — run-as does not work on release builds. Safe since
-            // s14: the FileProvider authority derives from applicationId
-            // (landmines #32/#33), so the two variants no longer conflict.
+            // install — run-as does not work on release builds. Safe because
+            // the FileProvider authority derives from applicationId, so the
+            // two variants never conflict.
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
         }
@@ -84,14 +90,11 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // findByName returns null when keystore.properties is absent,
-            // which would silently produce an UNSIGNED release that only fails
-            // at Play upload. Fail at build time instead.
+            // Null when no credentials are configured. Throwing here would run
+            // at configuration time and break EVERY build (debug included) on
+            // machines without the keystore, so the check is deferred to
+            // checkReleaseSigning, which only runs when a release is packaged.
             signingConfig = signingConfigs.findByName("release")
-                ?: throw GradleException(
-                    "Release signing config missing - keystore.properties not found. " +
-                        "Restore it from your password manager before building a release.",
-                )
         }
     }
 
@@ -108,6 +111,28 @@ android {
 kotlin {
     compilerOptions {
         jvmTarget.set(JvmTarget.JVM_17)
+    }
+}
+
+// An unsigned release only fails much later, at Play upload. Refuse to package
+// one instead - at execution time, so debug builds and IDE sync never need the
+// keystore. -Psysmon.allowUnsignedRelease=true opts out (CI compile checks,
+// builds that are signed separately afterwards).
+val checkReleaseSigning = tasks.register("checkReleaseSigning") {
+    val signed = releaseStoreFile != null
+    val allowUnsigned = providers.gradleProperty("sysmon.allowUnsignedRelease").orNull.toBoolean()
+    doLast {
+        if (!signed && !allowUnsigned) {
+            throw GradleException(
+                "Release signing is not configured. Add keystore.properties (see README) " +
+                    "or pass -Psysmon.allowUnsignedRelease=true for an unsigned build.",
+            )
+        }
+    }
+}
+tasks.configureEach {
+    if (name.startsWith("package") && (name.endsWith("Release") || name.endsWith("ReleaseBundle"))) {
+        dependsOn(checkReleaseSigning)
     }
 }
 

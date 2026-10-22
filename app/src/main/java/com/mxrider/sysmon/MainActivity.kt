@@ -19,7 +19,7 @@ import kotlinx.coroutines.channels.SendChannel
  * A conflated [Channel], deliberately not a StateFlow: StateFlow's equality
  * conflation swallows a request identical to one left unconsumed, and a
  * single wedged PERFORMANCE value would turn every later notification tap
- * into a silent no-op (observed once on-device, session 7). The channel
+ * into a silent no-op (observed on a real device). The channel
  * delivers every send, and still buffers the latest request across the gap
  * between onCreate/onNewIntent and the scaffold collector attaching.
  *

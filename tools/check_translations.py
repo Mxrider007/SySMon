@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Audit the app-string translations against the base (English) resources.
 
-For every values-<locale>/strings.xml (one consolidated file per locale,
-Wave 2 s15), checks:
+For every values-<locale>/strings.xml (one consolidated file per locale),
+checks:
   1. Coverage: every base string/plurals WITHOUT translatable="false" exists
      in the locale; nothing extra exists that the base doesn't define.
   2. Placeholders: the exact multiset of %n$s / %n$d survives translation,
@@ -18,7 +18,7 @@ import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-RES = Path(__file__).resolve().parent.parent.parent / "app/src/main/res"
+RES = Path(__file__).resolve().parent.parent / "app/src/main/res"
 LOCALES = ["values-de", "values-fr", "values-es", "values-pt-rBR",
            "values-it", "values-pl", "values-ja", "values-ko"]
 

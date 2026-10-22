@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- German (Wave 2, s15). Corrections from native speakers are welcome.
+<!-- German. Corrections from native speakers are welcome.
      One file per locale by design: simpler to keep complete than 14 split
      files x 8 locales. Sections mirror the base files. -->
 <resources>

@@ -124,7 +124,7 @@ fun PerfChart(
         // Both label rows are pinned LTR: the Canvas plot does not mirror in
         // RTL locales (raw coordinates; newest sample stays at the right), so
         // a mirrored Row would caption the newest edge "60 seconds" and the
-        // oldest "0" — the exact cross-mapping TimelineChart fixed in s15.
+        // oldest "0" — the same cross-mapping TimelineChart guards against.
         if (topLeftLabel != null || topRightLabel != null) {
             CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
                 Row(

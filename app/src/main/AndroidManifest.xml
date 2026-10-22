@@ -15,7 +15,7 @@
          (CPU / network / battery readout notifications and performance
          logging, all default OFF). specialUse is the only FGS type that fits
          a continuous device-monitoring readout; Play Console asks for a
-         written justification + demo video for it (CONSOLE_ANSWERS.md). -->
+         written justification + demo video for it. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />

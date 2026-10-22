@@ -1,62 +1,109 @@
 # SysMon — Task Manager for Android
 
-A Windows 11 Task Manager–style system monitor for Android. Native Kotlin + Jetpack Compose, styled after the Fluent design language (Mica-style surfaces, Selawik typeface, accent-tinted live charts).
+A desktop-style task manager and system monitor for Android, inspired by the Windows 11 Task Manager. Native Kotlin + Jetpack Compose, styled after the Fluent design language (Mica-style surfaces, Selawik typeface, accent-tinted live charts).
 
-**Private by design: the app requests no `INTERNET` permission.** Nothing ever leaves the device.
+**Private by design: the app requests no `INTERNET` permission.** Nothing ever leaves the device, and you can verify that yourself by inspecting the APK's permission list. No ads, no analytics, no trackers.
 
-**Two editions, one codebase (s16):** the main app is **free and complete** (`com.mxrider.sysmon`, gradle flavor `free`); **SysMon Supporter** (`com.mxrider.sysmon.supporter`, flavor `supporter`) is a feature-identical paid donation edition — a tip jar for people who want to fund development, which a no-INTERNET app cannot accept any other way. The only differences are the launcher label, an About-card edition line, and the package name; both install side by side.
+<p>
+  <img src="store/play-screenshots/final/01-cpu-percore.png" width="180" alt="Performance: CPU with per-core charts">
+  <img src="store/play-screenshots/final/02-processes.png" width="180" alt="Processes">
+  <img src="store/play-screenshots/final/04-memory.png" width="180" alt="Performance: memory">
+  <img src="store/play-screenshots/final/03-overlay-widget.png" width="180" alt="Floating monitor and home-screen widget">
+</p>
 
-Localized (UI + Play listing) in English, German, French, Spanish, Brazilian Portuguese, Italian, Polish, Japanese and Korean; the Android 13+ per-app language picker is wired via `localeConfig`. Translations live in `app/src/main/res/values-<locale>/strings.xml` (one consolidated file per locale) and `store/listings/` + `store/listings-supporter/`; audit ALL listings with `store/tools/check_listings.py` after any copy change.
+## Download
 
-## Screens (Win11 Task Manager → Android mapping)
+Signed APKs are attached to each [GitHub release](../../releases). Requires Android 8.0 (API 26) or newer.
 
-| Win11 tab | SysMon screen | Data source |
+## Editions
+
+One codebase, two editions. The main app is **free and complete** (`com.mxrider.sysmon`, Gradle flavor `free`). **SysMon Supporter** (`com.mxrider.sysmon.supporter`, flavor `supporter`) is a feature-identical paid edition on Google Play for people who want to fund development; with no `INTERNET` permission there is no other way to accept donations. The only differences are the launcher label, an About-card edition line and the package name, so both can be installed side by side.
+
+## Screens
+
+| Task Manager tab | SysMon screen | Data source |
 |---|---|---|
-| Processes | Processes — recently active apps, screen time, network & storage per app, End task | `UsageStatsManager`, `NetworkStatsManager`, `StorageStatsManager` |
-| Performance | Live 60-second charts: CPU (incl. per-core small multiples), Memory (+composition bar), Network (receive/send), Storage, Battery (power draw in watts + temperature, with a fuel-gauge capacity estimate), Thermal (OS throttling status + per-sensor temperatures where the device permits them), GPU (identity always; total load only where the vendor's counter is readable, which is a minority of devices) | `/proc`, `/sys` cpufreq, `/sys/class/thermal`, `/sys/class/kgsl`, `ActivityManager`, `TrafficStats`, `BatteryManager`, `PowerManager`, `StorageManager`, EGL |
-| *(no Win11 counterpart)* | Timeline — the performance log charted over 1 h / 6 h / 24 h / 7 d / everything: CPU, memory, battery level, power draw, temperature, network, with screen-on shading and crosshair scrubbing. Recording gaps stay gaps — nothing is interpolated | the app's own CSV perf-log ring (Settings → Performance logging) |
-| App history | Screen time / launches / Wi-Fi & mobile data per app over Today / 7 / 30 days | `UsageStatsManager`, `NetworkStatsManager` |
-| Startup apps | Apps registered for boot (`BOOT_COMPLETED` receivers) with impact heuristic | `PackageManager` |
-| Users | Device users & work profiles (Android exposes limited info) | `UserManager` |
+| Processes | Recently active apps, screen time, network and storage per app, End task | `UsageStatsManager`, `NetworkStatsManager`, `StorageStatsManager` |
+| Performance | Live 60-second charts: CPU (incl. per-core small multiples), Memory (+ composition bar), Network (receive/send), Storage, Battery (power draw in watts + temperature, with a fuel-gauge capacity estimate), Thermal (OS throttling status + per-sensor temperatures where the device permits them), GPU (identity always; total load only where the vendor's counter is readable, which is a minority of devices) | `/proc`, `/sys` cpufreq, `/sys/class/thermal`, `/sys/class/kgsl`, `ActivityManager`, `TrafficStats`, `BatteryManager`, `PowerManager`, `StorageManager`, EGL |
+| *(no counterpart)* | Timeline: the performance log charted over 1 h / 6 h / 24 h / 7 d / everything (CPU, memory, battery level, power draw, temperature, network) with screen-on shading and crosshair scrubbing. Recording gaps stay gaps; nothing is interpolated | the app's own CSV performance log (Settings → Performance logging) |
+| App history | Screen time / launches / Wi-Fi and mobile data per app over Today / 7 / 30 days | `UsageStatsManager`, `NetworkStatsManager` |
+| Startup apps | Apps registered for boot (`BOOT_COMPLETED` receivers) with an impact heuristic | `PackageManager` |
+| Users | Device users and work profiles (Android exposes limited info) | `UserManager` |
 | Details | Full installed-app inventory: versions, SDKs, sizes, installer, dates | `PackageManager` |
 | Services | Declared services of installed apps, exported/enabled/FGS types | `PackageManager` |
 | Settings | Theme, accent, update speed (High/Normal/Low/Paused), start page, readout notifications, floating monitor, performance logging | DataStore |
 
+Also included: optional status-bar readout notifications (CPU, memory, network, battery), a draggable floating mini-monitor, and a home-screen widget.
+
 ### Honest platform limits (surfaced in-app, never faked)
-- Per-process CPU/RAM of *other* apps is not available to third-party apps on modern Android. CPU utilization is measured from `/proc/stat` where readable, otherwise estimated from per-core frequency scaling and labeled as such.
-- The optional "CPU usage in notification" readout (foreground service, off by default) shows the same figure under the same rules — estimates stay marked with ~, and sampling pauses while the screen is off.
-- The optional home-screen widget pulls in Jetpack Glance, which transitively adds `WAKE_LOCK` and `RECEIVE_BOOT_COMPLETED` to the merged manifest (Glance composes widgets inside WorkManager). SysMon declares neither and registers no boot receiver; both are disclosed in the listing and privacy policy rather than left for a user to discover in a permission inspector.
-- The optional floating mini-monitor (same service, off by default, needs "Display over other apps") shows live CPU/memory/network/battery in a draggable always-on-top card under the same honesty rules; if the special access is revoked, the toggle turns itself off rather than pretend. Android itself hides *all* third-party overlays while security-sensitive screens are in front (the Settings app does this to prevent tapjacking), so the card disappears there and returns on its own — that is the OS protecting you, not a failure.
-- The home-screen widget (Glance) samples at refresh time — ↻ tap or the platform's 30-minute cycle — and stamps every card with "Updated HH:mm" instead of passing a stale number off as live. CPU and network get a real one-second two-sample window per refresh, never a fabricated first-call zero.
-- "End task" uses `killBackgroundProcesses` (a no-op for other apps since API 34) and always offers the App-info deep link where the user can Force stop.
+
+- Per-process CPU/RAM of *other* apps is not available to third-party apps on modern Android. CPU utilization is measured from `/proc/stat` where readable, otherwise estimated from per-core frequency scaling and labeled as such (estimates are marked with `~`).
+- The optional readout notifications (foreground service, off by default) show the same figures under the same rules, and sampling pauses while the screen is off.
+- The home-screen widget uses Jetpack Glance, which transitively adds `WAKE_LOCK` and `RECEIVE_BOOT_COMPLETED` to the merged manifest (Glance composes widgets inside WorkManager). SysMon declares neither and registers no boot receiver of its own.
+- The widget samples at refresh time (tap ↻, or the platform's 30-minute cycle) and stamps every card with "Updated HH:mm" instead of passing a stale number off as live.
+- The floating mini-monitor needs "Display over other apps". Android hides *all* third-party overlays while security-sensitive screens are in front (for example the Settings app), so the card disappears there and comes back on its own. If the special access is revoked, the toggle turns itself off.
+- "End task" uses `killBackgroundProcesses` (a no-op for other apps since API 34) and always offers the App info deep link, where the user can Force stop.
 - Live service state is not exposed; the Services screen shows declared services.
 
-## Build
+## Building
 
-Requires JDK 17 and the Android SDK (platform 36). `local.properties` points at the SDK.
+Requirements: JDK 17 or newer and the Android SDK with platform 36. Point Gradle at the SDK with `ANDROID_HOME` or a `local.properties` file containing `sdk.dir=/path/to/Android/Sdk` (Android Studio creates it for you).
 
 ```bash
-./gradlew :app:assembleDebug      # debug APK
-./gradlew :app:assembleRelease    # release (set up signing first — see PLAY_STORE.md)
+./gradlew assembleFreeDebug        # debug APK: app/build/outputs/apk/free/debug/
+./gradlew assembleFreeRelease      # signed release APK (needs signing, see below)
+./gradlew bundleFreeRelease        # signed release AAB for Google Play
 ```
+
+Replace `Free` with `Supporter` for the Supporter edition. Debug builds install alongside a release build (`.debug` package suffix).
+
+`gradle.properties` is tuned for a machine with 4 GB of RAM (a single worker, in-process Kotlin compilation). On a bigger machine you can raise `org.gradle.jvmargs` and `org.gradle.workers.max` in `~/.gradle/gradle.properties`, which takes precedence.
+
+### Release signing
+
+Release builds are signed with credentials that never enter the repository. Either create `keystore.properties` in the repository root (it is git-ignored):
+
+```properties
+storeFile=/absolute/path/to/upload-keystore.jks
+storePassword=...
+keyAlias=...
+keyPassword=...
+```
+
+or set the environment variables `SYSMON_KEYSTORE_FILE`, `SYSMON_KEYSTORE_PASSWORD`, `SYSMON_KEY_ALIAS` and `SYSMON_KEY_PASSWORD`. Without them, packaging a release fails with a clear error instead of producing an unsigned file by surprise; pass `-Psysmon.allowUnsignedRelease=true` if you really want an unsigned build (for example to sign it yourself afterwards).
+
+## Translations
+
+The UI is localized in English, German, French, Spanish, Brazilian Portuguese, Italian, Polish, Japanese and Korean, and the Android 13+ per-app language picker is wired up via `localeConfig`. Each locale has one consolidated file at `app/src/main/res/values-<locale>/strings.xml`. After changing any string, run:
+
+```bash
+python3 tools/check_translations.py
+```
+
+It checks that every locale covers every base string, that format placeholders survive translation, and that plurals are complete. Corrections from native speakers are very welcome.
 
 ## Architecture
 
-Single `:app` module, no DI framework, manual service locator (`Graph`).
+Single `:app` module, no DI framework, a small manual service locator (`Graph` in `SysMonApp.kt`).
 
 ```
-core/        contracts: data models, monitor/repo interfaces, ChartHistory, Ticker, Format
-data/system/ CPU, memory, network, battery, storage, GPU collectors
-data/apps/   PackageManager / UsageStats / NetworkStats repositories, task killer
-settings/    DataStore-backed SettingsStore
-ui/theme/    Fluent tokens (colors, Selawik typography, metrics) — contrast-checked accents
-ui/components/  NavRail, DataTable, Fluent controls, Win11-style charts
-ui/screens/  one package per screen + ViewModel
+core/           data models, monitor/repository interfaces, ChartHistory, Ticker, Format
+data/system/    CPU, memory, network, battery, storage, thermal and GPU collectors
+data/apps/      PackageManager / UsageStats / NetworkStats repositories, task killer
+data/logging/   CSV performance-log writer and reader
+service/        readout notifications, floating monitor and performance logging (one foreground service)
+settings/       DataStore-backed SettingsStore
+ui/theme/       Fluent tokens (colors, Selawik typography, metrics)
+ui/components/  NavRail, DataTable, Fluent controls, charts
+ui/screens/     one package per screen + its ViewModel
+ui/widget/      the Glance home-screen widget
 ```
 
-`CONTRACTS_UI.md` documents the binding component signatures and the Win11 visual spec.
+## Privacy
+
+See the [privacy policy](store/PRIVACY_POLICY.md). In short: SysMon collects nothing, transmits nothing and shares nothing.
 
 ## Licensing notes
 
-- Selawik font © Microsoft, SIL Open Font License 1.1 (`SELAWIK_LICENSE.txt`). Attribution shipped in Settings → About.
-- The app is *Fluent-inspired* but uses no Microsoft trademarks, icons, or the "Windows" name anywhere in product, listing, or marketing. Do not change this — see PLAY_STORE.md.
+- Selawik font © Microsoft, SIL Open Font License 1.1 (`SELAWIK_LICENSE.txt`). Attribution is shown in Settings → About.
+- The app is *Fluent-inspired* but uses no Microsoft trademarks or icons, and not the "Windows" name, anywhere in the product, listing or marketing. SysMon is an independent app and is not affiliated with Microsoft.
