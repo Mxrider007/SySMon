@@ -1,5 +1,6 @@
 package com.mxrider.sysmon.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -94,6 +96,10 @@ private fun MainScaffold(
     var railExpanded by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
 
+    // The expanded rail overlays the page like a drawer; Back closes it
+    // before it leaves the app.
+    BackHandler(enabled = railExpanded) { railExpanded = false }
+
     KeepScreenOn(settings.keepScreenOn)
 
     // Notification taps land here as tab requests. Channel iteration (not a
@@ -156,7 +162,14 @@ private fun MainScaffold(
             expanded = railExpanded,
             onToggleExpand = { railExpanded = !railExpanded },
         )
-        Box(Modifier.fillMaxSize()) {
+        // imePadding: under edge-to-edge the window is not resized for the
+        // keyboard, which would otherwise cover the bottom rows while a
+        // search field has focus. The rail keeps its full height.
+        Box(
+            Modifier
+                .fillMaxSize()
+                .imePadding(),
+        ) {
             // Crossfade drops a tab's composition when it leaves; without a
             // SaveableStateHolder every rememberSaveable in the screens (panel
             // selection, toggles, dialog flags) would reset on each tab switch.

@@ -1,5 +1,6 @@
 package com.mxrider.sysmon.ui.components.chart
 
+import android.text.format.DateFormat
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -23,6 +24,7 @@ import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -108,6 +110,11 @@ fun TimelineChart(
     val geometry = remember(textMeasurer, captionSecondary) { TimelineGeometryCache() }
     val touchX = remember { mutableFloatStateOf(Float.NaN) }
     val ceilingCache = remember(textMeasurer, captionSecondary) { CeilingLabelCache2() }
+    // Month names and day/month order follow the app's language. The zone is
+    // resolved when formatting, so a time-zone change while the process
+    // lives (the logging service keeps it alive for days) is picked up.
+    val locale = LocalConfiguration.current.locales[0]
+    val formats = remember(locale) { TimelineFormats(locale) }
 
     Column(modifier = modifier) {
         Canvas(
@@ -169,6 +176,7 @@ fun TimelineChart(
                 lonePointTickPx = 2.dp.toPx(),
                 measurer = textMeasurer,
                 labelStyle = captionSecondary,
+                formats = formats,
             )
             val effectiveMax = geometry.effectiveMax
             val hairline = 1.dp.toPx()
@@ -310,7 +318,9 @@ fun TimelineChart(
                         val sy = h * (1f - (secondaryAt / effectiveMax).coerceIn(0f, 1f))
                         drawCircle(colors.accent, radius = 3.dp.toPx(), center = Offset(px, sy))
                     }
-                    val timeLine = geometry.tooltipTimeFormat.format(Instant.ofEpochMilli(times[idx]))
+                    val timeLine = geometry.tooltipTimeFormat.format(
+                        Instant.ofEpochMilli(times[idx]).atZone(ZoneId.systemDefault()),
+                    )
                     val tooltipText = if (secondaryAt != null) {
                         val first = primaryLabel?.let { "$it: " }.orEmpty() + valueFormatter(v)
                         val second =
@@ -361,12 +371,16 @@ fun TimelineChart(
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
                 Text(
-                    text = EDGE_STAMP.format(Instant.ofEpochMilli(windowStartMs)),
+                    text = formats.stampMinutes.format(
+                        Instant.ofEpochMilli(windowStartMs).atZone(ZoneId.systemDefault()),
+                    ),
                     style = typography.caption,
                     color = colors.textSecondary,
                 )
                 Text(
-                    text = EDGE_STAMP.format(Instant.ofEpochMilli(windowEndMs)),
+                    text = formats.stampMinutes.format(
+                        Instant.ofEpochMilli(windowEndMs).atZone(ZoneId.systemDefault()),
+                    ),
                     style = typography.caption,
                     color = colors.textSecondary,
                 )
@@ -408,6 +422,8 @@ private class TimelineGeometryCache {
     private var width = 0f
     private var height = 0f
     private var lonePointTickPx = 0f
+    private var formats: TimelineFormats? = null
+    private var zone: ZoneId = ZoneId.systemDefault()
 
     var effectiveMax = 1f
         private set
@@ -418,7 +434,7 @@ private class TimelineGeometryCache {
         private set
 
     /** Tooltip stamp: seconds only when the window is fine enough to need them. */
-    var tooltipTimeFormat: DateTimeFormatter = TOOLTIP_MINUTES
+    var tooltipTimeFormat: DateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
         private set
 
     fun refresh(
@@ -436,7 +452,9 @@ private class TimelineGeometryCache {
         lonePointTickPx: Float,
         measurer: TextMeasurer,
         labelStyle: TextStyle,
+        formats: TimelineFormats,
     ) {
+        val zone = ZoneId.systemDefault()
         if (times === this.times &&
             values === this.values &&
             secondaryValues === this.secondaryValues &&
@@ -448,10 +466,14 @@ private class TimelineGeometryCache {
             minAutoScale == this.minAutoScale &&
             width == this.width &&
             height == this.height &&
-            lonePointTickPx == this.lonePointTickPx
+            lonePointTickPx == this.lonePointTickPx &&
+            formats === this.formats &&
+            zone == this.zone
         ) {
             return
         }
+        this.formats = formats
+        this.zone = zone
         this.times = times
         this.values = values
         this.secondaryValues = secondaryValues
@@ -486,8 +508,9 @@ private class TimelineGeometryCache {
         }
 
         val spanMs = windowEndMs - windowStartMs
-        tooltipTimeFormat = if (spanMs <= 2 * 60 * 60 * 1000L) TOOLTIP_SECONDS else TOOLTIP_MINUTES
-        buildGridlines(measurer, labelStyle)
+        tooltipTimeFormat =
+            if (spanMs <= 2 * 60 * 60 * 1000L) formats.stampSeconds else formats.stampMinutes
+        buildGridlines(measurer, labelStyle, formats)
     }
 
     private fun buildTimePaths(
@@ -560,16 +583,15 @@ private class TimelineGeometryCache {
      * truncating to the day (or hour) in the default zone, so a "3 h" step
      * lands on 00:00 / 03:00 / 06:00 rather than arbitrary offsets.
      */
-    private fun buildGridlines(measurer: TextMeasurer, style: TextStyle) {
+    private fun buildGridlines(measurer: TextMeasurer, style: TextStyle, formats: TimelineFormats) {
         val spanMs = windowEndMs - windowStartMs
         // Beyond the candidate list (multi-month "everything" spans), fall
         // back to a whole-day step sized to the span instead of truncating
         // the gridline run at MAX_GRIDLINES weeks.
         val stepMs = GRID_STEPS_MS.firstOrNull { spanMs / it <= MAX_GRIDLINES }
             ?: (DAY_MS * ((spanMs / MAX_GRIDLINES + DAY_MS - 1) / DAY_MS))
-        val zone = ZoneId.systemDefault()
         val dayStep = stepMs >= DAY_MS
-        val labelFormat = if (dayStep) GRID_DAY else GRID_TIME
+        val labelFormat = if (dayStep) formats.gridDay else formats.gridTime
 
         val start = Instant.ofEpochMilli(windowStartMs).atZone(zone)
         var tick = if (dayStep) {
@@ -612,18 +634,32 @@ private class TimelineGeometryCache {
             3_600_000L, 3 * 3_600_000L, 6 * 3_600_000L, 12 * 3_600_000L,
             DAY_MS, 2 * DAY_MS, 7 * DAY_MS,
         ).toList()
-        val GRID_TIME: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm", Locale.US)
-        val GRID_DAY: DateTimeFormatter = DateTimeFormatter.ofPattern("MMM d", Locale.US)
-        val TOOLTIP_SECONDS: DateTimeFormatter =
-            DateTimeFormatter.ofPattern("MMM d, HH:mm:ss", Locale.US).withZone(ZoneId.systemDefault())
-        val TOOLTIP_MINUTES: DateTimeFormatter =
-            DateTimeFormatter.ofPattern("MMM d, HH:mm", Locale.US).withZone(ZoneId.systemDefault())
     }
 }
 
-/** Bottom-edge window stamps; composition-scope so recomposition sees it. */
-private val EDGE_STAMP: DateTimeFormatter =
-    DateTimeFormatter.ofPattern("MMM d, HH:mm", Locale.US).withZone(ZoneId.systemDefault())
+/**
+ * The chart's date/time stamps in [locale]'s own field order and month names
+ * (24-hour, like the rest of the app's charts). Zone-free: callers format a
+ * ZonedDateTime in the current zone.
+ */
+private class TimelineFormats(locale: Locale) {
+    val gridTime: DateTimeFormatter = pattern(locale, "HHmm", "HH:mm")
+    val gridDay: DateTimeFormatter = pattern(locale, "MMMd", "MMM d")
+    val stampMinutes: DateTimeFormatter = pattern(locale, "MMMdHHmm", "MMM d, HH:mm")
+    val stampSeconds: DateTimeFormatter = pattern(locale, "MMMdHHmmss", "MMM d, HH:mm:ss")
+
+    private companion object {
+        /**
+         * The platform's best pattern for [skeleton] in [locale]. ICU patterns
+         * are java.time-compatible for these fields; the US pattern is the
+         * fallback should a locale ever produce one that is not.
+         */
+        fun pattern(locale: Locale, skeleton: String, fallback: String): DateTimeFormatter =
+            runCatching {
+                DateTimeFormatter.ofPattern(DateFormat.getBestDateTimePattern(locale, skeleton), locale)
+            }.getOrElse { DateTimeFormatter.ofPattern(fallback, Locale.US) }
+    }
+}
 
 /** Same memo as PerfChart's private ceiling cache; local copy keeps both private. */
 private class CeilingLabelCache2 {

@@ -114,6 +114,10 @@ fun FluentButton(
             style = FluentTheme.typography.body,
             color = textColor,
             maxLines = 1,
+            // Same as FluentStandardButton: a squeezed label must ellipsize,
+            // not wrap into a second line the 32dp height hides.
+            softWrap = false,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }

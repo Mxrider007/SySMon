@@ -236,6 +236,19 @@
     <string name="perf_battery_capacity">Capacità (stim.)</string>
     <string name="perf_battery_capacity_of_design">~%1$d%% dei %2$s mAh di fabbrica</string>
     <string name="perf_battery_capacity_basis">stima del misuratore di carica</string>
+    <string name="perf_battery_status_charging">In carica</string>
+    <string name="perf_battery_status_discharging">In scarica</string>
+    <string name="perf_battery_status_full">Carica</string>
+    <string name="perf_battery_status_not_charging">Non in carica</string>
+    <string name="perf_battery_unknown">Sconosciuto</string>
+    <string name="perf_battery_health_good">Buona</string>
+    <string name="perf_battery_health_overheat">Surriscaldata</string>
+    <string name="perf_battery_health_dead">Esaurita</string>
+    <string name="perf_battery_health_over_voltage">Sovratensione</string>
+    <string name="perf_battery_health_failure">Guasto</string>
+    <string name="perf_battery_health_cold">Troppo fredda</string>
+    <string name="perf_battery_plug_wireless">Wireless</string>
+    <string name="perf_battery_plug_dock">Dock</string>
     <string name="perf_tile_thermal">Termica</string>
     <string name="perf_thermal_status">Stato limitazione</string>
     <string name="perf_thermal_headroom">Margine</string>
@@ -417,6 +430,7 @@
     <string name="settings_about_fluent">Design ispirato a Fluent. Non affiliato a Microsoft.</string>
     <string name="settings_about_usage_revoke">L’accesso ai dati di utilizzo è revocabile in ogni momento nelle impostazioni di sistema</string>
     <string name="settings_about_exodus">Verifica tu stesso gli 0 tracker — controlla SysMon con l’app di Exodus Privacy</string>
+    <string name="settings_about_privacy_policy">Informativa sulla privacy</string>
     <string name="settings_open_link_failed">Impossibile aprire un browser</string>
     <string name="settings_usage_access_settings">Impostazioni accesso ai dati di utilizzo</string>
     <string name="settings_open_settings_failed">Impossibile aprire le impostazioni di sistema</string>

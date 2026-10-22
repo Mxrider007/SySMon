@@ -52,6 +52,10 @@ class DefaultUsageRepository(context: Context) : UsageRepository {
             } catch (e: Exception) {
                 pkg
             }
+            // NetworkStats is per uid. Below FIRST_APPLICATION_UID the uid is a
+            // shared system one (Settings runs as uid 1000 alongside
+            // system_server), so its traffic is not this one app's: unknown.
+            val ownUid = ai.uid >= android.os.Process.FIRST_APPLICATION_UID
             rows += UsageRow(
                 packageName = pkg,
                 label = label,
@@ -59,8 +63,8 @@ class DefaultUsageRepository(context: Context) : UsageRepository {
                 screenTimeMs = acc.screenTimeMs,
                 lastUsed = maxOf(acc.lastEnter, acc.lastExit),
                 launches = if (eventBased) acc.launches else null,
-                wifiBytes = wifiByUid?.let { it[ai.uid] ?: 0L },
-                mobileBytes = mobileByUid?.let { it[ai.uid] ?: 0L },
+                wifiBytes = wifiByUid?.takeIf { ownUid }?.let { it[ai.uid] ?: 0L },
+                mobileBytes = mobileByUid?.takeIf { ownUid }?.let { it[ai.uid] ?: 0L },
             )
         }
         return rows

@@ -77,6 +77,7 @@
     <string name="settings_about_fluent">Fluent-inspired design. Not affiliated with Microsoft.</string>
     <string name="settings_about_usage_revoke">Usage access can be revoked anytime in system settings</string>
     <string name="settings_about_exodus">Verify 0 trackers yourself — audit SysMon with Exodus Privacy\'s on-device app</string>
+    <string name="settings_about_privacy_policy">Privacy policy</string>
     <string name="settings_open_link_failed">Couldn\'t open a browser</string>
     <string name="settings_usage_access_settings">Usage access settings</string>
     <string name="settings_open_settings_failed">Couldn\'t open system settings</string>

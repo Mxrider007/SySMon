@@ -32,7 +32,10 @@ class DefaultThermalMonitor(context: Context) : ThermalMonitor {
 
     /** Last headroom reading and when it was taken ([android.os.SystemClock.elapsedRealtime]). */
     private var headroomCache: Float? = null
-    private var headroomReadAt: Long = Long.MIN_VALUE
+
+    // Not Long.MIN_VALUE: `now - MIN_VALUE` overflows to a negative number,
+    // which would satisfy the rate-limit check forever and never read.
+    private var headroomReadAt: Long = -HEADROOM_MIN_INTERVAL_MS
 
     override suspend fun sample(): ThermalSnapshot {
         val zones = discovered ?: discover().also { discovered = it }
@@ -177,7 +180,10 @@ class DefaultThermalMonitor(context: Context) : ThermalMonitor {
          *
          * The candidate scales map the sane band to raw ranges that are almost
          * disjoint but overlap at the decade edges (raw 100–120 is a valid
-         * plain-°C reading AND a valid deci-°C one). For those ambiguous
+         * plain-°C reading AND a valid deci-°C one). There is deliberately no
+         * centi-°C candidate: no kernel uses it, and it would turn a genuinely
+         * cold milli-°C reading (raw 5000 = 5 °C) into a fabricated 50 °C
+         * instead of hiding it. For those ambiguous
          * values the larger divisor wins: sysfs documents millidegrees as the
          * standard unit, so the more standard interpretation is the better
          * prior — and it is also the calmer one, which matters when the
@@ -186,7 +192,7 @@ class DefaultThermalMonitor(context: Context) : ThermalMonitor {
          * hidden, never displayed.
          */
         fun plausibleCelsius(raw: Long): Double? {
-            for (scale in longArrayOf(1000L, 100L, 10L, 1L)) {
+            for (scale in longArrayOf(1000L, 10L, 1L)) {
                 val c = raw.toDouble() / scale
                 if (c in MIN_C..MAX_C) return c
             }
@@ -203,6 +209,12 @@ class DefaultThermalMonitor(context: Context) : ThermalMonitor {
             SENSOR_INDEX.find(t)?.let { match ->
                 val n = match.groupValues[1]
                 return "SoC sensor $n"
+            }
+            // Qualcomm names per-core zones cpu-<cluster>-<core>-usr; the
+            // single-index form below would label every core of a cluster
+            // with the cluster number.
+            CPU_CLUSTER_CORE.find(t)?.let { match ->
+                return "CPU cluster ${match.groupValues[1]} core ${match.groupValues[2]}"
             }
             CPU_INDEX.find(t)?.let { match ->
                 return "CPU ${match.groupValues[1]}"
@@ -225,6 +237,7 @@ class DefaultThermalMonitor(context: Context) : ThermalMonitor {
         }
 
         val SENSOR_INDEX = Regex("""tsens_tz_sensor(\d+)""")
+        val CPU_CLUSTER_CORE = Regex("""^cpu[-_](\d+)[-_](\d+)""")
         val CPU_INDEX = Regex("""^cpu[-_]?(\d+)""")
     }
 

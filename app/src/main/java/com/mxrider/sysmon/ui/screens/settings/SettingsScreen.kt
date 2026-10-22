@@ -3,6 +3,7 @@ package com.mxrider.sysmon.ui.screens.settings
 import android.Manifest
 import android.content.ClipData
 import android.content.ClipboardManager
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -87,6 +88,13 @@ import kotlinx.coroutines.launch
  */
 private const val EXODUS_URL = "https://exodus-privacy.eu.org/en/"
 
+/**
+ * The privacy policy as published with the source. Opened in the browser,
+ * like every other link here, so the app itself stays internet-free.
+ */
+private const val PRIVACY_POLICY_URL =
+    "https://github.com/Mxrider007/SySMon/blob/main/store/PRIVACY_POLICY.md"
+
 /** Support address; also shown verbatim in [R.string.settings_about_support]. */
 private const val SUPPORT_MAILTO = "mailto:mxrider008@gmail.com?subject=SysMon%20support"
 
@@ -121,6 +129,9 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
     val requestBatNotifPermission = rememberNotifPermissionRequest { vm.setBatteryNotification(true) }
     val requestMemNotifPermission = rememberNotifPermissionRequest { vm.setMemoryNotification(true) }
     val requestLogPermission = rememberNotifPermissionRequest { vm.setLogging(true) }
+    // The floating monitor runs in the same foreground service, which cannot
+    // start without notification permission on Android 13+.
+    val requestOverlayNotifPermission = rememberNotifPermissionRequest { vm.setOverlayEnabled(true) }
 
     val logStatus by vm.logStatus.collectAsStateWithLifecycle()
     var showClearLog by rememberSaveable { mutableStateOf(false) }
@@ -358,9 +369,7 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                     onCheckedChange = { checked ->
                         when {
                             !checked -> vm.setOverlayEnabled(false)
-                            android.provider.Settings.canDrawOverlays(context) ->
-                                vm.setOverlayEnabled(true)
-                            else -> {
+                            !android.provider.Settings.canDrawOverlays(context) -> {
                                 // "Display over other apps" has no result
                                 // callback; send the user there and let them
                                 // flip the toggle again on return.
@@ -381,6 +390,11 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                                     Toast.LENGTH_LONG,
                                 ).show()
                             }
+                            CpuNotificationService.canPostNotifications(context) ->
+                                vm.setOverlayEnabled(true)
+                            else -> requestOverlayNotifPermission.launch(
+                                Manifest.permission.POST_NOTIFICATIONS,
+                            )
                         }
                     },
                 )
@@ -456,7 +470,16 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                     FluentStandardButton(
                         text = stringResource(R.string.settings_log_export),
                         enabled = logStatus.rowCount > 0,
-                        onClick = { exportLog.launch(defaultLogExportName()) },
+                        onClick = {
+                            // Some trimmed-down ROMs ship without a document
+                            // provider to handle the save dialog.
+                            try {
+                                exportLog.launch(defaultLogExportName())
+                            } catch (_: ActivityNotFoundException) {
+                                Toast.makeText(context, logExportFailedMessage, Toast.LENGTH_LONG)
+                                    .show()
+                            }
+                        },
                     )
                     FluentStandardButton(
                         text = stringResource(R.string.settings_log_clear),
@@ -503,6 +526,18 @@ fun SettingsScreen(modifier: Modifier = Modifier) {
                 onClick = {
                     try {
                         context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(EXODUS_URL)))
+                    } catch (_: Exception) {
+                        Toast.makeText(context, openLinkFailedMessage, Toast.LENGTH_SHORT).show()
+                    }
+                },
+            )
+            AboutLink(
+                text = stringResource(R.string.settings_about_privacy_policy),
+                onClick = {
+                    try {
+                        context.startActivity(
+                            Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_POLICY_URL)),
+                        )
                     } catch (_: Exception) {
                         Toast.makeText(context, openLinkFailedMessage, Toast.LENGTH_SHORT).show()
                     }

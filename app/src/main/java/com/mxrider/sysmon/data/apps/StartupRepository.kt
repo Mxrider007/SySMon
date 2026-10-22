@@ -10,6 +10,8 @@ import android.os.Build
 import com.mxrider.sysmon.core.StartupImpact
 import com.mxrider.sysmon.core.StartupRepository
 import com.mxrider.sysmon.core.StartupRow
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 
 /**
  * "Startup" rows: apps declaring BOOT_COMPLETED receivers, grouped per
@@ -43,6 +45,8 @@ class DefaultStartupRepository(context: Context) : StartupRepository {
 
         val rows = ArrayList<StartupRow>(byPackage.size)
         for ((pkg, infos) in byPackage) {
+            // One binder call per package: let a superseded reload stop here.
+            currentCoroutineContext().ensureActive()
             val ai = applicationInfoOrNull(pkg) ?: continue // Skip unresolvable rows.
             val receiverNames = infos.mapNotNull { it.activityInfo?.name?.substringAfterLast('.') }
             if (receiverNames.isEmpty()) continue

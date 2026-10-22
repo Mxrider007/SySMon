@@ -1,5 +1,6 @@
 package com.mxrider.sysmon.ui.screens.apphistory
 
+import android.text.format.DateUtils
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -51,6 +52,20 @@ import kotlinx.coroutines.delay
 private const val DASH = "—"
 
 /**
+ * "5 min. ago", "Yesterday", "3 days ago", then a date past a week, formatted
+ * by the platform in the app's language. A dash when there is no timestamp.
+ */
+private fun lastUsedText(epochMillis: Long, now: Long = System.currentTimeMillis()): String {
+    if (epochMillis <= 0L) return DASH
+    return DateUtils.getRelativeTimeSpanString(
+        minOf(epochMillis, now), // clock skew must not read as "in 2 min."
+        now,
+        0L,
+        DateUtils.FORMAT_ABBREV_RELATIVE or DateUtils.FORMAT_ABBREV_MONTH,
+    ).toString()
+}
+
+/**
  * Win11 Task Manager "App history" page: a range combo box (Today / 7 days /
  * 30 days) and a sortable table of per-app screen time, launches, Wi-Fi and
  * mobile data, and last-used time. Without usage access the table is replaced
@@ -63,8 +78,13 @@ fun AppHistoryScreen(modifier: Modifier = Modifier) {
     val range by vm.range.collectAsStateWithLifecycle()
     val colors = FluentTheme.colors
 
-    // The VM outlives tab switches; reload on revisit so rows never go stale.
-    LaunchedEffect(Unit) { vm.refreshIfStale() }
+    // The VM outlives tab switches and backgrounding; recheck on every visit
+    // AND every resume, so a tab left open overnight never shows yesterday
+    // as "Today".
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    LaunchedEffect(lifecycle) {
+        lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) { vm.refreshIfStale() }
+    }
 
     val sinceDate = remember(state.rangeStartMillis) {
         DateFormat.getDateInstance(DateFormat.MEDIUM).format(Date(state.rangeStartMillis))
@@ -124,7 +144,7 @@ fun AppHistoryScreen(modifier: Modifier = Modifier) {
                 title = lastUsedTitle,
                 width = 130.dp,
                 sortable = true,
-            ) { row -> ValueCell(Format.relativeTime(row.lastUsed)) },
+            ) { row -> ValueCell(lastUsedText(row.lastUsed)) },
         )
     }
 

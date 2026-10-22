@@ -17,6 +17,7 @@ import com.mxrider.sysmon.core.Format
 import com.mxrider.sysmon.core.NetTransport
 import com.mxrider.sysmon.ui.components.StatTile
 import com.mxrider.sysmon.ui.components.chart.PerfChart
+import com.mxrider.sysmon.ui.TokenLabels
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -76,7 +77,10 @@ internal fun NetworkPanel(
 
         Spacer(Modifier.height(24.dp))
         SpecRow(stringResource(R.string.perf_net_connection_type), transportText)
-        SpecRow(stringResource(R.string.perf_net_name), net?.networkName ?: DASH)
+        SpecRow(
+            stringResource(R.string.perf_net_name),
+            TokenLabels.localized(net?.networkName, TokenLabels::networkName) ?: DASH,
+        )
         SpecRow(stringResource(R.string.perf_net_ipv4), net?.ipv4 ?: DASH)
         SpecRow(stringResource(R.string.perf_net_ipv6), net?.ipv6 ?: DASH)
         SpecRow(

@@ -36,6 +36,7 @@ import com.mxrider.sysmon.core.Format
 import com.mxrider.sysmon.ui.components.TitleBar
 import com.mxrider.sysmon.ui.components.chart.MiniChartTile
 import com.mxrider.sysmon.ui.theme.FluentMetrics
+import com.mxrider.sysmon.ui.TokenLabels
 
 /** Sidebar entries of the Performance page, in Win11 Task Manager order. */
 internal enum class PerfPanel { CPU, MEMORY, NETWORK, STORAGE, BATTERY, THERMAL, GPU }
@@ -273,7 +274,10 @@ private fun PerfTile(
                 onClick = onClick,
                 modifier = modifier,
                 secondaryValue = bat?.let { b ->
-                    listOfNotNull(b.status, b.temperatureC?.let { Format.celsius(it) })
+                    listOfNotNull(
+                        TokenLabels.localized(b.status, TokenLabels::batteryStatus),
+                        b.temperatureC?.let { Format.celsius(it) },
+                    )
                         .joinToString(" • ")
                 },
             )

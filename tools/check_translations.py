@@ -8,6 +8,8 @@ checks:
   2. Placeholders: the exact multiset of %n$s / %n$d survives translation,
      for strings and for every plurals quantity (against the base "other").
   3. formatted="false" is carried wherever the base declares it.
+  4. No string body contains a bare ASCII double quote: aapt2 treats it as
+     a quoting delimiter and silently drops it (use “typographic” quotes).
 
 Run after ANY string change, before gradle — it catches in seconds what
 lint reports late and MissingTranslation would let silently fall back.
@@ -36,6 +38,18 @@ def collect(d):
     return out
 
 
+def bare_quotes(d):
+    """Names of strings/items in d whose raw body holds an unescaped "."""
+    found = []
+    for f in sorted(Path(d).glob("strings*.xml")):
+        raw = f.read_text(encoding="utf-8")
+        for m in re.finditer(r'<(string|item)\b([^>]*)>(.*?)</\1>', raw, re.S):
+            if re.search(r'(?<!\\)"', m.group(3)):
+                name = re.search(r'(?:name|quantity)="([^"]*)"', m.group(2))
+                found.append(name.group(1) if name else "?")
+    return found
+
+
 def placeholders(text):
     return sorted(re.findall(r"%\d+\$[sd]", text))
 
@@ -44,6 +58,10 @@ def main():
     base = collect(RES / "values")
     translatable = {k for k, v in base.items() if v[2].get("translatable") != "false"}
     fail = False
+    for loc in ["values"] + LOCALES:
+        for name in bare_quotes(RES / loc):
+            print(f"{loc}: {name} has a bare ASCII quote (aapt2 drops it)")
+            fail = True
     for loc in LOCALES:
         tr = collect(RES / loc)
         for name in sorted(translatable - set(tr)):

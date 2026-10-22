@@ -1,7 +1,7 @@
 
 # SysMon Privacy Policy
 
-**Effective date: August 13, 2026** *(this update adds the Supporter edition package; the data practices are unchanged since July 4, 2026)*
+**Effective date: October 22, 2026** *(this update explains Android device backup of settings and one more library-defined permission; the data practices are unchanged since July 4, 2026)*
 
 SysMon is a system monitor for Android, available in two editions with identical features and identical data practices: the free app (package name `com.mxrider.sysmon`) and the paid **SysMon Supporter** edition (package name `com.mxrider.sysmon.supporter`), which exists so users who want to can fund development. This policy covers both packages; everything below applies equally to each. It is short because the app's data practices are short: **SysMon collects nothing, transmits nothing, and shares nothing. All data it displays stays on your device.**
 
@@ -11,7 +11,7 @@ SysMon does not request the Android `INTERNET` permission. Without it, the opera
 
 There are no ads, no analytics, no crash-reporting services, no trackers, and no third-party SDKs of any kind. There are no accounts, sign-ins, or user profiles.
 
-**Two permissions you will see that SysMon never asked for.** If you inspect that list, it shows `WAKE_LOCK` ("prevent phone from sleeping") and `RECEIVE_BOOT_COMPLETED` ("run at startup"). Neither is declared by SysMon. Both are added automatically by the Android library that draws the optional home-screen widget, which composes it inside the system's background-work scheduler. SysMon registers **no** start-at-boot receiver of its own — that is why the app's own settings tell you a readout "returns the next time you open SysMon" after a reboot instead of starting by itself. We would rather explain these than have you find them unexplained.
+**Permissions you will see that SysMon never asked for.** If you inspect that list, it shows `WAKE_LOCK` ("prevent phone from sleeping") and `RECEIVE_BOOT_COMPLETED` ("run at startup"). Neither is declared by SysMon. Both are added automatically by the Android library that draws the optional home-screen widget, which composes it inside the system's background-work scheduler. SysMon registers **no** start-at-boot receiver of its own — that is why the app's own settings tell you a readout "returns the next time you open SysMon" after a reboot instead of starting by itself. You may also see `com.mxrider.sysmon.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION` (with `.supporter` in the Supporter edition): a signature-level permission that the AndroidX core library defines so that only SysMon itself can deliver broadcasts to SysMon's internal receivers. It grants nothing to any other app. We would rather explain these than have you find them unexplained.
 
 If SysMon ever crashes, a technical crash log is written to the app's private storage **on your device only**. You can copy it — together with your device model, Android version and app version — from Settings ("Copy diagnostics") and choose to email it to support yourself. Nothing is ever sent automatically, and the log contains no personal information.
 
@@ -27,7 +27,7 @@ To do its job as a monitor, SysMon reads the following information **on-device o
 
 If you use the **Export CSV** button on the Details screen, SysMon writes the app-inventory table you are looking at to a temporary file and hands it to the app you choose in the system share sheet. Nothing is sent anywhere on its own — you pick the destination, and the file contains only the information already shown on that screen.
 
-Your only stored data — settings (theme, accent color, update speed, start page, notification and logging preferences) and the optional performance log described above — is kept locally on your device.
+Your only stored data — settings (theme, accent color, update speed, start page, notification and logging preferences) and the optional performance log described above — is kept locally on your device. If Android backup is turned on, Android may include SysMon's settings (never the performance log, the crash log, or any app or usage data) in your device backup and restore them on a new device; that backup is made and stored by Android under your own account, not by SysMon.
 
 ## Honesty about what the app shows
 
@@ -37,7 +37,7 @@ Android limits what any third-party app can see: system-wide CPU% is estimated f
 
 Because SysMon keeps everything on-device, deleting your data is entirely in your hands:
 
-- **Uninstall the app** — this removes all of SysMon's local settings and the optional performance log.
+- **Uninstall the app** — this removes all of SysMon's local settings and the optional performance log from the device. A copy of the settings in an Android device backup is managed in your Google account's backup settings.
 - **Clear the performance log** anytime in SysMon Settings → Logging → Clear log.
 - Optionally, **revoke Usage access** in Android Settings → Apps → Special app access → Usage access, at any time, even while the app remains installed.
 

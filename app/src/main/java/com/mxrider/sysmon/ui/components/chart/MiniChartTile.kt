@@ -84,7 +84,8 @@ fun MiniChartTile(
             val values = history.window(windowPoints)
             var windowMax = 0f
             for (v in values) if (v.isFinite() && v > windowMax) windowMax = v
-            val effectiveMax = max(minScale, niceCeil(windowMax))
+            // Same formula as PerfChart, so the floor is a nice value too.
+            val effectiveMax = niceCeil(max(windowMax, minScale))
             val hairline = 1.dp.toPx()
 
             buildSeriesPaths(values, effectiveMax, size.width, size.height, linePath, fillPath)

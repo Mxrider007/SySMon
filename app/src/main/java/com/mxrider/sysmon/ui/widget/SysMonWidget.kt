@@ -3,15 +3,23 @@ package com.mxrider.sysmon.ui.widget
 import android.content.Context
 import android.content.Intent
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.glance.semantics.contentDescription
 import androidx.glance.semantics.semantics
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.ImageProvider
 import androidx.glance.action.clickable
+import androidx.glance.currentState
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.SizeMode
@@ -19,6 +27,7 @@ import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.provideContent
+import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.background
 import androidx.glance.action.ActionParameters
 import androidx.glance.layout.Alignment
@@ -64,22 +73,45 @@ class SysMonWidget : GlanceAppWidget() {
     override val sizeMode: SizeMode = SizeMode.Single
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val data = sampleWidgetData(context)
-        provideContent { WidgetContent(data) }
+        val initial = sampleWidgetData(context)
+        provideContent {
+            // The session outlives provideGlance's first pass by ~45 s, and
+            // update() only reloads state into it, so a refresh tap inside
+            // that window arrives as a new nonce, not as a fresh provideGlance.
+            val nonce = currentState(REFRESH_NONCE) ?: 0L
+            var data by remember { mutableStateOf(initial) }
+            var sampledFor by remember { mutableLongStateOf(nonce) }
+            LaunchedEffect(nonce) {
+                if (nonce != sampledFor) {
+                    data = sampleWidgetData(context)
+                    sampledFor = nonce
+                }
+            }
+            WidgetContent(data)
+        }
     }
 }
+
+private val REFRESH_NONCE = longPreferencesKey("refresh_nonce")
 
 class SysMonWidgetReceiver : GlanceAppWidgetReceiver() {
     override val glanceAppWidget: GlanceAppWidget = SysMonWidget()
 }
 
-/** ↻ tap: re-runs provideGlance for this instance (fresh samples). */
+/**
+ * ↻ tap: bumps the instance's refresh nonce, then updates it. A running
+ * session resamples on the new nonce; otherwise update() starts a new
+ * provideGlance, which samples anyway.
+ */
 class RefreshSysMonWidgetAction : ActionCallback {
     override suspend fun onAction(
         context: Context,
         glanceId: GlanceId,
         parameters: ActionParameters,
     ) {
+        updateAppWidgetState(context, glanceId) { prefs ->
+            prefs[REFRESH_NONCE] = (prefs[REFRESH_NONCE] ?: 0L) + 1
+        }
         SysMonWidget().update(context, glanceId)
     }
 }

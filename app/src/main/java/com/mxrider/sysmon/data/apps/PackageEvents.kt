@@ -6,9 +6,14 @@ import android.content.Intent
 import android.content.IntentFilter
 import androidx.core.content.ContextCompat
 import java.util.concurrent.CopyOnWriteArrayList
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filterNotNull
 
 /**
  * Process-wide install/uninstall/update signal. The app-list ViewModels are
@@ -28,6 +33,19 @@ object PackageEvents {
 
     /** Bumps on every package add/remove/replace; collectors reload on change. */
     val generation: StateFlow<Long> = _generation.asStateFlow()
+
+    /**
+     * The generations a list should reload on, delivered only while [visible]
+     * is true: churn behind other tabs (a Play Store batch update) collapses
+     * into one reload on the next visit instead of a full package sweep per
+     * install. The generation seen at the first visit is skipped, since the
+     * caller's initial load already covers it.
+     */
+    fun changesWhile(visible: Flow<Boolean>): Flow<Long> =
+        combine(generation, visible) { gen, shown -> if (shown) gen else null }
+            .filterNotNull()
+            .distinctUntilChanged()
+            .drop(1)
 
     /**
      * Synchronous per-package listeners (icon-cache eviction). Registered from

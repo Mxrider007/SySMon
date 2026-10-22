@@ -108,12 +108,17 @@ class TimelineViewModel : ViewModel() {
             return
         }
         val end = bounds.lastMs
-        val start = range.millis?.let { maxOf(bounds.firstMs, end - it) } ?: bounds.firstMs
+        // At least a minute of window: right after recording starts the log
+        // holds one row (first == last), and a zero-width window would draw
+        // nothing at all instead of that lone sample inside a chart frame.
+        val start = (range.millis?.let { maxOf(bounds.firstMs, end - it) } ?: bounds.firstMs)
+            .coerceAtMost(end - MIN_WINDOW_MS)
         val series = reader.load(start, end)
         _uiState.update { it.copy(loading = false, bounds = bounds, series = series) }
     }
 
     private companion object {
         const val REFRESH_MS = 60_000L
+        const val MIN_WINDOW_MS = 60_000L
     }
 }

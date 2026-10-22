@@ -7,10 +7,10 @@ import com.mxrider.sysmon.data.apps.PackageEvents
 import com.mxrider.sysmon.core.AppEntry
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -41,11 +41,13 @@ class DetailsViewModel : ViewModel() {
 
     init {
         refresh()
-        // Package churn reloads the inventory immediately; the 60-second
-        // staleness window below stays as the fallback for anything the
-        // broadcast can't see (e.g. enabled-state flips via adb).
+        // Package churn reloads the inventory right away while the screen is
+        // showing, and on the next visit otherwise; the 60-second staleness
+        // window below stays as the fallback for anything the broadcast
+        // can't see (e.g. enabled-state flips via adb).
         viewModelScope.launch {
-            PackageEvents.generation.drop(1).collect { refresh() }
+            PackageEvents.changesWhile(_state.subscriptionCount.map { it > 0 })
+                .collect { refresh() }
         }
     }
 

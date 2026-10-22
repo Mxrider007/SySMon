@@ -17,31 +17,49 @@ import java.util.concurrent.ConcurrentHashMap
 /**
  * Installed-app inventory via [PackageManager] plus per-app storage stats via
  * [StorageStatsManager] (the latter silently degrades to `null` without usage
- * access). Results are cached: the full list for 30 s, per-package storage for
- * 60 s. All loading happens on the caller's dispatcher (callers use IO).
+ * access). Results are cached: the full list until a package changes (and at
+ * most 5 min), per-package storage for 60 s. Both caches are keyed on the
+ * [PackageEvents] generation, so an install, update or uninstall is visible to
+ * the very next load instead of being masked by a still-fresh cache. All
+ * loading happens on the caller's dispatcher (callers use IO).
  */
 class DefaultAppRepository(context: Context) : AppRepository {
 
     private val appContext = context.applicationContext
     private val pm: PackageManager get() = appContext.packageManager
 
+    /** (elapsedRealtime timestamp, [PackageEvents] generation, list). */
     @Volatile
-    private var cachedApps: Pair<Long, List<AppEntry>>? = null
+    private var cachedApps: Triple<Long, Long, List<AppEntry>>? = null
 
     /** packageName -> (elapsedRealtime timestamp, bytes or null when unavailable). */
     private val storageCache = ConcurrentHashMap<String, Pair<Long, Long?>>()
 
+    /** The [PackageEvents] generation [storageCache] was filled under. */
+    @Volatile
+    private var storageGeneration = PackageEvents.generation.value
+
     override suspend fun installedApps(): List<AppEntry> {
         val now = SystemClock.elapsedRealtime()
-        cachedApps?.let { (timestamp, list) ->
-            if (now - timestamp < APP_CACHE_MS) return list
+        // Read the generation BEFORE loading: a package change that lands
+        // mid-load leaves this result stamped with the old generation, so the
+        // event-driven reload that follows misses the cache and sees it.
+        val generation = PackageEvents.generation.value
+        cachedApps?.let { (timestamp, cachedGeneration, list) ->
+            if (cachedGeneration == generation && now - timestamp < APP_CACHE_MS) return list
         }
         val list = loadApps()
-        cachedApps = now to list
+        cachedApps = Triple(now, generation, list)
         return list
     }
 
     override suspend fun appStorageBytes(packageName: String, uid: Int): Long? {
+        val generation = PackageEvents.generation.value
+        if (generation != storageGeneration) {
+            // Installs, updates and uninstalls change sizes; start over.
+            storageCache.clear()
+            storageGeneration = generation
+        }
         val now = SystemClock.elapsedRealtime()
         storageCache[packageName]?.let { (timestamp, bytes) ->
             if (now - timestamp < STORAGE_CACHE_MS) return bytes
@@ -56,7 +74,9 @@ class DefaultAppRepository(context: Context) : AppRepository {
                     packageName,
                     UserHandle.getUserHandleForUid(uid),
                 )
-                stats.appBytes + stats.dataBytes + stats.cacheBytes
+                // dataBytes already includes the cache directories; adding
+                // cacheBytes again would count every app's cache twice.
+                stats.appBytes + stats.dataBytes
             }
         } catch (e: SecurityException) {
             null // No usage access.
@@ -150,7 +170,7 @@ class DefaultAppRepository(context: Context) : AppRepository {
     }
 
     private companion object {
-        const val APP_CACHE_MS = 30_000L
+        const val APP_CACHE_MS = 5 * 60_000L
         const val STORAGE_CACHE_MS = 60_000L
     }
 }

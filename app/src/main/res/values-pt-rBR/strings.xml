@@ -62,7 +62,7 @@
     <string name="services_yes">Sim</string>
     <string name="services_no">Não</string>
     <string name="services_empty_title">Nenhum serviço encontrado</string>
-    <string name="services_empty_body">Tente outra pesquisa ou desative "Ocultar apps do sistema".</string>
+    <string name="services_empty_body">Tente outra pesquisa ou desative “Ocultar apps do sistema”.</string>
 
     <!-- strings_startup.xml -->
     <string name="startup_subtitle">Apps registrados para rodar quando o aparelho liga. O Android os inicia automaticamente após o boot; para impedir, abra a info do app e desative-o.</string>
@@ -184,7 +184,7 @@
     <string name="perf_cpu_estimated_note">Estimado pelas frequências dos núcleos — o Android restringe estatísticas exatas de CPU</string>
     <string name="perf_cpu_estimate_why">Por que é uma estimativa?</string>
     <string name="perf_cpu_estimate_why_title">Por que o uso de CPU é uma estimativa</string>
-    <string name="perf_cpu_estimate_why_body">Desde o Android 8, o sistema impede que apps leiam as estatísticas globais de CPU (/proc/stat); nenhum app da Play consegue medir o uso exato de CPU do sistema.\n\nO SysMon estima a carga pela frequência ao vivo de cada núcleo: um núcleo perto da frequência máxima é considerado ocupado; perto da mínima, ocioso. Isso acompanha bem as tendências reais, mas é uma aproximação — picos curtos podem passar despercebidos e trabalho leve em segundo plano pode ser super ou subestimado.\n\nO campo "Fonte" mostra o método deste aparelho. Quando um valor não pode ser medido, o SysMon mostra "—" em vez de inventar um número.</string>
+    <string name="perf_cpu_estimate_why_body">Desde o Android 8, o sistema impede que apps leiam as estatísticas globais de CPU (/proc/stat); nenhum app da Play consegue medir o uso exato de CPU do sistema.\n\nO SysMon estima a carga pela frequência ao vivo de cada núcleo: um núcleo perto da frequência máxima é considerado ocupado; perto da mínima, ocioso. Isso acompanha bem as tendências reais, mas é uma aproximação — picos curtos podem passar despercebidos e trabalho leve em segundo plano pode ser super ou subestimado.\n\nO campo “Fonte” mostra o método deste aparelho. Quando um valor não pode ser medido, o SysMon mostra “—” em vez de inventar um número.</string>
     <string name="perf_cpu_unavailable_title">Estatísticas de CPU indisponíveis</string>
     <string name="perf_cpu_unavailable_body">Este aparelho não expõe aos apps o uso de CPU nem as frequências por núcleo.</string>
     <string name="perf_logical_processors">Processadores lógicos</string>
@@ -236,6 +236,19 @@
     <string name="perf_battery_capacity">Capacidade (est.)</string>
     <string name="perf_battery_capacity_of_design">~%1$d%% dos %2$s mAh de fábrica</string>
     <string name="perf_battery_capacity_basis">estimativa do medidor de carga</string>
+    <string name="perf_battery_status_charging">Carregando</string>
+    <string name="perf_battery_status_discharging">Descarregando</string>
+    <string name="perf_battery_status_full">Completa</string>
+    <string name="perf_battery_status_not_charging">Não está carregando</string>
+    <string name="perf_battery_unknown">Desconhecido</string>
+    <string name="perf_battery_health_good">Boa</string>
+    <string name="perf_battery_health_overheat">Superaquecida</string>
+    <string name="perf_battery_health_dead">Inutilizável</string>
+    <string name="perf_battery_health_over_voltage">Sobretensão</string>
+    <string name="perf_battery_health_failure">Falha</string>
+    <string name="perf_battery_health_cold">Muito fria</string>
+    <string name="perf_battery_plug_wireless">Sem fio</string>
+    <string name="perf_battery_plug_dock">Base</string>
     <string name="perf_tile_thermal">Térmica</string>
     <string name="perf_thermal_status">Status de limitação</string>
     <string name="perf_thermal_headroom">Margem</string>
@@ -308,7 +321,7 @@
     <string name="processes_gate_action">Conceder acesso de uso</string>
     <string name="processes_gate_notice">Sem o acesso de uso, apenas os apps instalados são listados e as colunas de atividade ficam vazias.</string>
     <string name="processes_empty_title">Nenhum processo encontrado</string>
-    <string name="processes_empty_body">Tente outra pesquisa ou ative "Mostrar processos do sistema".</string>
+    <string name="processes_empty_body">Tente outra pesquisa ou ative “Mostrar processos do sistema”.</string>
     <string name="processes_end_task_title">Finalizar %1$s?</string>
     <string name="processes_end_task_body">O SysMon pedirá ao Android para parar os processos em segundo plano deste app. O Android pode ignorar o pedido ou reiniciar o app, e o que o app mostra na tela não é afetado. Para uma parada garantida, abra a info do app e use Forçar parada.</string>
     <string name="processes_end_task_body_limited">No Android 14 ou mais recente, o sistema ignora pedidos para parar processos de outros apps, então Finalizar tarefa não funciona aqui. Forçar parada, na info do app, é a ação que realmente para um app.</string>
@@ -388,7 +401,7 @@
     <string name="settings_notification_boxes_desc">Adiciona um bloco de uso ao vivo a cada notificação de leitura</string>
     <string name="settings_overlay">Monitor flutuante</string>
     <string name="settings_overlay_desc">Cartão pequeno sempre por cima com CPU, memória, rede e bateria ao vivo — arraste para onde quiser, até sobre jogos. Consome um pouco de bateria. Após reiniciar, volta na próxima vez que você abrir o SysMon.</string>
-    <string name="settings_overlay_permission">Permita "Sobrepor a outros apps" para o SysMon e ligue a chave de novo</string>
+    <string name="settings_overlay_permission">Permita “Sobrepor a outros apps” para o SysMon e ligue a chave de novo</string>
     <string name="settings_cpu_notification_denied">As notificações estão desativadas para o SysMon. Permita-as nas configurações do sistema para usar isto.</string>
     <string name="settings_logging">Registro de desempenho</string>
     <string name="settings_logging_desc">Grava CPU, memória, bateria e rede em um arquivo CSV neste aparelho (rotativo, até 50 MB — as amostras mais antigas caem primeiro), mesmo com o app fechado e a tela apagada — isso consome um pouco de bateria. Após reiniciar, continua na próxima vez que você abrir o SysMon. Nada sai do aparelho.</string>
@@ -417,6 +430,7 @@
     <string name="settings_about_fluent">Design inspirado no Fluent. Sem afiliação com a Microsoft.</string>
     <string name="settings_about_usage_revoke">O acesso de uso pode ser revogado a qualquer momento nas configurações do sistema</string>
     <string name="settings_about_exodus">Verifique você mesmo os 0 rastreadores — audite o SysMon com o app da Exodus Privacy</string>
+    <string name="settings_about_privacy_policy">Política de privacidade</string>
     <string name="settings_open_link_failed">Não foi possível abrir um navegador</string>
     <string name="settings_usage_access_settings">Configurações de acesso de uso</string>
     <string name="settings_open_settings_failed">Não foi possível abrir as configurações do sistema</string>

@@ -227,6 +227,19 @@
     <string name="perf_battery_capacity">容量(推定)</string>
     <string name="perf_battery_capacity_of_design">設計値 %2$s mAh の約%1$d%%</string>
     <string name="perf_battery_capacity_basis">電池残量計による推定</string>
+    <string name="perf_battery_status_charging">充電中</string>
+    <string name="perf_battery_status_discharging">放電中</string>
+    <string name="perf_battery_status_full">満充電</string>
+    <string name="perf_battery_status_not_charging">充電していません</string>
+    <string name="perf_battery_unknown">不明</string>
+    <string name="perf_battery_health_good">良好</string>
+    <string name="perf_battery_health_overheat">過熱</string>
+    <string name="perf_battery_health_dead">故障</string>
+    <string name="perf_battery_health_over_voltage">過電圧</string>
+    <string name="perf_battery_health_failure">異常</string>
+    <string name="perf_battery_health_cold">低温</string>
+    <string name="perf_battery_plug_wireless">ワイヤレス</string>
+    <string name="perf_battery_plug_dock">ドック</string>
     <string name="perf_tile_thermal">温度</string>
     <string name="perf_thermal_status">スロットリング状態</string>
     <string name="perf_thermal_headroom">余裕度</string>
@@ -402,6 +415,7 @@
     <string name="settings_about_fluent">Fluentに着想を得たデザイン。Microsoftとは無関係です。</string>
     <string name="settings_about_usage_revoke">使用状況アクセスはいつでもシステム設定で取り消せます</string>
     <string name="settings_about_exodus">トラッカー0を自分で確認 — Exodus Privacyの端末内アプリでSysMonを監査</string>
+    <string name="settings_about_privacy_policy">プライバシーポリシー</string>
     <string name="settings_open_link_failed">ブラウザを開けませんでした</string>
     <string name="settings_usage_access_settings">使用状況アクセスの設定</string>
     <string name="settings_open_settings_failed">システム設定を開けませんでした</string>

@@ -93,6 +93,10 @@ class DefaultDiagnostics(
      */
     private suspend fun samplerMatrix(): String = buildString {
         appendLine("Samplers:")
+        // A fresh probe has no previous /proc/stat reading, so its first
+        // sample always falls back to the frequency estimate; prime it so the
+        // report names the source the app really uses.
+        runCatching { cpuProbe.sample() }
         val cpu = runCatching { cpuProbe.sample() }.getOrNull()
         val online = cpu?.perCore?.count { it.online } ?: 0
         appendLine(

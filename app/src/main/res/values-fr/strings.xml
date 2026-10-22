@@ -236,6 +236,19 @@
     <string name="perf_battery_capacity">Capacité (est.)</string>
     <string name="perf_battery_capacity_of_design">~%1$d%% des %2$s mAh d’origine</string>
     <string name="perf_battery_capacity_basis">estimation de la jauge</string>
+    <string name="perf_battery_status_charging">En charge</string>
+    <string name="perf_battery_status_discharging">En décharge</string>
+    <string name="perf_battery_status_full">Pleine</string>
+    <string name="perf_battery_status_not_charging">Pas en charge</string>
+    <string name="perf_battery_unknown">Inconnu</string>
+    <string name="perf_battery_health_good">Bonne</string>
+    <string name="perf_battery_health_overheat">Surchauffe</string>
+    <string name="perf_battery_health_dead">Hors service</string>
+    <string name="perf_battery_health_over_voltage">Surtension</string>
+    <string name="perf_battery_health_failure">Défaillance</string>
+    <string name="perf_battery_health_cold">Trop froide</string>
+    <string name="perf_battery_plug_wireless">Sans fil</string>
+    <string name="perf_battery_plug_dock">Station d’accueil</string>
     <string name="perf_tile_thermal">Thermique</string>
     <string name="perf_thermal_status">État de limitation</string>
     <string name="perf_thermal_headroom">Marge</string>
@@ -417,6 +430,7 @@
     <string name="settings_about_fluent">Design inspiré de Fluent. Non affilié à Microsoft.</string>
     <string name="settings_about_usage_revoke">L’accès aux données d’utilisation est révocable à tout moment dans les paramètres système</string>
     <string name="settings_about_exodus">Vérifiez « 0 traqueur » vous-même — auditez SysMon avec l’appli d’Exodus Privacy</string>
+    <string name="settings_about_privacy_policy">Politique de confidentialité</string>
     <string name="settings_open_link_failed">Impossible d’ouvrir un navigateur</string>
     <string name="settings_usage_access_settings">Paramètres d’accès aux données d’utilisation</string>
     <string name="settings_open_settings_failed">Impossible d’ouvrir les paramètres système</string>

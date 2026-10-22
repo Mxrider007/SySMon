@@ -8,6 +8,8 @@ import android.content.pm.ServiceInfo
 import android.os.Build
 import com.mxrider.sysmon.core.ServiceRepository
 import com.mxrider.sysmon.core.ServiceRow
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 
 /**
  * Declared services of installed apps. Android exposes no live service state
@@ -35,6 +37,8 @@ class DefaultServiceRepository(context: Context) : ServiceRepository {
         val rows = ArrayList<ServiceRow>(256)
         for (ai in apps) {
             val pkg = ai.packageName ?: continue
+            // One binder call per package: let a superseded reload stop here.
+            currentCoroutineContext().ensureActive()
             val pkgInfo: PackageInfo = try {
                 val flags = PackageManager.GET_SERVICES or PackageManager.MATCH_DISABLED_COMPONENTS
                 if (Build.VERSION.SDK_INT >= 33) {

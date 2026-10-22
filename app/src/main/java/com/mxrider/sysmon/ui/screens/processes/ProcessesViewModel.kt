@@ -11,6 +11,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -59,13 +60,16 @@ class ProcessesViewModel : ViewModel() {
     private var infoJob: Job? = null
 
     init {
+        // The Settings default applies on start and whenever it changes; the
+        // screen's own toggle overrides it until then.
         viewModelScope.launch {
-            val showSystem = try {
-                settingsStore.settings.first().showSystemApps
-            } catch (e: Exception) {
-                false
-            }
-            _state.update { recompute(it.copy(showSystem = showSystem)) }
+            settingsStore.settings
+                .map { it.showSystemApps }
+                .distinctUntilChanged()
+                .catch { emit(false) }
+                .collect { showSystem ->
+                    _state.update { recompute(it.copy(showSystem = showSystem)) }
+                }
         }
         // PAUSED suspends the periodic loop below entirely, so without this
         // one-shot the app's default tab would sit on its loading spinner

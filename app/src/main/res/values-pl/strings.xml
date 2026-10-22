@@ -242,6 +242,19 @@
     <string name="perf_battery_capacity">Pojemność (szac.)</string>
     <string name="perf_battery_capacity_of_design">~%1$d%% z fabrycznych %2$s mAh</string>
     <string name="perf_battery_capacity_basis">szacunek z licznika ładunku</string>
+    <string name="perf_battery_status_charging">Ładowanie</string>
+    <string name="perf_battery_status_discharging">Rozładowywanie</string>
+    <string name="perf_battery_status_full">Naładowana</string>
+    <string name="perf_battery_status_not_charging">Nie ładuje się</string>
+    <string name="perf_battery_unknown">Nieznany</string>
+    <string name="perf_battery_health_good">Dobra</string>
+    <string name="perf_battery_health_overheat">Przegrzana</string>
+    <string name="perf_battery_health_dead">Zużyta</string>
+    <string name="perf_battery_health_over_voltage">Przepięcie</string>
+    <string name="perf_battery_health_failure">Awaria</string>
+    <string name="perf_battery_health_cold">Zbyt zimna</string>
+    <string name="perf_battery_plug_wireless">Bezprzewodowo</string>
+    <string name="perf_battery_plug_dock">Stacja dokująca</string>
     <string name="perf_tile_thermal">Temperatury</string>
     <string name="perf_thermal_status">Stan ograniczania</string>
     <string name="perf_thermal_headroom">Zapas</string>
@@ -426,6 +439,7 @@
     <string name="settings_about_fluent">Projekt inspirowany Fluent. Brak powiązań z Microsoft.</string>
     <string name="settings_about_usage_revoke">Dostęp do danych o użyciu można cofnąć w każdej chwili w ustawieniach systemu</string>
     <string name="settings_about_exodus">Sprawdź „0 trackerów” — zbadaj SysMon aplikacją Exodus Privacy</string>
+    <string name="settings_about_privacy_policy">Polityka prywatności</string>
     <string name="settings_open_link_failed">Nie udało się otworzyć przeglądarki</string>
     <string name="settings_usage_access_settings">Ustawienia dostępu do danych o użyciu</string>
     <string name="settings_open_settings_failed">Nie udało się otworzyć ustawień systemu</string>

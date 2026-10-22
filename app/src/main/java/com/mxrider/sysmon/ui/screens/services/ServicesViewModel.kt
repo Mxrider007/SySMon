@@ -5,13 +5,15 @@ import androidx.lifecycle.viewModelScope
 import com.mxrider.sysmon.data.apps.PackageEvents
 import com.mxrider.sysmon.Graph
 import com.mxrider.sysmon.core.ServiceRow
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -31,7 +33,7 @@ class ServicesViewModel : ViewModel() {
         /** [rows] after the query/system filters and the active sort. */
         val visibleRows: List<ServiceRow> = emptyList(),
         val query: String = "",
-        /** Win11-style group toggle; system apps hidden by default. */
+        /** Group toggle; starts from Settings' "Show system apps by default". */
         val hideSystem: Boolean = true,
         val sortKey: String = COL_SERVICE,
         val ascending: Boolean = true,
@@ -45,12 +47,27 @@ class ServicesViewModel : ViewModel() {
 
     private var recomputeJob: Job? = null
 
+    // Until the first load lands there is nothing to filter; recomputing then
+    // would clear `loading` over an empty list.
+    private var rowsLoaded = false
+
     init {
         refresh()
-        // Package churn reloads immediately; the 60-second staleness
-        // window stays as the fallback.
         viewModelScope.launch {
-            PackageEvents.generation.drop(1).collect { refresh() }
+            Graph.settings.settings
+                .map { !it.showSystemApps }
+                .distinctUntilChanged()
+                .catch { }
+                .collect { hide ->
+                    _state.update { it.copy(hideSystem = hide) }
+                    if (rowsLoaded) scheduleRecompute()
+                }
+        }
+        // Package churn reloads right away while the screen is showing, and
+        // on the next visit otherwise.
+        viewModelScope.launch {
+            PackageEvents.changesWhile(_state.subscriptionCount.map { it > 0 })
+                .collect { refresh() }
         }
     }
 
@@ -75,6 +92,7 @@ class ServicesViewModel : ViewModel() {
             // it here would flash "no matching services" for the frames while
             // 2000+ rows are still being filtered off-thread.
             _state.update { it.copy(rows = rows) }
+            rowsLoaded = true
             scheduleRecompute()
             lastLoadedAt = System.currentTimeMillis()
         }

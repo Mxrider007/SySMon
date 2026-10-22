@@ -104,6 +104,20 @@
     <!-- %1$d = whole percent, %2$s = design mAh, e.g. "~99% of 2,683 mAh design". -->
     <string name="perf_battery_capacity_of_design">~%1$d%% of %2$s mAh design</string>
     <string name="perf_battery_capacity_basis">fuel-gauge estimate</string>
+    <!-- Battery states as shown; the CSV log keeps the English tokens. -->
+    <string name="perf_battery_status_charging">Charging</string>
+    <string name="perf_battery_status_discharging">Discharging</string>
+    <string name="perf_battery_status_full">Full</string>
+    <string name="perf_battery_status_not_charging">Not charging</string>
+    <string name="perf_battery_unknown">Unknown</string>
+    <string name="perf_battery_health_good">Good</string>
+    <string name="perf_battery_health_overheat">Overheated</string>
+    <string name="perf_battery_health_dead">Dead</string>
+    <string name="perf_battery_health_over_voltage">Over voltage</string>
+    <string name="perf_battery_health_failure">Failure</string>
+    <string name="perf_battery_health_cold">Cold</string>
+    <string name="perf_battery_plug_wireless">Wireless</string>
+    <string name="perf_battery_plug_dock">Dock</string>
 
     <!-- Thermal panel -->
     <string name="perf_tile_thermal">Thermal</string>

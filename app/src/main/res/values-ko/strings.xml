@@ -61,7 +61,7 @@
     <string name="services_yes">예</string>
     <string name="services_no">아니요</string>
     <string name="services_empty_title">일치하는 서비스 없음</string>
-    <string name="services_empty_body">다른 검색어를 시도하거나 "시스템 앱 숨기기"를 끄세요.</string>
+    <string name="services_empty_body">다른 검색어를 시도하거나 “시스템 앱 숨기기”를 끄세요.</string>
 
     <!-- strings_startup.xml -->
     <string name="startup_subtitle">기기 시작 시 실행되도록 등록된 앱입니다. Android가 부팅 후 자동으로 실행합니다. 막으려면 앱 정보를 열어 앱을 사용 중지하세요.</string>
@@ -175,7 +175,7 @@
     <string name="perf_cpu_estimated_note">코어 주파수로 추정 — Android는 정확한 CPU 통계를 제한합니다</string>
     <string name="perf_cpu_estimate_why">왜 추정치인가요?</string>
     <string name="perf_cpu_estimate_why_title">CPU 사용률이 추정치인 이유</string>
-    <string name="perf_cpu_estimate_why_body">Android 8부터 시스템은 앱의 전역 CPU 통계(/proc/stat) 읽기를 차단하므로, Play의 어떤 앱도 시스템 전체의 정확한 CPU 사용률을 측정할 수 없습니다.\n\n대신 SysMon은 각 코어의 실시간 클럭으로 부하를 추정합니다. 최대 주파수에 가까운 코어는 바쁨, 최소에 가까우면 유휴로 간주합니다. 실제 부하 추세를 잘 따르지만 근사치입니다 — 짧은 스파이크를 놓치거나 가벼운 백그라운드 작업을 과대/과소평가할 수 있습니다.\n\n"소스" 항목은 이 기기에서 쓰는 방식을 보여줍니다. 값을 측정할 수 없으면 SysMon은 숫자를 지어내는 대신 "—"를 표시합니다.</string>
+    <string name="perf_cpu_estimate_why_body">Android 8부터 시스템은 앱의 전역 CPU 통계(/proc/stat) 읽기를 차단하므로, Play의 어떤 앱도 시스템 전체의 정확한 CPU 사용률을 측정할 수 없습니다.\n\n대신 SysMon은 각 코어의 실시간 클럭으로 부하를 추정합니다. 최대 주파수에 가까운 코어는 바쁨, 최소에 가까우면 유휴로 간주합니다. 실제 부하 추세를 잘 따르지만 근사치입니다 — 짧은 스파이크를 놓치거나 가벼운 백그라운드 작업을 과대/과소평가할 수 있습니다.\n\n“소스” 항목은 이 기기에서 쓰는 방식을 보여줍니다. 값을 측정할 수 없으면 SysMon은 숫자를 지어내는 대신 “—”를 표시합니다.</string>
     <string name="perf_cpu_unavailable_title">CPU 통계 사용 불가</string>
     <string name="perf_cpu_unavailable_body">이 기기는 CPU 사용률도 코어 주파수도 앱에 공개하지 않습니다.</string>
     <string name="perf_logical_processors">논리 프로세서</string>
@@ -227,6 +227,19 @@
     <string name="perf_battery_capacity">용량(추정)</string>
     <string name="perf_battery_capacity_of_design">설계 용량 %2$s mAh의 약 %1$d%%</string>
     <string name="perf_battery_capacity_basis">배터리 게이지 추정</string>
+    <string name="perf_battery_status_charging">충전 중</string>
+    <string name="perf_battery_status_discharging">방전 중</string>
+    <string name="perf_battery_status_full">완충됨</string>
+    <string name="perf_battery_status_not_charging">충전 안 함</string>
+    <string name="perf_battery_unknown">알 수 없음</string>
+    <string name="perf_battery_health_good">양호</string>
+    <string name="perf_battery_health_overheat">과열</string>
+    <string name="perf_battery_health_dead">고장</string>
+    <string name="perf_battery_health_over_voltage">과전압</string>
+    <string name="perf_battery_health_failure">오류</string>
+    <string name="perf_battery_health_cold">저온</string>
+    <string name="perf_battery_plug_wireless">무선</string>
+    <string name="perf_battery_plug_dock">도크</string>
     <string name="perf_tile_thermal">온도</string>
     <string name="perf_thermal_status">스로틀링 상태</string>
     <string name="perf_thermal_headroom">여유</string>
@@ -295,7 +308,7 @@
     <string name="processes_gate_action">사용 정보 접근 허용</string>
     <string name="processes_gate_notice">접근 없이는 설치된 앱만 나열되고 활동 열은 비어 있습니다.</string>
     <string name="processes_empty_title">일치하는 프로세스 없음</string>
-    <string name="processes_empty_body">다른 검색어를 시도하거나 "시스템 프로세스 표시"를 켜세요.</string>
+    <string name="processes_empty_body">다른 검색어를 시도하거나 “시스템 프로세스 표시”를 켜세요.</string>
     <string name="processes_end_task_title">%1$s을(를) 끝낼까요?</string>
     <string name="processes_end_task_body">SysMon이 Android에 이 앱의 백그라운드 프로세스 중지를 요청합니다. Android는 요청을 무시하거나 앱을 재시작할 수 있으며, 앱이 화면에 표시하는 내용은 영향을 받지 않습니다. 확실히 중지하려면 앱 정보를 열어 강제 종료를 사용하세요.</string>
     <string name="processes_end_task_body_limited">Android 14부터 시스템은 다른 앱의 백그라운드 프로세스 중지 요청을 무시하므로 여기서는 작업 끝내기가 동작하지 않습니다. 앱을 정말로 중지하는 것은 앱 정보 화면의 강제 종료입니다.</string>
@@ -375,7 +388,7 @@
     <string name="settings_notification_boxes_desc">각 판독 알림에 실시간 사용량 타일을 추가합니다</string>
     <string name="settings_overlay">플로팅 모니터</string>
     <string name="settings_overlay_desc">CPU·메모리·네트워크·배터리를 실시간으로 보여주는 항상 위 작은 카드 — 게임 중에도 원하는 곳으로 드래그하세요. 켜져 있는 동안 배터리를 조금 사용합니다. 재부팅 후에는 다음에 SysMon을 열 때 돌아옵니다.</string>
-    <string name="settings_overlay_permission">SysMon에 "다른 앱 위에 표시"를 허용한 뒤 스위치를 다시 켜세요</string>
+    <string name="settings_overlay_permission">SysMon에 “다른 앱 위에 표시”를 허용한 뒤 스위치를 다시 켜세요</string>
     <string name="settings_cpu_notification_denied">SysMon 알림이 꺼져 있습니다. 이 기능을 쓰려면 시스템 설정에서 허용하세요.</string>
     <string name="settings_logging">성능 로그</string>
     <string name="settings_logging_desc">CPU·메모리·배터리·네트워크를 이 기기의 CSV 파일에 기록합니다(순환, 최대 50 MB — 가장 오래된 샘플부터 삭제). 앱을 닫고 화면이 꺼져 있어도 기록하며 배터리를 조금 사용합니다. 재부팅 후에는 다음에 SysMon을 열 때 재개됩니다. 아무것도 기기를 떠나지 않습니다.</string>
@@ -402,6 +415,7 @@
     <string name="settings_about_fluent">Fluent에서 영감을 받은 디자인. Microsoft와 무관합니다.</string>
     <string name="settings_about_usage_revoke">사용 정보 접근은 언제든 시스템 설정에서 취소할 수 있습니다</string>
     <string name="settings_about_exodus">트래커 0개를 직접 확인 — Exodus Privacy의 기기 내 앱으로 SysMon을 감사하세요</string>
+    <string name="settings_about_privacy_policy">개인정보처리방침</string>
     <string name="settings_open_link_failed">브라우저를 열 수 없습니다</string>
     <string name="settings_usage_access_settings">사용 정보 접근 설정</string>
     <string name="settings_open_settings_failed">시스템 설정을 열 수 없습니다</string>

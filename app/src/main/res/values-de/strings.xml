@@ -232,6 +232,19 @@
     <string name="perf_battery_capacity">Kapazität (gesch.)</string>
     <string name="perf_battery_capacity_of_design">~%1$d%% von %2$s mAh Nennwert</string>
     <string name="perf_battery_capacity_basis">Ladungszähler-Schätzung</string>
+    <string name="perf_battery_status_charging">Wird geladen</string>
+    <string name="perf_battery_status_discharging">Wird entladen</string>
+    <string name="perf_battery_status_full">Voll</string>
+    <string name="perf_battery_status_not_charging">Lädt nicht</string>
+    <string name="perf_battery_unknown">Unbekannt</string>
+    <string name="perf_battery_health_good">Gut</string>
+    <string name="perf_battery_health_overheat">Überhitzt</string>
+    <string name="perf_battery_health_dead">Defekt</string>
+    <string name="perf_battery_health_over_voltage">Überspannung</string>
+    <string name="perf_battery_health_failure">Fehler</string>
+    <string name="perf_battery_health_cold">Zu kalt</string>
+    <string name="perf_battery_plug_wireless">Kabellos</string>
+    <string name="perf_battery_plug_dock">Dock</string>
     <string name="perf_tile_thermal">Thermik</string>
     <string name="perf_thermal_status">Drosselungsstatus</string>
     <string name="perf_thermal_headroom">Reserve</string>
@@ -410,6 +423,7 @@
     <string name="settings_about_fluent">Fluent-inspiriertes Design. Nicht mit Microsoft verbunden.</string>
     <string name="settings_about_usage_revoke">Der Nutzungszugriff ist jederzeit in den Systemeinstellungen widerrufbar</string>
     <string name="settings_about_exodus">Prüfe „0 Tracker“ selbst — auditiere SysMon mit der Geräte-App von Exodus Privacy</string>
+    <string name="settings_about_privacy_policy">Datenschutzerklärung</string>
     <string name="settings_open_link_failed">Es konnte kein Browser geöffnet werden</string>
     <string name="settings_usage_access_settings">Einstellungen für Nutzungszugriff</string>
     <string name="settings_open_settings_failed">Systemeinstellungen konnten nicht geöffnet werden</string>

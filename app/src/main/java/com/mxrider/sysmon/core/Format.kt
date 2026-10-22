@@ -1,7 +1,6 @@
 package com.mxrider.sysmon.core
 
 import java.util.Locale
-import kotlin.math.abs
 
 /**
  * Formatting helpers shared by every screen. Windows convention: binary
@@ -73,18 +72,6 @@ object Format {
         val days = ms / 86_400_000
         val rest = duration(ms % 86_400_000).let { if (it.count { c -> c == ':' } == 1) "0:$it" else it }
         return if (days > 0) "$days d $rest" else rest
-    }
-
-    /** Coarse relative time: "Just now", "5 min ago", "2 h ago", "3 days ago". */
-    fun relativeTime(epochMillis: Long, now: Long = System.currentTimeMillis()): String {
-        if (epochMillis <= 0) return "Never"
-        val d = abs(now - epochMillis)
-        return when {
-            d < 60_000 -> "Just now"
-            d < 3_600_000 -> "${d / 60_000} min ago"
-            d < 86_400_000 -> "${d / 3_600_000} h ago"
-            else -> "${d / 86_400_000} days ago"
-        }
     }
 
     fun watts(w: Double): String = String.format(Locale.US, "%.1f W", w)

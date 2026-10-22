@@ -83,16 +83,16 @@ internal object DetailsCsv {
         DateTimeFormatter.ISO_INSTANT
 
     private fun AppEntry.toCsvLine(): String = listOf(
-        label,
+        text(label),
         packageName,
-        versionName.orEmpty(),
+        text(versionName.orEmpty()),
         versionCode.toString(),
         targetSdk.toString(),
         minSdk.toString(),
         apkSizeBytes.toString(),
         isoOrEmpty(installTime),
         isoOrEmpty(updateTime),
-        installerPackage.orEmpty(),
+        text(installerPackage.orEmpty()),
         enabled.toString(),
         isSystem.toString(),
         uid.toString(),
@@ -100,6 +100,16 @@ internal object DetailsCsv {
 
     private fun isoOrEmpty(epochMillis: Long): String =
         if (epochMillis <= 0) "" else ISO_UTC.format(Instant.ofEpochMilli(epochMillis))
+
+    /**
+     * Free text an installed app controls (its label, versionName). A leading
+     * = + - @ tab or CR makes spreadsheets evaluate the cell as a formula, so
+     * such a value gets a leading apostrophe and stays plain text.
+     */
+    private fun text(field: String): String =
+        if (field.isNotEmpty() && field[0] in FORMULA_LEADS) "'$field" else field
+
+    private val FORMULA_LEADS = charArrayOf('=', '+', '-', '@', '\t', '\r')
 
     /** RFC 4180: quote fields containing commas, quotes or line breaks. */
     private fun escape(field: String): String =

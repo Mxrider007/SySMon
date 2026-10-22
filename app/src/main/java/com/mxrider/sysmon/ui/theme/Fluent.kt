@@ -1,7 +1,9 @@
 package com.mxrider.sysmon.ui.theme
 
 import android.os.Build
-import android.app.Activity
+import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ColorScheme
@@ -25,7 +27,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.view.WindowCompat
 import com.mxrider.sysmon.R
 import com.mxrider.sysmon.core.AccentOption
 import com.mxrider.sysmon.core.ThemeMode
@@ -215,6 +216,10 @@ private fun bridgeColorScheme(c: FluentColors): ColorScheme {
     )
 }
 
+/** androidx.activity's default navigation-bar scrims (used on Android 8-9 only). */
+private val LIGHT_NAV_SCRIM = 0xE6FFFFFF.toInt()
+private val DARK_NAV_SCRIM = 0x801B1B1B.toInt()
+
 @Composable
 fun FluentTheme(
     themeMode: ThemeMode,
@@ -264,18 +269,23 @@ fun FluentTheme(
     val typography = fluentTypography()
 
     // The in-app theme can disagree with the system theme (Light setting on a
-    // dark-mode phone), and enableEdgeToEdge only follows the SYSTEM uiMode —
-    // without this the status-bar clock/icons render white over the app's
-    // light surfaces (invisible). The window icon contrast must follow the
-    // theme actually drawn underneath it.
+    // dark-mode phone), and the default enableEdgeToEdge follows the SYSTEM
+    // uiMode: the status-bar clock/icons would render white over the app's
+    // light surfaces (invisible), and on Android 8-9 the dark theme would get
+    // white navigation buttons on the light scrim. Bar icons and scrims must
+    // follow the theme actually drawn underneath them. In SYSTEM mode a
+    // runtime dark-mode flip recomposes this (isSystemInDarkTheme) and
+    // re-runs it; forced modes never need to.
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
-            (view.context as? Activity)?.window?.let { window ->
-                val controller = WindowCompat.getInsetsController(window, view)
-                controller.isAppearanceLightStatusBars = !dark
-                controller.isAppearanceLightNavigationBars = !dark
-            }
+            (view.context as? ComponentActivity)?.enableEdgeToEdge(
+                statusBarStyle = SystemBarStyle.auto(
+                    android.graphics.Color.TRANSPARENT,
+                    android.graphics.Color.TRANSPARENT,
+                ) { dark },
+                navigationBarStyle = SystemBarStyle.auto(LIGHT_NAV_SCRIM, DARK_NAV_SCRIM) { dark },
+            )
         }
     }
 

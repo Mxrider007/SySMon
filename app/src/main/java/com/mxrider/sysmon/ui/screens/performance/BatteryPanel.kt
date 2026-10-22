@@ -16,6 +16,7 @@ import com.mxrider.sysmon.core.ChartHistory
 import com.mxrider.sysmon.core.Format
 import com.mxrider.sysmon.ui.components.StatTile
 import com.mxrider.sysmon.ui.components.chart.PerfChart
+import com.mxrider.sysmon.ui.TokenLabels
 import java.util.Locale
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -35,7 +36,10 @@ internal fun BatteryPanel(
         PanelHeader(
             title = stringResource(R.string.perf_tile_battery),
             trailing = bat?.let { b ->
-                listOfNotNull(b.status, b.temperatureC?.let { Format.celsius(it) })
+                listOfNotNull(
+                    TokenLabels.localized(b.status, TokenLabels::batteryStatus),
+                    b.temperatureC?.let { Format.celsius(it) },
+                )
                     .joinToString(" • ")
             },
         )
@@ -109,8 +113,8 @@ internal fun BatteryPanel(
             )
             StatTile(
                 label = stringResource(R.string.perf_battery_status),
-                value = bat?.status ?: DASH,
-                secondary = bat?.plugType,
+                value = TokenLabels.localized(bat?.status, TokenLabels::batteryStatus) ?: DASH,
+                secondary = TokenLabels.localized(bat?.plugType, TokenLabels::plugType),
             )
             StatTile(
                 label = stringResource(R.string.perf_battery_power),
@@ -130,7 +134,7 @@ internal fun BatteryPanel(
             )
             StatTile(
                 label = stringResource(R.string.perf_battery_health),
-                value = bat?.health ?: DASH,
+                value = TokenLabels.localized(bat?.health, TokenLabels::batteryHealth) ?: DASH,
             )
             StatTile(
                 label = stringResource(R.string.perf_battery_technology),

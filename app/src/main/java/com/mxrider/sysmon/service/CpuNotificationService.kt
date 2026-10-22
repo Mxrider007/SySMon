@@ -23,6 +23,7 @@ import android.graphics.Typeface
 import android.os.Build
 import android.os.IBinder
 import android.os.PowerManager
+import android.os.SystemClock
 import android.provider.Settings
 import android.view.Gravity
 import android.view.MotionEvent
@@ -49,6 +50,7 @@ import com.mxrider.sysmon.core.TabDestination
 import com.mxrider.sysmon.core.averageCurFreqKhz
 import com.mxrider.sysmon.data.system.DefaultCpuMonitor
 import com.mxrider.sysmon.data.system.DefaultNetworkMonitor
+import com.mxrider.sysmon.ui.TokenLabels
 import java.util.Locale
 import kotlin.math.abs
 import kotlinx.coroutines.CoroutineScope
@@ -98,6 +100,12 @@ class CpuNotificationService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val screenOn = MutableStateFlow(true)
     private var running = false
+
+    // Set first thing in onDestroy: an update already past its cancellation
+    // checks on a background thread must not re-post a readout after the
+    // teardown cancelled it.
+    @Volatile
+    private var destroyed = false
     private var lastCpuTitle: String? = null
     private var lastNetTitle: String? = null
     private var lastBatKey: String? = null
@@ -131,6 +139,15 @@ class CpuNotificationService : Service() {
     // PROC_STAT ROMs are real and explicitly supported.
     private val cpuMonitor by lazy { DefaultCpuMonitor() }
     private val logCpuMonitor by lazy { DefaultCpuMonitor() }
+
+    // update() also runs off-cadence: on every settings emission and every
+    // repeat start, often two of them a few ms apart. Re-sampling the delta
+    // monitors there would measure a window of milliseconds, so a sample
+    // younger than half a tick is reused instead. Guarded by stateMutex.
+    private var lastCpuSnap: CpuSnapshot? = null
+    private var lastCpuAt = 0L
+    private var lastNetSnap: NetworkSnapshot? = null
+    private var lastNetAt = 0L
 
     // Floating mini-monitor. Main-thread only (WindowManager contract); the
     // update loop hands it immutable strings via a thread-safe setter.
@@ -174,7 +191,11 @@ class CpuNotificationService : Service() {
         // never re-emits, and a readout whose values are stable (a full
         // idle battery) is then held blank by its own repaint guard.
         val entryAnchor = if (anchorId != 0) anchorId else CPU_NOTIFICATION_ID
-        startInForeground(entryAnchor, placeholderNotification(entryAnchor))
+        // Denied (see startInForeground): the service is already stopping, so
+        // starting the collectors would only let them post into a dead instance.
+        if (!startInForeground(entryAnchor, placeholderNotification(entryAnchor))) {
+            return START_NOT_STICKY
+        }
         if (!running) {
             running = true
             scope.launch {
@@ -203,8 +224,10 @@ class CpuNotificationService : Service() {
                     .distinctUntilChanged()
                     .collectLatest { (enabled, interval) ->
                         if (!enabled) return@collectLatest
+                        var netPrimed = false
                         while (true) {
-                            if (!logOnce()) break
+                            if (!logOnce(netPrimed)) break
+                            netPrimed = true
                             delay(interval.intervalMs)
                         }
                     }
@@ -229,6 +252,7 @@ class CpuNotificationService : Service() {
     }
 
     override fun onDestroy() {
+        destroyed = true
         try {
             unregisterReceiver(screenReceiver)
         } catch (_: Exception) {
@@ -236,6 +260,10 @@ class CpuNotificationService : Service() {
         }
         detachOverlay() // onDestroy runs on the main thread
         scope.cancel()
+        // Readouts other than the anchor were posted with notify(), so the
+        // system leaves them up when the service dies; a frozen readout must
+        // not outlive the service that keeps it current.
+        cancelAllNotifications()
         super.onDestroy()
     }
 
@@ -261,7 +289,9 @@ class CpuNotificationService : Service() {
             else -> LOG_NOTIFICATION_ID // logging is the only thing left on
         }
         if (wantedAnchor != anchorId) {
-            startInForeground(wantedAnchor, placeholderNotification(wantedAnchor))
+            if (!startInForeground(wantedAnchor, placeholderNotification(wantedAnchor))) {
+                return@withLock
+            }
             // The placeholder just overwrote a live readout; force reposts.
             lastCpuTitle = null
             lastNetTitle = null
@@ -300,6 +330,13 @@ class CpuNotificationService : Service() {
     }
 
     private suspend fun stopCompletely() {
+        cancelAllNotifications()
+        withContext(Dispatchers.Main) { detachOverlay() }
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        stopSelf()
+    }
+
+    private fun cancelAllNotifications() {
         val manager = getSystemService(NotificationManager::class.java)
         manager?.cancel(CPU_NOTIFICATION_ID)
         manager?.cancel(NET_NOTIFICATION_ID)
@@ -307,9 +344,6 @@ class CpuNotificationService : Service() {
         manager?.cancel(MEM_NOTIFICATION_ID)
         manager?.cancel(LOG_NOTIFICATION_ID)
         manager?.cancel(OVERLAY_NOTIFICATION_ID)
-        withContext(Dispatchers.Main) { detachOverlay() }
-        stopForeground(STOP_FOREGROUND_REMOVE)
-        stopSelf()
     }
 
     /**
@@ -327,11 +361,22 @@ class CpuNotificationService : Service() {
             scope.launch { Graph.settings.setOverlayEnabled(false) }
         }
         val overlay = settings.overlayEnabled
+        val now = SystemClock.elapsedRealtime()
         val cpuSnap = if (settings.cpuNotification || overlay) {
-            runCatching { cpuMonitor.sample() }.getOrNull()
+            if (lastCpuSnap != null && now - lastCpuAt < UPDATE_INTERVAL_MS / 2) {
+                lastCpuSnap
+            } else {
+                runCatching { cpuMonitor.sample() }.getOrNull()
+                    .also { lastCpuSnap = it; lastCpuAt = now }
+            }
         } else null
         val netSnap = if (settings.netNotification || overlay) {
-            runCatching { netMonitor.sample() }.getOrNull()
+            if (lastNetSnap != null && now - lastNetAt < UPDATE_INTERVAL_MS / 2) {
+                lastNetSnap
+            } else {
+                runCatching { netMonitor.sample() }.getOrNull()
+                    .also { lastNetSnap = it; lastNetAt = now }
+            }
         } else null
         val batSnap = if (settings.batteryNotification || overlay) {
             runCatching { Graph.battery.sample() }.getOrNull()
@@ -413,7 +458,7 @@ class CpuNotificationService : Service() {
                 Format.bitsPerSec(snapshot.rxBytesPerSec),
                 Format.bitsPerSec(snapshot.txBytesPerSec),
             )
-            val name = snapshot.networkName
+            val name = TokenLabels.localized(this, snapshot.networkName, TokenLabels::networkName)
             text = if (name != null) {
                 getString(R.string.net_notif_text_on, name)
             } else {
@@ -468,8 +513,13 @@ class CpuNotificationService : Service() {
                 getString(R.string.bat_notif_title, level)
             }
             val state = buildString {
-                append(snapshot.status)
-                snapshot.plugType?.let { append(" ($it)") }
+                val service = this@CpuNotificationService
+                append(
+                    TokenLabels.localized(service, snapshot.status, TokenLabels::batteryStatus)
+                        .orEmpty(),
+                )
+                TokenLabels.localized(service, snapshot.plugType, TokenLabels::plugType)
+                    ?.let { append(" ($it)") }
                 snapshot.temperatureC?.let { append(" · ").append(Format.celsius(it)) }
             }
             text = getString(R.string.bat_notif_text_on, state)
@@ -708,14 +758,20 @@ class CpuNotificationService : Service() {
         }
     }
 
-    /** One log row; false ends the loop (unwritable — the ring never fills). */
-    private suspend fun logOnce(): Boolean {
+    /**
+     * One log row; false ends the loop (unwritable — the ring never fills).
+     * The first row of a run leaves the network blank: its rate would span
+     * either nothing (a fresh monitor reports 0) or the whole time logging
+     * was off, and neither is a measurement of that moment.
+     */
+    private suspend fun logOnce(netPrimed: Boolean): Boolean {
+        val net = runCatching { logNetMonitor.sample() }.getOrNull()
         val sample = LogSample(
             timeMillis = System.currentTimeMillis(),
             cpu = runCatching { logCpuMonitor.sample() }.getOrNull(),
             memory = runCatching { Graph.memory.sample() }.getOrNull(),
             battery = runCatching { Graph.battery.sample() }.getOrNull(),
-            network = runCatching { logNetMonitor.sample() }.getOrNull(),
+            network = net?.takeIf { netPrimed },
             screenOn = screenOn.value,
         )
         if (Graph.perfLogger.append(sample)) return true
@@ -727,6 +783,7 @@ class CpuNotificationService : Service() {
     }
 
     private fun postUpdate(id: Int, notification: Notification) {
+        if (destroyed) return
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
             ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
             PackageManager.PERMISSION_GRANTED
@@ -754,18 +811,20 @@ class CpuNotificationService : Service() {
      * when the user turned the overlay on. Crashing there would be a crash the
      * user never caused and cannot avoid, so the service simply stops instead;
      * the readouts return the next time the app is opened, exactly as they do
-     * after a reboot.
+     * after a reboot. Returns false in that case.
      */
-    private fun startInForeground(id: Int, notification: Notification) {
+    private fun startInForeground(id: Int, notification: Notification): Boolean {
         anchorId = id
-        try {
+        return try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                 startForeground(id, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
             } else {
                 startForeground(id, notification)
             }
+            true
         } catch (e: Exception) {
             stopSelf()
+            false
         }
     }
 
@@ -1096,7 +1155,11 @@ class CpuNotificationService : Service() {
         /** Same placeholder convention as the panels: never a fabricated value. */
         private const val DASH = "—"
 
-        /** True when notifications can actually be shown (pre-33: always). */
+        /**
+         * True when the app holds the notification permission: always below
+         * Android 13, where the user can still block notifications per app
+         * or per channel in system settings.
+         */
         fun canPostNotifications(context: Context): Boolean =
             Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
                 ContextCompat.checkSelfPermission(

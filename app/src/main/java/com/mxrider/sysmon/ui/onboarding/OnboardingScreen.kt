@@ -1,6 +1,7 @@
 package com.mxrider.sysmon.ui.onboarding
 
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
@@ -70,6 +71,10 @@ fun OnboardingScreen(onDone: () -> Unit) {
     var step by rememberSaveable { mutableIntStateOf(1) }
     var granted by rememberSaveable { mutableStateOf(false) }
     val openFailedMessage = stringResource(R.string.onboarding_open_settings_failed)
+
+    // Back from the disclosure returns to the welcome step instead of
+    // closing the app mid-setup.
+    BackHandler(enabled = step == 2) { step = 1 }
 
     // RESUMED-gated: the user typically leaves for system Settings from this
     // step (or parks the app in recents), and an ungated loop would keep

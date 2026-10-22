@@ -211,7 +211,7 @@ data class ProcessRow(
     val status: ProcStatus,
     val foregroundTimeTodayMs: Long,
     val lastUsedTime: Long,
-    /** App + data + cache via StorageStatsManager; null without usage access. */
+    /** App + data (data includes the cache) via StorageStatsManager; null without usage access. */
     val storageBytes: Long?,
     /** Wi-Fi + mobile bytes today via NetworkStatsManager; null without usage access. */
     val networkTodayBytes: Long?,

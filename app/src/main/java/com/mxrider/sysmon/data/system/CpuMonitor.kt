@@ -217,11 +217,11 @@ class DefaultCpuMonitor : CpuMonitor {
             if (hi > max) max = hi
         }
         if (min == Long.MAX_VALUE) min = 0L
-        val soc = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            Build.SOC_MODEL
-        } else {
-            Build.HARDWARE
-        }
+        // SOC_MODEL is "unknown" on devices without ro.soc.model (common on
+        // phones upgraded to 12+ on an older vendor image).
+        val soc = (if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) Build.SOC_MODEL else null)
+            ?.takeIf { it.isNotBlank() && it != Build.UNKNOWN }
+            ?: Build.HARDWARE
         return CpuStaticInfo(
             socModel = soc,
             hardware = Build.HARDWARE,

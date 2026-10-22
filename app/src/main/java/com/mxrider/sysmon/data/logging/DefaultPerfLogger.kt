@@ -78,7 +78,12 @@ class DefaultPerfLogger(context: Context) : PerfLogger {
                 -1L
             }
         }
-        if (newSize < 0) return@withLock false
+        if (newSize < 0) {
+            // A failed append may have written part of the row (disk full).
+            // The next use repairs the torn tail and re-reads disk truth.
+            initialized = false
+            return@withLock false
+        }
         activeSize = newSize
         activeRows++
         if (activeStartedAt == null) activeStartedAt = sample.timeMillis

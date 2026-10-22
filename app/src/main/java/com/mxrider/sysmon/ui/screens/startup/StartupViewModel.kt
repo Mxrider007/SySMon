@@ -6,11 +6,11 @@ import com.mxrider.sysmon.data.apps.PackageEvents
 import com.mxrider.sysmon.Graph
 import com.mxrider.sysmon.core.StartupRow
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -41,10 +41,11 @@ class StartupViewModel : ViewModel() {
 
     init {
         refresh()
-        // Package churn reloads immediately; the 60-second staleness
-        // window stays as the fallback.
+        // Package churn reloads right away while the screen is showing, and
+        // on the next visit otherwise.
         viewModelScope.launch {
-            PackageEvents.generation.drop(1).collect { refresh() }
+            PackageEvents.changesWhile(_state.subscriptionCount.map { it > 0 })
+                .collect { refresh() }
         }
     }
 

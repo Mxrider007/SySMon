@@ -1,6 +1,7 @@
 package com.mxrider.sysmon.data.logging
 
 import com.mxrider.sysmon.core.PerfLogger
+import kotlinx.coroutines.CancellationException
 
 /** First/last recorded timestamps and surviving row count of the whole ring. */
 data class LogBounds(
@@ -71,13 +72,15 @@ class PerfLogReader(private val logger: PerfLogger) {
             var last = Long.MIN_VALUE
             var n = 0L
             for (line in rows) {
-                val t = line.split(',', limit = 3).getOrNull(1)?.toLongOrNull() ?: continue
+                val t = timeOf(line) ?: continue
                 if (t < first) first = t
                 if (t > last) last = t
                 n++
             }
             if (n > 0) LogBounds(first, last, n) else null
         }
+    } catch (e: CancellationException) {
+        throw e
     } catch (_: Exception) {
         null
     }
@@ -102,12 +105,13 @@ class PerfLogReader(private val logger: PerfLogger) {
         try {
             logger.readRows { rows ->
                 for (line in rows) {
+                    // Window check first, so rows outside it are never split.
+                    val t = timeOf(line) ?: continue
+                    if (t < startMs || t > endMs) continue
                     val f = line.split(',')
                     // Schema is 18 columns since it was introduced; anything
                     // shorter is a torn or foreign row.
                     if (f.size < 18) continue
-                    val t = f[1].toLongOrNull() ?: continue
-                    if (t < startMs || t > endMs) continue
                     var b = ((t - startMs) / bucketMs).toInt()
                     if (b >= bucketCount) b = bucketCount - 1
                     rowsInWindow++
@@ -127,6 +131,8 @@ class PerfLogReader(private val logger: PerfLogger) {
                     f[7].toLongOrNull()?.let { if (it > memTotalMax) memTotalMax = it }
                 }
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (_: Exception) {
             return null
         }
@@ -180,6 +186,15 @@ class PerfLogReader(private val logger: PerfLogger) {
         if (value == null || value.isNaN()) return
         sums[metric][bucket] += value
         counts[metric][bucket]++
+    }
+
+    /** The `time_unix_ms` column (the second field), without splitting the row. */
+    private fun timeOf(line: String): Long? {
+        val c1 = line.indexOf(',')
+        if (c1 < 0) return null
+        val c2 = line.indexOf(',', c1 + 1)
+        if (c2 < 0) return null
+        return line.substring(c1 + 1, c2).toLongOrNull()
     }
 
     private fun medianDelta(times: LongArray): Long {

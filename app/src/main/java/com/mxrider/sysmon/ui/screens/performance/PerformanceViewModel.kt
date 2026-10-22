@@ -1,5 +1,6 @@
 package com.mxrider.sysmon.ui.screens.performance
 
+import android.os.SystemClock
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.mxrider.sysmon.Graph
@@ -16,6 +17,7 @@ import com.mxrider.sysmon.core.ThermalSnapshot
 import com.mxrider.sysmon.core.UpdateSpeed
 import com.mxrider.sysmon.core.ticker
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -79,6 +81,9 @@ class PerformanceViewModel : ViewModel() {
     private var lastStorage: StorageSnapshot? = null
     private var gpuRequested = false
 
+    /** elapsedRealtime of the last sample pushed; 0 = none since the last clear. */
+    private var lastTickAt = 0L
+
     init {
         // Static CPU info once, off the main thread.
         viewModelScope.launch {
@@ -130,13 +135,22 @@ class PerformanceViewModel : ViewModel() {
                     if (active) {
                         // With PAUSED persisted the ticker never fires; take
                         // one sample per visit so panels freeze on real data
-                        // instead of showing "Loading" forever.
+                        // instead of showing "Loading" forever. The delta
+                        // sources are primed first so that sample covers one
+                        // real second, not the whole time since the last visit.
                         val speed = try {
                             Graph.settings.settings.first().updateSpeed
                         } catch (_: Exception) {
                             UpdateSpeed.NORMAL
                         }
-                        if (speed == UpdateSpeed.PAUSED) onTick(0L)
+                        if (speed == UpdateSpeed.PAUSED) {
+                            withContext(Dispatchers.IO) {
+                                runCatching { Graph.network.sample() }
+                                runCatching { Graph.cpu.sample() }
+                            }
+                            delay(1_000)
+                            onTick(0L, live = false)
+                        }
                         ticker(Graph.settings.settings.map { it.updateSpeed }).collect { tick ->
                             onTick(tick)
                         }
@@ -157,6 +171,15 @@ class PerformanceViewModel : ViewModel() {
         thermalHistory.clear()
         gpuHistory.clear()
         coreHistories.forEach { it.clear() }
+        lastTickAt = 0L
+    }
+
+    private fun pushGap(points: Int) {
+        val all = listOf(
+            cpuHistory, memoryHistory, netRxHistory, netTxHistory, batteryHistory,
+            batteryPowerHistory, batteryTempHistory, storageHistory, thermalHistory, gpuHistory,
+        ) + coreHistories
+        for (history in all) repeat(points) { history.push(Float.NaN) }
     }
 
     /** Loads GPU info the first time the GPU panel is shown; provider caches. */
@@ -173,7 +196,8 @@ class PerformanceViewModel : ViewModel() {
         }
     }
 
-    private suspend fun onTick(tick: Long) {
+    /** [live] = a ticker tick; false for the one-shot sample of a PAUSED visit. */
+    private suspend fun onTick(tick: Long, live: Boolean = true) {
         val sampleStorage = tick % STORAGE_SAMPLE_PERIOD_TICKS == 0L
         val batch = try {
             withContext(Dispatchers.IO) {
@@ -193,8 +217,27 @@ class PerformanceViewModel : ViewModel() {
         }
 
         // ChartHistory is not thread-safe: push on the main thread only.
+
+        // Sampling stops while the screen is away (another tab, Home). Blank
+        // the time it was gone instead of joining old samples straight onto
+        // new ones under the "60 seconds" axis. On the first tick back the
+        // delta sources (network counters, /proc/stat CPU) report the average
+        // over the whole absence, so their point is blanked as well.
+        val now = SystemClock.elapsedRealtime()
+        val intervalMs = _uiState.value.intervalMs
+        val missed = if (live && lastTickAt > 0L && intervalMs > 0L) {
+            (now - lastTickAt) / intervalMs - 1
+        } else {
+            0L
+        }
+        lastTickAt = now
+        val afterGap = missed >= 2
+        if (afterGap) pushGap(missed.coerceAtMost(HISTORY_CAPACITY.toLong()).toInt())
+        val cpuBlank = batch.cpu.source == CpuSource.UNAVAILABLE ||
+            (afterGap && batch.cpu.source == CpuSource.PROC_STAT)
+
         cpuHistory.push(
-            if (batch.cpu.source == CpuSource.UNAVAILABLE) Float.NaN
+            if (cpuBlank) Float.NaN
             else batch.cpu.utilization.coerceIn(0f, 1f),
         )
         if (coreHistories.isEmpty() && batch.cpu.perCore.isNotEmpty()) {
@@ -202,7 +245,7 @@ class PerformanceViewModel : ViewModel() {
             coreHistories = List(tracked) { ChartHistory(HISTORY_CAPACITY) }
         }
         coreHistories.forEachIndexed { index, history ->
-            val core = batch.cpu.perCore.getOrNull(index)
+            val core = batch.cpu.perCore.getOrNull(index)?.takeUnless { cpuBlank }
             history.push(core?.utilization?.coerceIn(0f, 1f) ?: Float.NaN)
         }
 
@@ -212,8 +255,12 @@ class PerformanceViewModel : ViewModel() {
             else Float.NaN,
         )
 
-        netRxHistory.push(batch.network.rxBytesPerSec.toFloat().coerceAtLeast(0f))
-        netTxHistory.push(batch.network.txBytesPerSec.toFloat().coerceAtLeast(0f))
+        netRxHistory.push(
+            if (afterGap) Float.NaN else batch.network.rxBytesPerSec.toFloat().coerceAtLeast(0f),
+        )
+        netTxHistory.push(
+            if (afterGap) Float.NaN else batch.network.txBytesPerSec.toFloat().coerceAtLeast(0f),
+        )
         // Fraction like CPU/memory: the MiniChartTile autoscale would otherwise
         // render 42% battery as a nearly-full sparkline (nice-ceiling of 50).
         batteryHistory.push((batch.battery.levelPercent / 100f).coerceIn(0f, 1f))
